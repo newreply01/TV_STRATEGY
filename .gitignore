@@ -1,0 +1,18 @@
+# Root .gitignore
+node_modules/
+.pm2/
+venv/
+strategies/venv/
+.env
+strategies/.env
+webapp/.env
+*.log
+strategies/*.log
+webapp/*.log
+tmp/
+.next/
+dist/
+build/
+.DS_Store
+*.pyc
+__pycache__/
