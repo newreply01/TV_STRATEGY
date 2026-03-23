@@ -148,7 +148,7 @@ export default function TradingViewChart({ slug, symbol = 'AAPL' }: { slug: stri
     let active = true;
     // Determine target URL - S002 use 5m for better trend perspective, S001 is 15m
     const interval = slug.includes('Volume-Profile') ? '5m' : '15m';
-    const period = slug.includes('Volume-Profile') ? '1d' : '2mo';
+    const period = slug.includes('Volume-Profile') ? '1mo' : '2mo';
     const host = typeof window !== 'undefined' ? window.location.hostname : '127.0.0.1';
     
     // Support remote API URL via env var, fallback to dynamic hostname on port 26001
@@ -175,7 +175,14 @@ export default function TradingViewChart({ slug, symbol = 'AAPL' }: { slug: stri
             createSeriesMarkers(flowSeriesRef.current, finalMarkers);
         }
 
-        if (active && chartRef.current) chartRef.current.timeScale().fitContent();
+        if (active && chartRef.current) {
+          chartRef.current.timeScale().fitContent();
+          if (chartData.ohlc && chartData.ohlc.length > 150) {
+            const lastTime = chartData.ohlc[chartData.ohlc.length-1].time as number;
+            const firstTime = chartData.ohlc[chartData.ohlc.length-150].time as number;
+            chartRef.current.timeScale().setVisibleRange({ from: firstTime, to: lastTime });
+          }
+        }
         setLoading(false);
       } catch (e: any) {
         console.error('[CHART ERROR]', e);
