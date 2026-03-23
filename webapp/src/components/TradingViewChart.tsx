@@ -146,8 +146,8 @@ export default function TradingViewChart({ slug, symbol = 'AAPL' }: { slug: stri
   // Sync Data Effect
   useEffect(() => {
     let active = true;
-    // Determine target URL - S002 might be 1m, S001 is 15m
-    const interval = slug.includes('Volume-Profile') ? '1m' : '15m';
+    // Determine target URL - S002 use 5m for better trend perspective, S001 is 15m
+    const interval = slug.includes('Volume-Profile') ? '5m' : '15m';
     const period = slug.includes('Volume-Profile') ? '1d' : '2mo';
     const host = typeof window !== 'undefined' ? window.location.hostname : '127.0.0.1';
     
