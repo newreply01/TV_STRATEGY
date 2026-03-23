@@ -254,13 +254,13 @@ export default function TradingViewChart({ slug, symbol = 'AAPL' }: { slug: stri
                         const topPos = ((maxP - midPoint.price) / rangeP) * 100;
 
                         return (
-                            <div key={i} className="absolute left-0 right-0 flex items-center px-4" style={{ top: `${topPos}%`, transform: 'translateY(-50%)' }}>
+                            <div key={i} className="absolute left-0 right-0 flex items-center pl-4 pr-16" style={{ top: `${topPos}%`, transform: 'translateY(-50%)' }}>
                                 {/* Left Label (Total Volume) */}
                                 <div className="text-[9px] font-black whitespace-nowrap px-1 z-30" style={{ color: color }}>
                                     {(totalVol/1000).toFixed(1)}K
                                 </div>
-                                {/* Full Span Line */}
-                                <div className="flex-1 border-t border-dashed" style={{ borderColor: color, opacity: 0.85, borderTopWidth: '1.2px' }} />
+                                {/* Full Span Line (Thinner) */}
+                                <div className="flex-1 border-t border-dashed" style={{ borderColor: color, opacity: 0.85, borderTopWidth: '1px' }} />
                                 {/* Right Label */}
                                 <div className="text-[9px] font-black whitespace-nowrap bg-black/60 px-1 rounded shadow-lg border border-white/5 ml-2 z-30" style={{ color: color }}>
                                     Total: {(totalVol/1000).toFixed(1)}K
