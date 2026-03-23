@@ -259,8 +259,13 @@ export default function TradingViewChart({ slug, symbol = 'AAPL' }: { slug: stri
                                 <div className="text-[9px] font-black whitespace-nowrap px-1 z-30" style={{ color: color }}>
                                     {(totalVol/1000).toFixed(1)}K
                                 </div>
-                                {/* Full Span Line (Original Thickness) */}
-                                <div className="flex-1 border-t border-dashed" style={{ borderColor: color, opacity: 0.85, borderTopWidth: '1.2px' }} />
+                                {/* Full Span Line (Denser Custom Pattern) */}
+                                <div className="flex-1 h-[1px]" style={{ 
+                                    backgroundImage: `linear-gradient(to right, ${color} 60%, transparent 60%)`,
+                                    backgroundSize: '4px 1px',
+                                    backgroundRepeat: 'repeat-x',
+                                    opacity: 0.85
+                                }} />
                                 {/* Right Label */}
                                 <div className="text-[9px] font-black whitespace-nowrap bg-black/60 px-1 rounded shadow-lg border border-white/5 ml-2 z-30" style={{ color: color }}>
                                     Total: {(totalVol/1000).toFixed(1)}K
