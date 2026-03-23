@@ -133,8 +133,8 @@ def calculate_clusters_volume_profile(df, n_clusters=5, iterations=10, n_bins=12
         bin_vap = np.zeros(len(bins)-1)
         
         for _, row in cluster_df.iterrows():
-            # Distribute volume across bins hit by the candle
-            bar_bins = (bins[:-1] >= row['low']) & (bins[1:] <= row['high'])
+            # Distribute volume across bins hit by the candle (overlap detection)
+            bar_bins = (bins[:-1] < row['high']) & (bins[1:] > row['low'])
             if bar_bins.any():
                 bin_vap[bar_bins] += row['volume'] / bar_bins.sum()
             else:
