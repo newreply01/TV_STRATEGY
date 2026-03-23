@@ -274,7 +274,8 @@ export default function TradingViewChart({ slug, symbol = 'AAPL' }: { slug: stri
                         const rangeP = maxP - minP || 1;
 
                         return Object.entries(groups).map(([color, members], i) => {
-                            // Logic: Use the median price index of the cluster to ensure it's in the middle of the color block
+                            // Logic: Use the median price index for centering, and Peak for the left volume label
+                            const peak = members.reduce((prev, curr) => (prev.volume > curr.volume) ? prev : curr);
                             const sortedMembers = [...members].sort((a,b) => a.price - b.price);
                             const midIdx = Math.floor(sortedMembers.length / 2);
                             const midPoint = sortedMembers[midIdx];
