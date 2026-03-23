@@ -20,7 +20,7 @@ DB_CONFIG_SCREENER = {
     "dbname": "stock_screener"
 }
 
-def get_data(symbol="2330", limit=300, source="yahoo"):
+def get_data(symbol="2330", limit=1500, source="yahoo"):
     """
     獲取數據核心函數
     source="local": 從 PostgreSQL 資料庫獲取 (適合精確回測)
@@ -77,7 +77,7 @@ def get_data(symbol="2330", limit=300, source="yahoo"):
     })
     return df
 
-def calculate_clusters_volume_profile(df, n_bins=120, window=150):
+def calculate_clusters_volume_profile(df, n_bins=120, window=600):
     if df.empty: return []
     latest_window = df.tail(window)
     price_min, price_max = latest_window['low'].min(), latest_window['high'].max()
