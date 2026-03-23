@@ -253,9 +253,9 @@ export default function TradingViewChart({ slug, symbol = 'AAPL' }: { slug: stri
 
                         return (
                             <div key={i} className="absolute left-0 right-0 flex items-center px-4" style={{ top: `${topPos}%`, transform: 'translateY(-50%)' }}>
-                                {/* Left Label */}
+                                {/* Left Label (Total Volume) */}
                                 <div className="text-[9px] font-black whitespace-nowrap px-1 z-30" style={{ color: color }}>
-                                    {(peak.volume/1000).toFixed(1)}K
+                                    {(totalVol/1000).toFixed(1)}K
                                 </div>
                                 {/* Full Span Line */}
                                 <div className="flex-1 border-t border-dashed" style={{ borderColor: color, opacity: 0.85, borderTopWidth: '1.2px' }} />
