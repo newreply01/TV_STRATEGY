@@ -149,6 +149,7 @@ export default function TradingViewChart({ slug, symbol = 'AAPL' }: { slug: stri
     // Determine target URL - S002 might be 1m, S001 is 15m
     const interval = slug.includes('Volume-Profile') ? '1m' : '15m';
     const period = slug.includes('Volume-Profile') ? '1d' : '2mo';
+    const host = typeof window !== 'undefined' ? window.location.hostname : '127.0.0.1';
     
     // Support remote API URL via env var, fallback to dynamic hostname on port 26001
     const apiBase = process.env.NEXT_PUBLIC_API_URL || `http://${host}:26001`;
