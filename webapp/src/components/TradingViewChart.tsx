@@ -284,8 +284,15 @@ export default function TradingViewChart({ slug, symbol = 'AAPL' }: { slug: stri
 
                             return (
                                 <div key={i} className="absolute left-0 right-0 flex items-center gap-2" style={{ top: `${topPos}%`, transform: 'translateY(-50%)' }}>
+                                    {/* Left Label (Volume) */}
+                                    <div className="text-[9px] font-black whitespace-nowrap bg-black/40 px-1 rounded" style={{ color: color }}>
+                                        {(peak.volume/1000).toFixed(1)}K
+                                    </div>
+                                    
                                     <div className="flex-1 border-t border-dashed" style={{ borderColor: color, opacity: 0.4 }} />
-                                    <div className="text-[9px] font-black whitespace-nowrap bg-black/50 px-1 rounded shadow-lg border border-white/5" style={{ color: color }}>
+                                    
+                                    {/* Right Label (Total) */}
+                                    <div className="text-[9px] font-black whitespace-nowrap bg-black/60 px-1 rounded shadow-lg border border-white/5" style={{ color: color }}>
                                         Total: {(totalVol/1000).toFixed(1)}K
                                     </div>
                                 </div>
