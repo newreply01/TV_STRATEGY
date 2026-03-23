@@ -180,21 +180,33 @@
             profileOverlay.appendChild(row);
         });
 
-        // Add Floating Markers for peaks
-        const threshold = maxVol * 0.8;
+        // Add Floating Markers for EACH cluster color group
+        const groups = {};
         chartData.volume_profile.forEach(p => {
-            if (p.volume >= threshold) {
-                const marker = document.createElement('div');
-                marker.className = 'v-marker';
-                const percentTop = ((maxPrice - p.price) / (maxPrice - minPrice)) * 100;
-                marker.style.position = 'absolute';
-                marker.style.top = percentTop + '%';
-                marker.style.left = '0';
-                marker.style.right = '0';
-                marker.style.paddingRight = '20px';
-                marker.innerHTML = `<div class="v-line"></div><div class="v-label">Total: ${(p.volume/1000).toFixed(1)}K</div>`;
-                profileOverlay.appendChild(marker);
-            }
+            if (!groups[p.color]) groups[p.color] = [];
+            groups[p.color].push(p);
+        });
+
+        Object.entries(groups).forEach(([color, members]) => {
+            // Find peak/center of this color group
+            const peak = members.reduce((prev, curr) => (prev.volume > curr.volume) ? prev : curr);
+            const totalVol = members.reduce((sum, curr) => sum + curr.volume, 0);
+            
+            const marker = document.createElement('div');
+            marker.className = 'v-marker';
+            const percentTop = ((maxPrice - peak.price) / (maxPrice - minPrice || 1)) * 100;
+            
+            marker.style.position = 'absolute';
+            marker.style.top = percentTop + '%';
+            marker.style.left = '0';
+            marker.style.right = '0';
+            marker.style.paddingRight = '20px';
+            
+            marker.innerHTML = `
+                <div class="v-line" style="border-color: ${color}; opacity: 0.4;"></div>
+                <div class="v-label" style="color: ${color}; border: 1px solid ${color}33;">Total: ${(totalVol/1000).toFixed(1)}K</div>
+            `;
+            profileOverlay.appendChild(marker);
         });
 
         // Main Chart
