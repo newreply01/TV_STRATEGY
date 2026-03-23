@@ -127,12 +127,15 @@ export default function TradingViewChart({ slug, symbol = 'AAPL' }: { slug: stri
       });
     }
 
-    const handleResize = () => {
-      if (chartRef.current && chartContainerRef.current) {
-        chartRef.current.applyOptions({ width: chartContainerRef.current.clientWidth });
-      }
-    };
-    window.addEventListener('resize', handleResize);
+    if (chartContainerRef.current) {
+        const chart = chartRef.current!;
+        chart.timeScale().applyOptions({
+            rightOffset: 30,
+            barSpacing: 6,
+            minBarSpacing: 0.5,
+        });
+        window.addEventListener('resize', handleResize);
+    }
 
     return () => {
       window.removeEventListener('resize', handleResize);
@@ -176,11 +179,13 @@ export default function TradingViewChart({ slug, symbol = 'AAPL' }: { slug: stri
         }
 
         if (active && chartRef.current) {
-          chartRef.current.timeScale().fitContent();
+          // No fitContent here to respect the rightOffset
           if (chartData.ohlc && chartData.ohlc.length > 150) {
             const lastTime = chartData.ohlc[chartData.ohlc.length-1].time as any;
             const firstTime = chartData.ohlc[chartData.ohlc.length-150].time as any;
             chartRef.current.timeScale().setVisibleRange({ from: firstTime, to: lastTime });
+          } else {
+            chartRef.current.timeScale().fitContent();
           }
         }
         setLoading(false);
