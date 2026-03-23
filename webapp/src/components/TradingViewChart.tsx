@@ -259,12 +259,12 @@ export default function TradingViewChart({ slug, symbol = 'AAPL' }: { slug: stri
                                 <div className="text-[9px] font-black whitespace-nowrap px-1 z-30" style={{ color: color }}>
                                     {(totalVol/1000).toFixed(1)}K
                                 </div>
-                                {/* Full Span Line (Denser Custom Pattern) */}
+                                {/* Full Span Line (Ultra-Dense Custom Pattern) */}
                                 <div className="flex-1 h-[1px]" style={{ 
-                                    backgroundImage: `linear-gradient(to right, ${color} 60%, transparent 60%)`,
-                                    backgroundSize: '4px 1px',
+                                    backgroundImage: `linear-gradient(to right, ${color} 50%, transparent 50%)`,
+                                    backgroundSize: '3px 1px',
                                     backgroundRepeat: 'repeat-x',
-                                    opacity: 0.85
+                                    opacity: 0.9
                                 }} />
                                 {/* Right Label */}
                                 <div className="text-[9px] font-black whitespace-nowrap bg-black/60 px-1 rounded shadow-lg border border-white/5 ml-2 z-30" style={{ color: color }}>
@@ -281,9 +281,9 @@ export default function TradingViewChart({ slug, symbol = 'AAPL' }: { slug: stri
             {/* Chart Area filler */}
             <div className="flex-1" />
             
-            {/* Overlay Volume Profile (Shifted left to avoid Y-axis) */}
+            {/* Overlay Volume Profile (Shifted further left to avoid Y-axis numbers) */}
             {hasVolumeProfile && (
-                <div className="absolute top-12 right-16 bottom-16 w-16 md:w-24 lg:w-32 z-20 pointer-events-none">
+                <div className="absolute top-12 right-20 bottom-16 w-16 md:w-24 lg:w-32 z-20 pointer-events-none">
                     <ResponsiveContainer width="100%" height="100%">
                         <BarChart data={data.volume_profile} layout="vertical" margin={{ top: 0, right: 0, left: 0, bottom: 0 }}>
                             <XAxis type="number" hide />
