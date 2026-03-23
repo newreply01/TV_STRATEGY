@@ -65,11 +65,14 @@ export default function TradingViewChart({ slug, symbol = 'AAPL' }: { slug: stri
     chartRef.current = chart;
 
     // Core Setup
-    // Only one pane for S002, Dual pane for S001 (Default behavior)
-    // We'll dynamically hide indicator pane if not S001?
-    // Actually, let's keep the indicator pane and just show empty if no data.
-    const indicatorPane = chart.addPane();
-    indicatorPane.setHeight(240); 
+    const isS002 = slug.includes('Volume-Profile');
+    const isS001 = slug.includes('Omni-Flow');
+
+    // Only add indicator pane for S001
+    const indicatorPane = isS001 ? chart.addPane() : null;
+    if (indicatorPane) {
+      indicatorPane.setHeight(240);
+    }
 
     const candlestickSeries = chart.addSeries(CandlestickSeries, {
       upColor: '#00ffcc', downColor: '#ff2e2e', borderVisible: false,
@@ -77,54 +80,50 @@ export default function TradingViewChart({ slug, symbol = 'AAPL' }: { slug: stri
     }, 0);
     candlestickSeriesRef.current = candlestickSeries;
 
-    const flowSeries = chart.addSeries(BaselineSeries, {
-      baseValue: { type: 'price', price: 0 },
-      topFillColor1: 'rgba(0, 255, 255, 0.4)', topFillColor2: 'rgba(0, 255, 255, 0.05)', topLineColor: '#00ffff',
-      bottomFillColor1: 'rgba(255, 46, 46, 0.05)', bottomFillColor2: 'rgba(255, 46, 46, 0.4)', bottomLineColor: '#ff2e2e',
-      lineWidth: 3,
-      lastValueVisible: false,
-      priceLineVisible: false,
-      priceFormat: {
-        type: 'custom',
-        formatter: (price: number) => {
-          const rounded = Math.round(price);
-          // Hide specific horizontal line axis labels
-          if ([90, 70, 0, -70, -90].includes(rounded) && Math.abs(price - rounded) < 0.1) return '';
-          return price.toFixed(2);
+    // S001 Specific Series
+    if (isS001) {
+      const flowSeries = chart.addSeries(BaselineSeries, {
+        baseValue: { type: 'price', price: 0 },
+        topFillColor1: 'rgba(0, 255, 255, 0.4)', topFillColor2: 'rgba(0, 255, 255, 0.05)', topLineColor: '#00ffff',
+        bottomFillColor1: 'rgba(255, 46, 46, 0.05)', bottomFillColor2: 'rgba(255, 46, 46, 0.4)', bottomLineColor: '#ff2e2e',
+        lineWidth: 3,
+        lastValueVisible: false,
+        priceLineVisible: false,
+        priceFormat: {
+          type: 'custom',
+          formatter: (price: number) => {
+            const rounded = Math.round(price);
+            if ([90, 70, 0, -70, -90].includes(rounded) && Math.abs(price - rounded) < 0.1) return '';
+            return price.toFixed(2);
+          },
         },
-      },
-    }, 1);
+      }, 1);
 
-    flowSeries.priceScale().applyOptions({
-      scaleMargins: {
-        bottom: 0.2,
-        top: 0.1,
-      },
-    });
-
-    flowSeriesRef.current = flowSeries;
-
-    const signalSeries = chart.addSeries(LineSeries, {
-      color: 'rgba(200, 200, 200, 0.3)', lineWidth: 1,
-      lastValueVisible: false,
-      priceLineVisible: false,
-      priceFormat: {
-        type: 'custom',
-        formatter: (price: number) => price.toFixed(2),
-      },
-    }, 1);
-    signalSeriesRef.current = signalSeries;
-
-    [90, 70, 0, -70, -90].forEach(p => {
-      flowSeries.createPriceLine({
-        price: p,
-        color: p === 0 ? 'rgba(255, 255, 255, 0.4)' : (Math.abs(p) === 90 ? 'rgba(255, 255, 255, 0.2)' : 'rgba(255, 255, 255, 0.1)'),
-        lineWidth: 1,
-        lineStyle: p === 0 ? 0 : 1,
-        axisLabelVisible: true,
-        title: p === 0 ? 'ZERO' : `${p > 0 ? '+' : ''}${p}`,
+      flowSeries.priceScale().applyOptions({
+        scaleMargins: { bottom: 0.2, top: 0.1 },
       });
-    });
+
+      flowSeriesRef.current = flowSeries;
+
+      const signalSeries = chart.addSeries(LineSeries, {
+        color: 'rgba(200, 200, 200, 0.3)', lineWidth: 1,
+        lastValueVisible: false,
+        priceLineVisible: false,
+        priceFormat: { type: 'custom', formatter: (price: number) => price.toFixed(2) },
+      }, 1);
+      signalSeriesRef.current = signalSeries;
+
+      [90, 70, 0, -70, -90].forEach(p => {
+        flowSeries.createPriceLine({
+          price: p,
+          color: p === 0 ? 'rgba(255, 255, 255, 0.4)' : (Math.abs(p) === 90 ? 'rgba(255, 255, 255, 0.2)' : 'rgba(255, 255, 255, 0.1)'),
+          lineWidth: 1,
+          lineStyle: p === 0 ? 0 : 1,
+          axisLabelVisible: true,
+          title: p === 0 ? 'ZERO' : `${p > 0 ? '+' : ''}${p}`,
+        });
+      });
+    }
 
     const handleResize = () => {
       if (chartRef.current && chartContainerRef.current) {
@@ -223,8 +222,8 @@ export default function TradingViewChart({ slug, symbol = 'AAPL' }: { slug: stri
       )}
 
       {/* Info HUD */}
-      <div className="absolute top-10 right-24 z-50 bg-zinc-900/90 backdrop-blur-xl p-4 rounded-xl border border-white/10 w-52 pointer-events-none transition-all duration-500 shadow-2xl">
-        <div className="text-[10px] uppercase font-black tracking-widest text-zinc-500 mb-2 border-b border-white/5 pb-1">
+      <div className="absolute top-10 left-10 z-50 bg-zinc-900/60 backdrop-blur-md p-3 rounded-xl border border-white/5 w-44 pointer-events-none transition-all duration-500 shadow-2xl">
+        <div className="text-[9px] uppercase font-black tracking-widest text-zinc-500 mb-2 border-b border-white/5 pb-1">
             {isS001 ? "Omni-Flow Consensus" : (slug.includes('Market-Structure') ? "Market Structure Dashboard" : "Clusters Volume Profile")}
         </div>
         <div className="space-y-2.5">
@@ -235,35 +234,66 @@ export default function TradingViewChart({ slug, symbol = 'AAPL' }: { slug: stri
                 {isS001 ? "Smart Flow" : (slug.includes('Market-Structure') ? "Structure HUB" : "Fixed Profile")}
             </span>
           </div>
-          <div className="flex justify-between items-center text-[11px]"><span className="text-zinc-500">Intensity</span><span className="text-white font-mono">{hasVolumeProfile ? "Lateral HUD" : (slug.includes('Market-Structure') ? "BOS/CHoCH" : "Dual Panes")}</span></div>
+          <div className="flex justify-between items-center text-[11px]"><span className="text-zinc-500">Intensity</span><span className="text-white font-mono">{hasVolumeProfile ? "Overlay HUD" : (slug.includes('Market-Structure') ? "BOS/CHoCH" : "Dual Panes")}</span></div>
           <div className="flex justify-between items-center text-[11px]"><span className="text-zinc-500">Sync</span><span className="text-[#ffff00] font-black tracking-widest animate-pulse uppercase">Active</span></div>
         </div>
       </div>
 
-      <div className="flex flex-1 w-full gap-2 min-h-[600px]">
-        {/* Left: Volume Profile (Optional) */}
-        {hasVolumeProfile && (
-            <div className="w-16 md:w-24 lg:w-32 h-full flex flex-col items-center bg-zinc-950/50 rounded-xl border border-white/5 pt-10 pb-16">
-                 <div className="text-[9px] font-black text-zinc-600 vertical-text transform rotate-180 uppercase tracking-widest mb-4">Volume Profile</div>
-                 <div className="flex-1 w-full">
+      <div className="flex flex-1 w-full gap-0 min-h-[600px] relative">
+        {/* Right: Price Chart */}
+        <div className="flex-1 h-full min-w-0 relative">
+            <div ref={chartContainerRef} className="w-full h-full border border-white/5 rounded-xl overflow-hidden bg-zinc-950" />
+            
+            {/* Overlay Volume Profile (Floating on the right) */}
+            {hasVolumeProfile && (
+                <div className="absolute top-10 right-0 bottom-16 w-24 md:w-36 lg:w-48 z-20 pointer-events-none pr-12">
                     <ResponsiveContainer width="100%" height="100%">
-                        <BarChart data={data.volume_profile} layout="vertical" margin={{ top: 0, right: 0, left: -20, bottom: 0 }}>
+                        <BarChart data={data.volume_profile} layout="vertical" margin={{ top: 0, right: 0, left: 0, bottom: 0 }}>
                             <XAxis type="number" hide />
                             <YAxis dataKey="price" type="category" hide reversed />
-                            <Bar dataKey="volume" radius={[0, 4, 4, 0]}>
+                            <Bar dataKey="volume" radius={[4, 0, 0, 4]}>
                                 {data.volume_profile && data.volume_profile.map((entry: any, index: number) => (
-                                    <Cell key={`cell-${index}`} fill={entry.color} fillOpacity={0.8} />
+                                    <Cell key={`cell-${index}`} fill={entry.color} fillOpacity={0.6} stroke={entry.color} strokeWidth={1} />
                                 ))}
                             </Bar>
                         </BarChart>
                     </ResponsiveContainer>
-                 </div>
-            </div>
-        )}
+                    
+                    {/* Floating Price Level Lines for EACH cluster color group */}
+                    {data.volume_profile ? (() => {
+                        const groups: Record<string, any[]> = {};
+                        data.volume_profile.forEach(p => {
+                            if (!groups[p.color]) groups[p.color] = [];
+                            groups[p.color].push(p);
+                        });
 
-        {/* Right: Price Chart */}
-        <div className="flex-1 h-full min-w-0">
-            <div ref={chartContainerRef} className="w-full h-full border border-white/5 rounded-xl overflow-hidden bg-zinc-950" />
+                        const profile = data.volume_profile || [];
+                        const prices = profile.map((v:any)=>v.price);
+                        const maxP = Math.max(...prices);
+                        const minP = Math.min(...prices);
+                        const rangeP = maxP - minP || 1;
+
+                        return Object.entries(groups).map(([color, members], i) => {
+                            // Logic: Use the median price index of the cluster to ensure it's in the middle of the color block
+                            const sortedMembers = [...members].sort((a,b) => a.price - b.price);
+                            const midIdx = Math.floor(sortedMembers.length / 2);
+                            const midPoint = sortedMembers[midIdx];
+                            
+                            const totalVol = members.reduce((sum, curr) => sum + curr.volume, 0);
+                            const topPos = ((maxP - midPoint.price) / rangeP) * 100;
+
+                            return (
+                                <div key={i} className="absolute left-0 right-0 flex items-center gap-2" style={{ top: `${topPos}%`, transform: 'translateY(-50%)' }}>
+                                    <div className="flex-1 border-t border-dashed" style={{ borderColor: color, opacity: 0.4 }} />
+                                    <div className="text-[9px] font-black whitespace-nowrap bg-black/50 px-1 rounded shadow-lg border border-white/5" style={{ color: color }}>
+                                        Total: {(totalVol/1000).toFixed(1)}K
+                                    </div>
+                                </div>
+                            );
+                        });
+                    })() : null}
+                </div>
+            )}
         </div>
       </div>
 

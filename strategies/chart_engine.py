@@ -25,8 +25,11 @@ def fetch_yfinance_data(symbol="2330.TW", period="1mo", interval="15m"):
     Note: 15m interval is only available for the last 60 days.
     """
     try:
-        # Optimization: 15m interval is extremely sensitive to period
-        actual_period = "1mo" 
+        # Optimization: 1m interval is only available for the last 7 days
+        actual_period = period
+        if interval == '1m' and (period not in ['1d', '5d', '7d']):
+            actual_period = "7d"
+            
         print(f"Engine: Downloading {symbol} from yf (period={actual_period}, interval={interval})")
         df = yf.download(symbol, period=actual_period, interval=interval, progress=False)
         
@@ -95,18 +98,20 @@ def get_chart_data(slug):
     interval = request.args.get('interval', '1m')
     period = request.args.get('period', '1d')
     symbol = request.args.get('symbol', 'AAPL')
+    df = None
+    source = "local_db"
+
+    # Use local DB only for 1m interval and 1d period
+    if period == '1d' and interval == '1m':
+        df = fetch_stock_screener_data(symbol=symbol)
     
-    # Logic: Use yfinance for longer periods or 15m interval
-    if period != '1d' or interval == '15m':
-        # Map 2330 -> 2330.TW for yfinance
+    if df is None or df.empty:
+        # Fallback to yfinance if local_db fails, or if not 1m/1d
+        print(f"Engine: Attempting yfinance fetch for {symbol} (fallback or regular)")
         yf_symbol = f"{symbol}.TW" if symbol.isdigit() else symbol
         df = fetch_yfinance_data(symbol=yf_symbol, period=period, interval=interval)
         source = "yfinance"
-    else:
-        # Use local DB for real-time 1m data
-        df = fetch_stock_screener_data(symbol=symbol)
-        source = "local_db"
-    
+
     if df is not None and not df.empty:
         print(f"Engine: Using {source} for {symbol} ({interval}/{period}), Count: {len(df)}")
         
