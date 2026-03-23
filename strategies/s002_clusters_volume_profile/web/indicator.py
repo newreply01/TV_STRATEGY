@@ -21,11 +21,11 @@ DB_CONFIG_SCREENER = {
 }
 
 def get_data(symbol="2330", limit=300, source="yahoo"):
-    \"\"\"
+    """
     獲取數據核心函數
     source="local": 從 PostgreSQL 資料庫獲取 (適合精確回測)
     source="yahoo": 從 Yahoo Finance 獲取 (適合快速網頁展示)
-    \"\"\"
+    """
     if source == "yahoo":
         try:
             import yfinance as yf
@@ -56,14 +56,7 @@ def get_data(symbol="2330", limit=300, source="yahoo"):
     # Local DB Logic (Backtest mode)
     try:
         conn = psycopg2.connect(**DB_CONFIG_SCREENER)
-        query = f\"\"\"
-            SELECT trade_time as datetime, open_price as open, high_price as high, 
-                   low_price as low, price as close, volume 
-            FROM realtime_ticks 
-            WHERE symbol = '{symbol}' 
-            ORDER BY trade_time DESC 
-            LIMIT {limit}
-        \"\"\"
+        query = f"SELECT trade_time as datetime, open_price as open, high_price as high, low_price as low, price as close, volume FROM realtime_ticks WHERE symbol = '{symbol}' ORDER BY trade_time DESC LIMIT {limit}"
         df = pd.read_sql(query, conn)
         conn.close()
         df = df.iloc[::-1].reset_index(drop=True)
