@@ -15,6 +15,7 @@ interface ChartData {
   signal: any[];
   markers: any[];
   volume_profile?: any[];
+  pocs?: any[];
   error?: string;
   metadata?: any;
 }
