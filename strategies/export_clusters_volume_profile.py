@@ -200,7 +200,7 @@ def generate_html(symbol, data):
             
             marker.innerHTML = `
                 <div class="v-label" style="color: ${color}; border: none; background: transparent; padding: 4px;">${(peak.volume/1000).toFixed(1)}K</div>
-                <div class="v-line" style="border-color: ${color}; opacity: 0.35; flex: 1;"></div>
+                <div class="v-line" style="border-color: ${color}; opacity: 0.8; flex: 1; border-top-width: 1.5px;"></div>
                 <div class="v-label" style="color: ${color}; border: 1px solid ${color}33; background: rgba(0,0,0,0.6); margin-left: 8px;">Total: ${(totalVol/1000).toFixed(1)}K</div>
             `;
             markersContainer.appendChild(marker);
