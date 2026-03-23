@@ -16,12 +16,14 @@ export default function ScriptDetailClient({ script }: { script: any }) {
   const [lang, setLang] = useState<'zh' | 'en'>('zh');
   const [symbol, setSymbol] = useState('AAPL');
   
+  const [customSymbol, setCustomSymbol] = useState('');
+  
   const popularSymbols = [
     { label: 'Apple', value: 'AAPL' },
     { label: 'Tesla', value: 'TSLA' },
     { label: 'Nvidia', value: 'NVDA' },
     { label: 'Meta', value: 'META' },
-    { label: '台積電', value: '2330' },
+    { label: '台積電 (2330.TW)', value: '2330.TW' },
   ];
   
   useEffect(() => {
@@ -107,7 +109,10 @@ export default function ScriptDetailClient({ script }: { script: any }) {
               {popularSymbols.map((s) => (
                 <button
                   key={s.value}
-                  onClick={() => setSymbol(s.value)}
+                  onClick={() => {
+                    setSymbol(s.value);
+                    setCustomSymbol(''); // Reset custom input when clicking presets
+                  }}
                   className={cn(
                     "px-4 py-1.5 rounded-lg text-sm font-black tracking-widest uppercase transition-all",
                     symbol === s.value 
@@ -118,6 +123,30 @@ export default function ScriptDetailClient({ script }: { script: any }) {
                   {s.label}
                 </button>
               ))}
+              
+              <div className="w-px h-4 bg-zinc-800 mx-2" />
+              
+              {/* Custom Symbol Input */}
+              <div className="flex items-center gap-2 px-2 py-0.5 bg-black/40 rounded-lg border border-white/5 group focus-within:border-brand-primary/50 transition-all">
+                <input
+                  type="text"
+                  placeholder="輸入代號 (e.g. BTCUSDT)"
+                  value={customSymbol}
+                  onChange={(e) => setCustomSymbol(e.target.value.toUpperCase())}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter' && customSymbol) {
+                      setSymbol(customSymbol);
+                    }
+                  }}
+                  className="bg-transparent border-none outline-none text-xs font-black w-32 placeholder:text-zinc-700 text-white p-1"
+                />
+                <button 
+                  onClick={() => customSymbol && setSymbol(customSymbol)}
+                  className="p-1 hover:text-brand-primary text-zinc-500 transition-colors"
+                >
+                  <Activity className="w-3.5 h-3.5" />
+                </button>
+              </div>
             </div>
           </div>
 
