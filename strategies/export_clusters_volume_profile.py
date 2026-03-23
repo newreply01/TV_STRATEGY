@@ -196,16 +196,20 @@ def generate_html(symbol, data):
         });
 
         Object.entries(groups).forEach(([color, members]) => {
-            // Find peak/center of this color group
-            const peak = members.reduce((prev, curr) => (prev.volume > curr.volume) ? prev : curr);
+            // Find median price of this color group for better centering
+            const sortedMembers = [...members].sort((a,b) => a.price - b.price);
+            const midIdx = Math.floor(sortedMembers.length / 2);
+            const midPoint = sortedMembers[midIdx];
+            
             const totalVol = members.reduce((sum, curr) => sum + curr.volume, 0);
             
             const marker = document.createElement('div');
             marker.className = 'v-marker';
-            const percentTop = ((maxPrice - peak.price) / (maxPrice - minPrice || 1)) * 100;
+            const percentTop = ((maxPrice - midPoint.price) / (maxPrice - minPrice || 1)) * 100;
             
             marker.style.position = 'absolute';
             marker.style.top = percentTop + '%';
+            marker.style.transform = 'translateY(-50%)';
             marker.style.left = '0';
             marker.style.right = '0';
             marker.style.paddingRight = '20px';
