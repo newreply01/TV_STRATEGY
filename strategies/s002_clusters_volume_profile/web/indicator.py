@@ -20,35 +20,69 @@ DB_CONFIG_SCREENER = {
     "dbname": "stock_screener"
 }
 
-def get_data(symbol="2330", limit=300):
-    """從 stock_screener.realtime_ticks 獲取 OHLCV 數據"""
+def get_data(symbol="2330", limit=300, source="yahoo"):
+    \"\"\"
+    獲取數據核心函數
+    source="local": 從 PostgreSQL 資料庫獲取 (適合精確回測)
+    source="yahoo": 從 Yahoo Finance 獲取 (適合快速網頁展示)
+    \"\"\"
+    if source == "yahoo":
+        try:
+            import yfinance as yf
+            # 對於台股，確保有 .TW 後綴
+            if symbol.isdigit() and len(symbol) == 4:
+                fetch_symbol = f"{symbol}.TW"
+            else:
+                fetch_symbol = symbol
+                
+            df = yf.download(fetch_symbol, period="1mo", interval="15m", progress=False)
+            if df.empty: raise ValueError("No data from yfinance")
+            
+            # 統一欄位名稱
+            df = df.reset_index()
+            # yfinance v0.2.40+ returns MultiIndex columns sometimes
+            if isinstance(df.columns, pd.MultiIndex):
+                df.columns = df.columns.get_level_values(0)
+
+            df.rename(columns={
+                'Date': 'datetime', 'Datetime': 'datetime', 
+                'Open': 'open', 'High': 'high', 'Low': 'low', 
+                'Close': 'close', 'Volume': 'volume'
+            }, inplace=True)
+            return df.tail(limit)
+        except Exception as e:
+            print(f"Yahoo Finance fetch failed: {e}. Falling back to dummy.")
+
+    # Local DB Logic (Backtest mode)
     try:
         conn = psycopg2.connect(**DB_CONFIG_SCREENER)
-        # 使用 research_db.py 中確認的欄位名稱
-        query = f"""
+        query = f\"\"\"
             SELECT trade_time as datetime, open_price as open, high_price as high, 
                    low_price as low, price as close, volume 
             FROM realtime_ticks 
             WHERE symbol = '{symbol}' 
             ORDER BY trade_time DESC 
             LIMIT {limit}
-        """
+        \"\"\"
         df = pd.read_sql(query, conn)
         conn.close()
         df = df.iloc[::-1].reset_index(drop=True)
-        return df
+        if not df.empty: return df
     except Exception as e:
-        print(f"Error fetching data from local DB: {e}. Using dummy data instead.")
-        dates = pd.date_range(end=datetime.now(), periods=limit, freq='min')
-        df = pd.DataFrame({
-            'datetime': dates,
-            'open': np.random.uniform(500, 600, limit),
-            'high': np.random.uniform(505, 605, limit),
-            'low': np.random.uniform(495, 595, limit),
-            'close': np.random.uniform(500, 600, limit),
-            'volume': np.random.uniform(100, 1000, limit)
-        })
-        return df
+        print(f"Local DB fetch failed: {e}")
+
+    # Fallback to Dummy
+    print("Using dummy data as final fallback.")
+    dates = pd.date_range(end=datetime.now(), periods=limit, freq='min')
+    df = pd.DataFrame({
+        'datetime': dates,
+        'open': np.random.uniform(500, 600, limit),
+        'high': np.random.uniform(505, 605, limit),
+        'low': np.random.uniform(495, 595, limit),
+        'close': np.random.uniform(500, 600, limit),
+        'volume': np.random.uniform(100, 1000, limit)
+    })
+    return df
 
 def calculate_clusters_volume_profile(df, n_bins=50, window=100):
     if df.empty: return []
