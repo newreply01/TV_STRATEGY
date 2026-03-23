@@ -35,59 +35,64 @@ def generate_html(symbol, data):
             align-items: center;
             z-index: 100;
         }
-        .title {
-            font-size: 20px;
-            font-weight: 900;
-            letter-spacing: -0.01em;
-            display: flex;
-            align-items: center;
-        }
-        .symbol {
-            color: #ff9800;
-            margin-right: 12px;
-            background: rgba(255, 152, 0, 0.1);
-            padding: 2px 8px;
-            border-radius: 4px;
-            font-family: monospace;
-        }
         main {
             flex: 1;
             display: flex;
-            flex-direction: row;
             position: relative;
-            gap: 4px;
-            padding: 10px;
-        }
-        #profile-container {
-            width: 120px;
-            height: 100%;
-            background: rgba(255, 255, 255, 0.02);
-            border-radius: 8px;
-            border: 1px solid rgba(255, 255, 255, 0.05);
-            display: flex;
-            flex-direction: column;
-            padding: 20px 0;
-            position: relative;
-        }
-        .profile-label {
-            position: absolute;
-            top: 10px;
-            left: 50%;
-            transform: translateX(-50%);
-            font-size: 8px;
-            font-weight: 900;
-            color: #444;
-            text-transform: uppercase;
-            letter-spacing: 0.1em;
-            white-space: nowrap;
+            padding: 0;
+            overflow: hidden;
         }
         #chart-container {
             flex: 1;
             height: 100%;
             background: #000000;
-            border-radius: 8px;
-            border: 1px solid rgba(255, 255, 255, 0.05);
-            overflow: hidden;
+            position: relative;
+        }
+        /* Volume Profile Overlay */
+        #profile-overlay {
+            position: absolute;
+            top: 40px;
+            right: 0;
+            bottom: 60px;
+            width: 300px;
+            z-index: 20;
+            display: flex;
+            flex-direction: column;
+            pointer-events: none;
+            padding-right: 60px;
+        }
+        .v-row {
+            flex: 1;
+            display: flex;
+            align-items: center;
+            position: relative;
+        }
+        .v-bar {
+            height: 80%;
+            transition: width 0.3s;
+            border-radius: 4px 0 0 4px;
+            margin-left: auto;
+        }
+        .v-marker {
+            position: absolute;
+            left: 0;
+            right: 0;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        .v-line {
+            flex: 1;
+            border-top: 1px dashed rgba(255, 255, 255, 0.15);
+        }
+        .v-label {
+            font-size: 9px;
+            font-weight: 900;
+            color: rgba(255, 255, 255, 0.4);
+            background: rgba(0, 0, 0, 0.6);
+            padding: 2px 4px;
+            border-radius: 3px;
+            white-space: nowrap;
         }
         /* HUD Overlay */
         .hud {
@@ -149,30 +154,29 @@ def generate_html(symbol, data):
         <div style="font-size: 11px; opacity: 0.4;">Exported: <script>document.write(new Date().toLocaleString())</script></div>
     </header>
     <main>
-        <div class="hud">
-            <div class="hud-header">Clusters Volume Profile</div>
-            <div class="hud-row"><span class="hud-label">Asset</span><span class="hud-value">{{symbol}}</span></div>
-            <div class="hud-row"><span class="hud-label">Status</span><span class="hud-value" style="color: #ff9800;">FIXED PROFILE</span></div>
-            <div class="hud-row"><span class="hud-label">Intensity</span><span class="hud-value">Lateral HUD</span></div>
-            <div class="hud-row"><span class="hud-label">Sync</span><span class="hud-value status-active">ACTIVE</span></div>
+        <div id="chart-container">
+            <div id="profile-overlay"></div>
+            <div class="hud">
+                <div class="hud-header">Clusters Volume Profile</div>
+                <div class="hud-row"><span class="hud-label">Asset</span><span class="hud-value">{{symbol}}</span></div>
+                <div class="hud-row"><span class="hud-label">Status</span><span class="hud-value" style="color: #ff9800;">FIXED PROFILE</span></div>
+                <div class="hud-row"><span class="hud-label">Intensity</span><span class="hud-value">Overlay HUD</span></div>
+                <div class="hud-row"><span class="hud-label">Sync</span><span class="hud-value status-active">ACTIVE</span></div>
+            </div>
         </div>
-        <div id="profile-container">
-            <div class="profile-label">Volume Profile</div>
-            <!-- Bars will be injected here -->
-        </div>
-        <div id="chart-container"></div>
     </main>
 
     <script>
         const chartData = {{json_data}};
         
-        // Render Volume Profile
-        const profileContainer = document.getElementById('profile-container');
+        // Render Volume Profile Overlay
+        const profileOverlay = document.getElementById('profile-overlay');
         const maxVol = Math.max(...chartData.volume_profile.map(p => p.volume));
+        const maxPrice = Math.max(...chartData.volume_profile.map(p => p.price));
+        const minPrice = Math.min(...chartData.volume_profile.map(p => p.price));
         
-        // We need to reverse because higher prices are at the top
+        // Render Bars
         const sortedProfile = [...chartData.volume_profile].sort((a, b) => b.price - a.price);
-        
         sortedProfile.forEach(p => {
             const row = document.createElement('div');
             row.className = 'v-row';
@@ -181,7 +185,24 @@ def generate_html(symbol, data):
             bar.style.width = (p.volume / maxVol * 100) + '%';
             bar.style.backgroundColor = p.color;
             row.appendChild(bar);
-            profileContainer.appendChild(row);
+            profileOverlay.appendChild(row);
+        });
+
+        // Add Floating Markers for peaks
+        const threshold = maxVol * 0.8;
+        chartData.volume_profile.forEach(p => {
+            if (p.volume >= threshold) {
+                const marker = document.createElement('div');
+                marker.className = 'v-marker';
+                const percentTop = ((maxPrice - p.price) / (maxPrice - minPrice)) * 100;
+                marker.style.position = 'absolute';
+                marker.style.top = percentTop + '%';
+                marker.style.left = '0';
+                marker.style.right = '0';
+                marker.style.paddingRight = '20px';
+                marker.innerHTML = `<div class="v-line"></div><div class="v-label">Total: ${(p.volume/1000).toFixed(1)}K</div>`;
+                profileOverlay.appendChild(marker);
+            }
         });
 
         // Main Chart
