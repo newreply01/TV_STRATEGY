@@ -178,8 +178,8 @@ export default function TradingViewChart({ slug, symbol = 'AAPL' }: { slug: stri
         if (active && chartRef.current) {
           chartRef.current.timeScale().fitContent();
           if (chartData.ohlc && chartData.ohlc.length > 150) {
-            const lastTime = chartData.ohlc[chartData.ohlc.length-1].time as number;
-            const firstTime = chartData.ohlc[chartData.ohlc.length-150].time as number;
+            const lastTime = chartData.ohlc[chartData.ohlc.length-1].time as any;
+            const firstTime = chartData.ohlc[chartData.ohlc.length-150].time as any;
             chartRef.current.timeScale().setVisibleRange({ from: firstTime, to: lastTime });
           }
         }
