@@ -37,13 +37,15 @@ export default function HomePage() {
             探索策略中心
             <ScrollText className="w-6 h-6 transition-transform group-hover:rotate-12" />
           </Link>
-          <Link
-            href="/monitor"
-            className="flex items-center gap-3 px-10 py-5 bg-white/5 hover:bg-white/10 border border-white/10 text-white rounded-[2rem] font-bold text-lg transition-all backdrop-blur-xl"
-          >
-            <LayoutDashboard className="w-6 h-6 text-zinc-400" />
-            查看管理中心
-          </Link>
+          {process.env.NEXT_PUBLIC_HIDE_ADMIN !== 'true' && (
+            <Link
+              href="/monitor"
+              className="flex items-center gap-3 px-10 py-5 bg-white/5 hover:bg-white/10 border border-white/10 text-white rounded-[2rem] font-bold text-lg transition-all backdrop-blur-xl"
+            >
+              <LayoutDashboard className="w-6 h-6 text-zinc-400" />
+              查看管理中心
+            </Link>
+          )}
         </div>
 
         {/* Feature Grid */}

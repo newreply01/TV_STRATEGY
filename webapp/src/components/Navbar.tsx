@@ -7,10 +7,12 @@ import { LayoutDashboard, ScrollText, Home, ArrowRight } from 'lucide-react';
 export default function Navbar() {
   const pathname = usePathname();
 
+  const hideAdmin = process.env.NEXT_PUBLIC_HIDE_ADMIN === 'true';
+  
   const navItems = [
     { name: '首頁', href: '/', icon: Home },
     { name: '策略中心', href: '/scripts', icon: ScrollText },
-    { name: '管理中心', href: '/monitor', icon: LayoutDashboard },
+    ...(hideAdmin ? [] : [{ name: '管理中心', href: '/monitor', icon: LayoutDashboard }]),
   ];
 
   return (
@@ -49,15 +51,17 @@ export default function Navbar() {
           </div>
         </div>
 
-        <div className="flex items-center gap-4">
-          <Link
-            href="/monitor"
-            className="hidden lg:flex items-center gap-2 rounded-xl bg-white px-4 py-2 text-sm font-black text-black transition-all hover:bg-zinc-200 active:scale-95"
-          >
-            即時狀態
-            <ArrowRight className="h-4 w-4" />
-          </Link>
-        </div>
+        {!hideAdmin && (
+          <div className="flex items-center gap-4">
+            <Link
+              href="/monitor"
+              className="hidden lg:flex items-center gap-2 rounded-xl bg-white px-4 py-2 text-sm font-black text-black transition-all hover:bg-zinc-200 active:scale-95"
+            >
+              即時狀態
+              <ArrowRight className="h-4 w-4" />
+            </Link>
+          </div>
+        )}
       </div>
     </nav>
   );
