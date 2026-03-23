@@ -215,9 +215,9 @@ def generate_html(symbol, data):
             marker.style.paddingRight = '20px';
             
             marker.innerHTML = `
-                <div class="v-label" style="color: ${color}; border: none; background: transparent; padding: 0;">${(peak.volume/1000).toFixed(1)}K</div>
-                <div class="v-line" style="border-color: ${color}; opacity: 0.4;"></div>
-                <div class="v-label" style="color: ${color}; border: 1px solid ${color}33; background: rgba(0,0,0,0.6);">Total: ${(totalVol/1000).toFixed(1)}K</div>
+                <div class="v-label" style="color: ${color}; border: none; background: transparent; padding: 0 4px; position: relative; z-index: 2;">${(peak.volume/1000).toFixed(1)}K</div>
+                <div class="v-line" style="border-color: ${color}; opacity: 0.4; margin-left: -10px;"></div>
+                <div class="v-label" style="color: ${color}; border: 1px solid ${color}33; background: rgba(0,0,0,0.6); position: relative; z-index: 2;">Total: ${(totalVol/1000).toFixed(1)}K</div>
             `;
             profileOverlay.appendChild(marker);
         });
@@ -232,11 +232,13 @@ def generate_html(symbol, data):
             timeScale: { borderColor: 'rgba(197, 203, 206, 0.1)', timeVisible: true, rightOffset: 50 },
         });
 
-        const candlestickSeries = chart.addCandlestickSeries({
+        const mainSeries = chart.addCandlestickSeries({
             upColor: '#00ffcc', downColor: '#ff2e2e', borderVisible: false,
             wickUpColor: '#00ffcc', wickDownColor: '#ff2e2e',
+            priceLineVisible: false,
+            lastValueVisible: false
         });
-        candlestickSeries.setData(chartData.ohlc);
+        mainSeries.setData(chartData.ohlc);
 
         chart.timeScale().fitContent();
         
