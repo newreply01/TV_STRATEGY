@@ -259,8 +259,8 @@ export default function TradingViewChart({ slug, symbol = 'AAPL' }: { slug: stri
                                 <div className="text-[9px] font-black whitespace-nowrap px-1 z-30" style={{ color: color }}>
                                     {(totalVol/1000).toFixed(1)}K
                                 </div>
-                                {/* Full Span Line (Thinner) */}
-                                <div className="flex-1 border-t border-dashed" style={{ borderColor: color, opacity: 0.85, borderTopWidth: '1px' }} />
+                                {/* Full Span Line (Original Thickness) */}
+                                <div className="flex-1 border-t border-dashed" style={{ borderColor: color, opacity: 0.85, borderTopWidth: '1.2px' }} />
                                 {/* Right Label */}
                                 <div className="text-[9px] font-black whitespace-nowrap bg-black/60 px-1 rounded shadow-lg border border-white/5 ml-2 z-30" style={{ color: color }}>
                                     Total: {(totalVol/1000).toFixed(1)}K
@@ -276,14 +276,14 @@ export default function TradingViewChart({ slug, symbol = 'AAPL' }: { slug: stri
             {/* Chart Area filler */}
             <div className="flex-1" />
             
-            {/* Overlay Volume Profile (Floating on the far right) */}
+            {/* Overlay Volume Profile (Shifted left to avoid Y-axis) */}
             {hasVolumeProfile && (
-                <div className="absolute top-12 right-0 bottom-16 w-16 md:w-24 lg:w-32 z-20 pointer-events-none">
+                <div className="absolute top-12 right-16 bottom-16 w-16 md:w-24 lg:w-32 z-20 pointer-events-none">
                     <ResponsiveContainer width="100%" height="100%">
                         <BarChart data={data.volume_profile} layout="vertical" margin={{ top: 0, right: 0, left: 0, bottom: 0 }}>
                             <XAxis type="number" hide />
                             <YAxis dataKey="price" type="category" hide reversed />
-                            <Bar dataKey="volume" isAnimationActive={false}>
+                            <Bar dataKey="volume" isAnimationActive={false} barSize={1.5}>
                                 {data.volume_profile.map((entry: any, index: number) => (
                                     <Cell key={`cell-${index}`} fill={entry.color} fillOpacity={0.6} />
                                 ))}
