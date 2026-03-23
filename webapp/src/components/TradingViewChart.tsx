@@ -288,7 +288,7 @@ export default function TradingViewChart({ slug, symbol = 'AAPL' }: { slug: stri
                         <BarChart data={data.volume_profile} layout="vertical" margin={{ top: 0, right: 0, left: 0, bottom: 0 }}>
                             <XAxis type="number" hide />
                             <YAxis dataKey="price" type="category" hide reversed />
-                            <Bar dataKey="volume" isAnimationActive={false} barSize={1.5}>
+                            <Bar dataKey="volume" isAnimationActive={false} barSize={1.2}>
                                 {data.volume_profile.map((entry: any, index: number) => (
                                     <Cell key={`cell-${index}`} fill={entry.color} fillOpacity={0.6} />
                                 ))}

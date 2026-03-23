@@ -77,7 +77,7 @@ def get_data(symbol="2330", limit=300, source="yahoo"):
     })
     return df
 
-def calculate_clusters_volume_profile(df, n_bins=50, window=100):
+def calculate_clusters_volume_profile(df, n_bins=120, window=150):
     if df.empty: return []
     latest_window = df.tail(window)
     price_min, price_max = latest_window['low'].min(), latest_window['high'].max()
