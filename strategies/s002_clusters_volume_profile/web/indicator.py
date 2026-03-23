@@ -20,7 +20,7 @@ DB_CONFIG_SCREENER = {
     "dbname": "stock_screener"
 }
 
-def get_data(symbol="2330", limit=1500, source="yahoo"):
+def get_data(symbol="2330", limit=2000, source="yahoo"):
     """
     獲取數據核心函數
     source="local": 從 PostgreSQL 資料庫獲取 (適合精確回測)
@@ -77,50 +77,98 @@ def get_data(symbol="2330", limit=1500, source="yahoo"):
     })
     return df
 
-def calculate_clusters_volume_profile(df, n_bins=120, window=600):
-    if df.empty: return []
-    latest_window = df.tail(window)
-    price_min, price_max = latest_window['low'].min(), latest_window['high'].max()
-    if price_max == price_min: price_max += 0.1
+def calculate_clusters_volume_profile(df, n_clusters=5, iterations=10, n_bins=120, window=600):
+    if df.empty: return [], []
+    latest_window = df.tail(window).copy()
     
-    bins = np.linspace(price_min, price_max, n_bins + 1)
-    bin_centers = (bins[:-1] + bins[1:]) / 2
-    vap = np.zeros(n_bins)
+    # 1. K-Means clustering setup
+    latest_window['hlc2'] = (latest_window['high'] + latest_window['low']) / 2
+    prices = latest_window['hlc2'].values
+    volumes = latest_window['volume'].values
     
-    for _, row in latest_window.iterrows():
-        bar_bins = (bins[:-1] >= row['low']) & (bins[1:] <= row['high'])
-        if bar_bins.any():
-            vap[bar_bins] += row['volume'] / bar_bins.sum()
-        else:
-            idx = np.digitize(row['close'], bins) - 1
-            if 0 <= idx < n_bins: vap[idx] += row['volume']
-
-    # Define color palette matching the reference image
+    p_min, p_max = latest_window['low'].min(), latest_window['high'].max()
+    if p_max == p_min: p_max += 0.1
+    # Initial centroids: linearly spaced
+    centroids = np.linspace(p_min, p_max, n_clusters)
+    assignments = np.zeros(len(prices), dtype=int)
+    
+    # 2. Iterations (1D K-Means)
+    for _ in range(iterations):
+        # Assign to nearest centroid
+        distances = np.abs(prices[:, np.newaxis] - centroids)
+        assignments = np.argmin(distances, axis=1)
+        
+        # Update centroids (volume-weighted)
+        for k in range(n_clusters):
+            mask = (assignments == k)
+            if mask.any():
+                centroids[k] = np.sum(prices[mask] * volumes[mask]) / np.sum(volumes[mask])
+    
+    # 3. Colors
     palette = [
-        "rgba(171, 71, 188, 0.7)",  # Purple
-        "rgba(255, 167, 38, 0.7)",  # Orange
-        "rgba(102, 187, 106, 0.7)", # Green
-        "rgba(239, 83, 80, 0.7)",   # Red
-        "rgba(66, 165, 245, 0.7)"   # Blue
+        "rgba(171, 71, 188, 0.75)", # Purple
+        "rgba(255, 167, 38, 0.75)", # Orange
+        "rgba(102, 187, 106, 0.75)",# Green
+        "rgba(239, 83, 80, 0.75)",  # Red
+        "rgba(66, 165, 245, 0.75)"  # Blue
     ]
     
-    profile_data = []
-    for i in range(len(vap)):
-        # Assign color based on price percentile/index to create cluster effect
-        color_idx = int((i / len(vap)) * len(palette))
-        color_idx = min(color_idx, len(palette) - 1)
-        
-        profile_data.append({
-            "price": float(round(bin_centers[i], 2)),
-            "volume": float(round(vap[i], 2)),
-            "color": palette[color_idx]
-        })
+    # 4. Generate Profiles per Cluster
+    all_profile_bins = []
+    pocs = []
     
-    return profile_data
+    # Sort centroids to ensure consistent coloring from bottom to top
+    sorted_indices = np.argsort(centroids)
+    
+    for i, k in enumerate(sorted_indices):
+        mask = (assignments == k)
+        if not mask.any(): continue
+        
+        cluster_df = latest_window[mask]
+        c_min, c_max = cluster_df['low'].min(), cluster_df['high'].max()
+        
+        # Calculate profile for this cluster
+        bins = np.linspace(c_min, c_max, max(10, n_bins // n_clusters))
+        bin_centers = (bins[:-1] + bins[1:]) / 2
+        bin_vap = np.zeros(len(bins)-1)
+        
+        for _, row in cluster_df.iterrows():
+            # Distribute volume across bins hit by the candle
+            bar_bins = (bins[:-1] >= row['low']) & (bins[1:] <= row['high'])
+            if bar_bins.any():
+                bin_vap[bar_bins] += row['volume'] / bar_bins.sum()
+            else:
+                # Fallback to HLC2 binning
+                idx = np.digitize(row['hlc2'], bins) - 1
+                if 0 <= idx < len(bin_vap): bin_vap[idx] += row['volume']
+        
+        # Total Volume and POC for the cluster
+        total_vol = cluster_df['volume'].sum()
+        poc_price = bin_centers[np.argmax(bin_vap)] if len(bin_vap) > 0 else centroids[k]
+        
+        color = palette[i % len(palette)]
+        
+        # Add POC info for dashed lines
+        pocs.append({
+            "price": float(round(poc_price, 2)),
+            "color": color,
+            "total_volume": float(total_vol)
+        })
+        
+        for j in range(len(bin_vap)):
+            all_profile_bins.append({
+                "price": float(round(bin_centers[j], 2)),
+                "volume": float(round(bin_vap[j], 2)),
+                "color": color
+            })
+            
+    # Sort profiles by price for frontend rendering
+    all_profile_bins.sort(key=lambda x: x['price'])
+    return all_profile_bins, pocs
 
 def main(symbol="2330"):
     df = get_data(symbol)
-    profile = calculate_clusters_volume_profile(df)
+    profile, pocs = calculate_clusters_volume_profile(df)
     
     ohlc = []
     for _, row in df.iterrows():
@@ -135,10 +183,11 @@ def main(symbol="2330"):
     return {
         "ohlc": ohlc,
         "volume_profile": profile,
+        "pocs": pocs,
         "symbol": symbol,
         "title": "Clusters Volume Profile [LuxAlgo]"
     }
 
 if __name__ == "__main__":
     res = main()
-    print(f"Computed Volume Profile for {res['symbol']} with {len(res['volume_profile'])} bins.")
+    print(f"Computed {len(res['pocs'])} clusters for {res['symbol']}.")

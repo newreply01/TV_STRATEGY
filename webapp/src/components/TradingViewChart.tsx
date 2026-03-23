@@ -251,47 +251,33 @@ export default function TradingViewChart({ slug, symbol = 'AAPL' }: { slug: stri
             {/* Full-Width Cluster Lines */}
         {hasVolumeProfile && data.volume_profile && (
             <div className="absolute top-12 left-0 right-0 bottom-16 z-20 pointer-events-none px-4">
-                {(() => {
-                    const groups: Record<string, any[]> = {};
-                    data.volume_profile.forEach(p => {
-                        if (!groups[p.color]) groups[p.color] = [];
-                        groups[p.color].push(p);
-                    });
-
+                {data.pocs && data.pocs.map((poc: any, i: number) => {
                     const prices = data.volume_profile.map((v:any)=>v.price);
                     const maxP = Math.max(...prices);
                     const minP = Math.min(...prices);
                     const rangeP = maxP - minP || 1;
+                    const topPos = ((maxP - poc.price) / rangeP) * 100;
 
-                    return Object.entries(groups).map(([color, members], i) => {
-                        const peak = members.reduce((prev, curr) => (prev.volume > curr.volume) ? prev : curr);
-                        const sortedMembers = [...members].sort((a,b) => a.price - b.price);
-                        const midIdx = Math.floor(sortedMembers.length / 2);
-                        const midPoint = sortedMembers[midIdx];
-                        const totalVol = members.reduce((sum, curr) => sum + curr.volume, 0);
-                        const topPos = ((maxP - midPoint.price) / rangeP) * 100;
-
-                        return (
-                            <div key={i} className="absolute left-0 right-0 flex items-center pl-4 pr-16" style={{ top: `${topPos}%`, transform: 'translateY(-50%)' }}>
-                                {/* Left Label (Total Volume) */}
-                                <div className="text-[9px] font-black whitespace-nowrap px-1 z-30" style={{ color: color }}>
-                                    {(totalVol/1000).toFixed(1)}K
-                                </div>
-                                {/* Full Span Line (Ultra-Dense Custom Pattern) */}
-                                <div className="flex-1 h-[1px]" style={{ 
-                                    backgroundImage: `linear-gradient(to right, ${color} 50%, transparent 50%)`,
-                                    backgroundSize: '3px 1px',
-                                    backgroundRepeat: 'repeat-x',
-                                    opacity: 0.9
-                                }} />
-                                {/* Right Label */}
-                                <div className="text-[9px] font-black whitespace-nowrap bg-black/60 px-1 rounded shadow-lg border border-white/5 ml-2 z-30" style={{ color: color }}>
-                                    Total: {(totalVol/1000).toFixed(1)}K
-                                </div>
+                    return (
+                        <div key={i} className="absolute left-0 right-0 flex items-center pl-4 pr-20" style={{ top: `${topPos}%`, transform: 'translateY(-50%)' }}>
+                            {/* Left Label (Cluster Volume) */}
+                            <div className="text-[9px] font-black whitespace-nowrap px-1 z-30" style={{ color: poc.color }}>
+                                {(poc.total_volume/1000).toFixed(1)}K
                             </div>
-                        );
-                    });
-                })()}
+                            {/* Full Span Line (Ultra-Dense Custom Pattern) */}
+                            <div className="flex-1 h-[1px]" style={{ 
+                                backgroundImage: `linear-gradient(to right, ${poc.color} 50%, transparent 50%)`,
+                                backgroundSize: '3px 1px',
+                                backgroundRepeat: 'repeat-x',
+                                opacity: 0.9
+                            }} />
+                            {/* Right Label */}
+                            <div className="text-[9px] font-black whitespace-nowrap bg-black/60 px-1 rounded shadow-lg border border-white/5 ml-2 z-30" style={{ color: poc.color }}>
+                                Total: {(poc.total_volume/1000).toFixed(1)}K
+                            </div>
+                        </div>
+                    );
+                })}
             </div>
         )}
 
