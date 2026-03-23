@@ -98,7 +98,7 @@ def generate_html(symbol, data):
         .hud {
             position: absolute;
             top: 15px;
-            right: 20px;
+            left: 20px;
             z-index: 50;
             background: rgba(20, 20, 20, 0.4);
             backdrop-filter: blur(5px);
