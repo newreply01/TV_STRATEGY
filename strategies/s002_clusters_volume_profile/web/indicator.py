@@ -35,7 +35,7 @@ def get_data(symbol="2330", limit=300, source="yahoo"):
             else:
                 fetch_symbol = symbol
                 
-            df = yf.download(fetch_symbol, period="1mo", interval="15m", progress=False)
+            df = yf.download(fetch_symbol, period="7d", interval="1m", progress=False)
             if df.empty: raise ValueError("No data from yfinance")
             
             # 統一欄位名稱
