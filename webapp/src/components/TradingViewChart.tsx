@@ -127,6 +127,12 @@ export default function TradingViewChart({ slug, symbol = 'AAPL' }: { slug: stri
       });
     }
 
+    const handleResize = () => {
+      if (chartRef.current && chartContainerRef.current) {
+        chartRef.current.applyOptions({ width: chartContainerRef.current.clientWidth });
+      }
+    };
+
     if (chartContainerRef.current) {
         const chart = chartRef.current!;
         chart.timeScale().applyOptions({
