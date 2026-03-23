@@ -68,15 +68,27 @@ def calculate_clusters_volume_profile(df, n_bins=50, window=100):
             idx = np.digitize(row['close'], bins) - 1
             if 0 <= idx < n_bins: vap[idx] += row['volume']
 
+    # Define color palette matching the reference image
+    palette = [
+        "rgba(171, 71, 188, 0.7)",  # Purple
+        "rgba(255, 167, 38, 0.7)",  # Orange
+        "rgba(102, 187, 106, 0.7)", # Green
+        "rgba(239, 83, 80, 0.7)",   # Red
+        "rgba(66, 165, 245, 0.7)"   # Blue
+    ]
+    
     profile_data = []
-    mean_vap = vap.mean()
-    for i in range(n_bins):
-        if vap[i] > 0:
-            profile_data.append({
-                "price": float(round(bin_centers[i], 2)),
-                "volume": float(round(vap[i], 2)),
-                "color": "rgba(33, 150, 243, 0.5)" if vap[i] < mean_vap else "rgba(255, 82, 82, 0.7)"
-            })
+    for i in range(len(vap)):
+        # Assign color based on price percentile/index to create cluster effect
+        color_idx = int((i / len(vap)) * len(palette))
+        color_idx = min(color_idx, len(palette) - 1)
+        
+        profile_data.append({
+            "price": float(round(bin_centers[i], 2)),
+            "volume": float(round(vap[i], 2)),
+            "color": palette[color_idx]
+        })
+    
     return profile_data
 
 def main(symbol="2330"):
