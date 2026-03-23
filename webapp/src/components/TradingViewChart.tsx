@@ -219,92 +219,79 @@ export default function TradingViewChart({ slug, symbol = 'AAPL' }: { slug: stri
         <div className="absolute inset-0 z-[60] flex items-center justify-center bg-black/5 pointer-events-none">
           <div className="px-4 py-2 bg-brand-primary text-white text-sm font-black rounded-xl shadow-2xl opacity-0 group-hover:opacity-100 transition-all duration-300 translate-y-2 group-hover:translate-y-0 text-center">
             點擊圖表以啟用縮放<br/><span className="text-[10px] font-medium opacity-70">數據來源: {data?.metadata?.source || '---'}</span>
-          </div>
-        </div>
+          </div>      {/* HUD Removed per user request */}
+       </div>
       )}
-
-      {/* Info HUD */}
-      <div className="absolute top-10 left-10 z-50 bg-zinc-900/60 backdrop-blur-md p-3 rounded-xl border border-white/5 w-44 pointer-events-none transition-all duration-500 shadow-2xl">
-        <div className="text-[9px] uppercase font-black tracking-widest text-zinc-500 mb-2 border-b border-white/5 pb-1">
-            {isS001 ? "Omni-Flow Consensus" : (slug.includes('Market-Structure') ? "Market Structure Dashboard" : "Clusters Volume Profile")}
-        </div>
-        <div className="space-y-2.5">
-          <div className="flex justify-between items-center text-[11px]"><span className="text-zinc-500">Asset</span><span className="text-white font-bold">{symbol} · {data?.metadata?.interval || '---'}</span></div>
-          <div className="flex justify-between items-center text-[11px]">
-            <span className="text-zinc-500">Status</span>
-            <span className="text-cyan-400 font-black tracking-tighter uppercase whitespace-nowrap">
-                {isS001 ? "Smart Flow" : (slug.includes('Market-Structure') ? "Structure HUB" : "Fixed Profile")}
-            </span>
-          </div>
-          <div className="flex justify-between items-center text-[11px]"><span className="text-zinc-500">Intensity</span><span className="text-white font-mono">{hasVolumeProfile ? "Overlay HUD" : (slug.includes('Market-Structure') ? "BOS/CHoCH" : "Dual Panes")}</span></div>
-          <div className="flex justify-between items-center text-[11px]"><span className="text-zinc-500">Sync</span><span className="text-[#ffff00] font-black tracking-widest animate-pulse uppercase">Active</span></div>
-        </div>
-      </div>
 
       <div className="flex flex-1 w-full gap-0 min-h-[600px] relative">
         {/* Right: Price Chart */}
         <div className="flex-1 h-full min-w-0 relative">
             <div ref={chartContainerRef} className="w-full h-full border border-white/5 rounded-xl overflow-hidden bg-zinc-950" />
             
-            {/* Overlay Volume Profile (Floating on the right) */}
+            {/* Full-Width Cluster Lines */}
+        {hasVolumeProfile && data.volume_profile && (
+            <div className="absolute top-12 left-0 right-0 bottom-16 z-20 pointer-events-none px-4">
+                {(() => {
+                    const groups: Record<string, any[]> = {};
+                    data.volume_profile.forEach(p => {
+                        if (!groups[p.color]) groups[p.color] = [];
+                        groups[p.color].push(p);
+                    });
+
+                    const prices = data.volume_profile.map((v:any)=>v.price);
+                    const maxP = Math.max(...prices);
+                    const minP = Math.min(...prices);
+                    const rangeP = maxP - minP || 1;
+
+                    return Object.entries(groups).map(([color, members], i) => {
+                        const peak = members.reduce((prev, curr) => (prev.volume > curr.volume) ? prev : curr);
+                        const sortedMembers = [...members].sort((a,b) => a.price - b.price);
+                        const midIdx = Math.floor(sortedMembers.length / 2);
+                        const midPoint = sortedMembers[midIdx];
+                        const totalVol = members.reduce((sum, curr) => sum + curr.volume, 0);
+                        const topPos = ((maxP - midPoint.price) / rangeP) * 100;
+
+                        return (
+                            <div key={i} className="absolute left-0 right-0 flex items-center px-4" style={{ top: `${topPos}%`, transform: 'translateY(-50%)' }}>
+                                {/* Left Label */}
+                                <div className="text-[9px] font-black whitespace-nowrap px-1 z-30" style={{ color: color }}>
+                                    {(peak.volume/1000).toFixed(1)}K
+                                </div>
+                                {/* Full Span Line */}
+                                <div className="flex-1 border-t border-dashed" style={{ borderColor: color, opacity: 0.35 }} />
+                                {/* Right Label */}
+                                <div className="text-[9px] font-black whitespace-nowrap bg-black/60 px-1 rounded shadow-lg border border-white/5 ml-2 z-30" style={{ color: color }}>
+                                    Total: {(totalVol/1000).toFixed(1)}K
+                                </div>
+                            </div>
+                        );
+                    });
+                })()}
+            </div>
+        )}
+
+        <div id="volume-profile-overlay" className="absolute top-0 right-0 bottom-0 left-0 pointer-events-none z-10 flex">
+            {/* Chart Area filler */}
+            <div className="flex-1" />
+            
+            {/* Overlay Volume Profile (Floating on the far right) */}
             {hasVolumeProfile && (
-                <div className="absolute top-10 right-0 bottom-16 w-24 md:w-36 lg:w-48 z-20 pointer-events-none pr-12">
+                <div className="absolute top-12 right-0 bottom-16 w-16 md:w-24 lg:w-32 z-20 pointer-events-none">
                     <ResponsiveContainer width="100%" height="100%">
                         <BarChart data={data.volume_profile} layout="vertical" margin={{ top: 0, right: 0, left: 0, bottom: 0 }}>
                             <XAxis type="number" hide />
                             <YAxis dataKey="price" type="category" hide reversed />
-                            <Bar dataKey="volume" radius={[4, 0, 0, 4]}>
-                                {data.volume_profile && data.volume_profile.map((entry: any, index: number) => (
-                                    <Cell key={`cell-${index}`} fill={entry.color} fillOpacity={0.6} stroke={entry.color} strokeWidth={1} />
+                            <Bar dataKey="volume" isAnimationActive={false}>
+                                {data.volume_profile.map((entry: any, index: number) => (
+                                    <Cell key={`cell-${index}`} fill={entry.color} fillOpacity={0.6} />
                                 ))}
                             </Bar>
                         </BarChart>
                     </ResponsiveContainer>
-                    
-                    {/* Floating Price Level Lines for EACH cluster color group */}
-                    {data.volume_profile ? (() => {
-                        const groups: Record<string, any[]> = {};
-                        data.volume_profile.forEach(p => {
-                            if (!groups[p.color]) groups[p.color] = [];
-                            groups[p.color].push(p);
-                        });
-
-                        const profile = data.volume_profile || [];
-                        const prices = profile.map((v:any)=>v.price);
-                        const maxP = Math.max(...prices);
-                        const minP = Math.min(...prices);
-                        const rangeP = maxP - minP || 1;
-
-                        return Object.entries(groups).map(([color, members], i) => {
-                            // Logic: Use the median price index for centering, and Peak for the left volume label
-                            const peak = members.reduce((prev, curr) => (prev.volume > curr.volume) ? prev : curr);
-                            const sortedMembers = [...members].sort((a,b) => a.price - b.price);
-                            const midIdx = Math.floor(sortedMembers.length / 2);
-                            const midPoint = sortedMembers[midIdx];
-                            
-                            const totalVol = members.reduce((sum, curr) => sum + curr.volume, 0);
-                            const topPos = ((maxP - midPoint.price) / rangeP) * 100;
-
-                            return (
-                                <div key={i} className="absolute left-0 right-0 flex items-center" style={{ top: `${topPos}%`, transform: 'translateY(-50%)' }}>
-                                    {/* Left Label (Volume) - Positioned over the line start with transparent bg */}
-                                    <div className="text-[9px] font-black whitespace-nowrap px-1 z-10" style={{ color: color, backgroundColor: 'rgba(0,0,0,0)' }}>
-                                        {(peak.volume/1000).toFixed(1)}K
-                                    </div>
-                                    
-                                    <div className="flex-1 border-t border-dashed" style={{ borderColor: color, opacity: 0.4, marginLeft: '-15px' }} />
-                                    
-                                    {/* Right Label (Total) */}
-                                    <div className="text-[9px] font-black whitespace-nowrap bg-black/60 px-1 rounded shadow-lg border border-white/5 ml-2" style={{ color: color }}>
-                                        Total: {(totalVol/1000).toFixed(1)}K
-                                    </div>
-                                </div>
-                            );
-                        });
-                    })() : null}
                 </div>
             )}
         </div>
+         </div>
       </div>
 
       <div id="chart-debug-info" className="absolute bottom-6 left-8 z-50 text-[10px] font-black uppercase tracking-widest text-zinc-700">

@@ -94,21 +94,7 @@ def generate_html(symbol, data):
             border-radius: 3px;
             white-space: nowrap;
         }
-        /* HUD Overlay */
-        .hud {
-            position: absolute;
-            top: 15px;
-            left: 20px;
-            z-index: 50;
-            background: rgba(20, 20, 20, 0.4);
-            backdrop-filter: blur(5px);
-            padding: 10px;
-            border-radius: 8px;
-            border: 1px solid rgba(255, 255, 255, 0.05);
-            width: 160px;
-            pointer-events: none;
-            box-shadow: 0 10px 30px rgba(0,0,0,0.5);
-        }
+        /* HUD Removed */
         .hud-header {
             font-size: 10px;
             font-weight: 900;
@@ -154,15 +140,10 @@ def generate_html(symbol, data):
         <div style="font-size: 11px; opacity: 0.4;">Exported: <script>document.write(new Date().toLocaleString())</script></div>
     </header>
     <main>
-        <div id="chart-container">
-            <div id="profile-overlay"></div>
-            <div class="hud">
-                <div class="hud-header">Clusters Volume Profile</div>
-                <div class="hud-row"><span class="hud-label">Asset</span><span class="hud-value">{{symbol}}</span></div>
-                <div class="hud-row"><span class="hud-label">Status</span><span class="hud-value" style="color: #ff9800;">FIXED PROFILE</span></div>
-                <div class="hud-row"><span class="hud-label">Intensity</span><span class="hud-value">Overlay HUD</span></div>
-                <div class="hud-row"><span class="hud-label">Sync</span><span class="hud-value status-active">ACTIVE</span></div>
-            </div>
+        <div class="main-container">
+            <div id="chart"></div>
+            <div id="profile-container"></div>
+            <div id="markers-container"></div>
         </div>
     </main>
 
@@ -170,7 +151,9 @@ def generate_html(symbol, data):
         const chartData = {{json_data}};
         
         // Render Volume Profile Overlay
-        const profileOverlay = document.getElementById('profile-overlay');
+        const profileContainer = document.getElementById('profile-container');
+        const markersContainer = document.getElementById('markers-container');
+
         const maxVol = Math.max(...chartData.volume_profile.map(p => p.volume));
         const maxPrice = Math.max(...chartData.volume_profile.map(p => p.price));
         const minPrice = Math.min(...chartData.volume_profile.map(p => p.price));
@@ -185,7 +168,7 @@ def generate_html(symbol, data):
             bar.style.width = (p.volume / maxVol * 100) + '%';
             bar.style.backgroundColor = p.color;
             row.appendChild(bar);
-            profileOverlay.appendChild(row);
+            profileContainer.appendChild(row);
         });
 
         // Add Floating Markers for EACH cluster color group
@@ -198,9 +181,8 @@ def generate_html(symbol, data):
         Object.entries(groups).forEach(([color, members]) => {
             // Find median price of this color group for better centering
             const sortedMembers = [...members].sort((a,b) => a.price - b.price);
-            const midIdx = Math.floor(sortedMembers.length / 2);
-            const midPoint = sortedMembers[midIdx];
-            
+            const midPoint = sortedMembers[Math.floor(sortedMembers.length / 2)];
+            const peak = members.reduce((prev, curr) => (prev.volume > curr.volume) ? prev : curr); // Find peak volume for label
             const totalVol = members.reduce((sum, curr) => sum + curr.volume, 0);
             
             const marker = document.createElement('div');
@@ -212,18 +194,20 @@ def generate_html(symbol, data):
             marker.style.transform = 'translateY(-50%)';
             marker.style.left = '0';
             marker.style.right = '0';
-            marker.style.paddingRight = '20px';
+            marker.style.display = 'flex';
+            marker.style.alignItems = 'center';
+            marker.style.padding = '0 10px';
             
             marker.innerHTML = `
-                <div class="v-label" style="color: ${color}; border: none; background: transparent; padding: 0 4px; position: relative; z-index: 2;">${(peak.volume/1000).toFixed(1)}K</div>
-                <div class="v-line" style="border-color: ${color}; opacity: 0.4; margin-left: -10px;"></div>
-                <div class="v-label" style="color: ${color}; border: 1px solid ${color}33; background: rgba(0,0,0,0.6); position: relative; z-index: 2;">Total: ${(totalVol/1000).toFixed(1)}K</div>
+                <div class="v-label" style="color: ${color}; border: none; background: transparent; padding: 4px;">${(peak.volume/1000).toFixed(1)}K</div>
+                <div class="v-line" style="border-color: ${color}; opacity: 0.35; flex: 1;"></div>
+                <div class="v-label" style="color: ${color}; border: 1px solid ${color}33; background: rgba(0,0,0,0.6); margin-left: 8px;">Total: ${(totalVol/1000).toFixed(1)}K</div>
             `;
-            profileOverlay.appendChild(marker);
+            markersContainer.appendChild(marker);
         });
 
         // Main Chart
-        const chart = LightweightCharts.createChart(document.getElementById('chart-container'), {
+        const chart = LightweightCharts.createChart(document.getElementById('chart'), {
             layout: { background: { type: 'solid', color: '#000000' }, textColor: '#d1d4dc' },
             grid: {
                 vertLines: { color: 'rgba(42, 46, 57, 0.05)' },
