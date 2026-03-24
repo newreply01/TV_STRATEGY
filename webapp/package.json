@@ -9,7 +9,7 @@
     "lint": "eslint"
   },
   "engines": {
-    "node": ">=25.0.0"
+    "node": "24.x"
   },
   "dependencies": {
     "@prisma/client": "^6.4.1",
