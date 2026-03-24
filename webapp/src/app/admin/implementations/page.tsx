@@ -1,17 +1,16 @@
 export const revalidate = 0;
-import React from 'react';
-import { query } from '@/lib/db';
+import { prisma } from '@/lib/prisma';
 import { CheckCircle2, X, Clock, Folder, Database, ArrowLeft } from 'lucide-react';
 import Link from 'next/link';
 
 async function getImplementationStatus() {
-  const res = await query(`
+  const data = await prisma.$queryRaw`
     SELECT s.id, s.title, s.slug, s.category, i.serial_id, i.is_implemented, i.folder_path, i.implemented_at, i.notes
     FROM tradingview_scripts s
     LEFT JOIN script_implementations i ON s.slug = i.script_slug
     ORDER BY i.serial_id ASC NULLS LAST, s.last_synced_at DESC
-  `);
-  return res.rows;
+  `;
+  return data as any[];
 }
 
 export default async function ImplementationDashboard() {
