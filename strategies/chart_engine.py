@@ -20,33 +20,35 @@ SLUG_S002 = "lpnsjMbH-Clusters-Volume-Profile-LuxAlgo"
 SLUG_S003 = "vXui7vrm-Market-Structure-Dashboard-Flux-Charts"
 
 def fetch_yfinance_data(symbol="2330.TW", period="1mo", interval="15m"):
-    """
-    Fetch historical data from yfinance for backtesting or simulation.
-    Note: 15m interval is only available for the last 60 days.
-    """
     try:
-        # Optimization: 1m interval is only available for the last 7 days
         actual_period = period
         if interval == '1m' and (period not in ['1d', '5d', '7d']):
             actual_period = "7d"
             
-        print(f"Engine: Downloading {symbol} from yf (period={actual_period}, interval={interval})")
-        df = yf.download(symbol, period=actual_period, interval=interval, progress=False)
+        print(f"Engine: Downloading {symbol} via Ticker (period={actual_period}, interval={interval})")
+        ticker = yf.Ticker(symbol)
+        df = ticker.history(period=actual_period, interval=interval)
         
         if df is None or df.empty:
-            print(f"Engine Error: yf returned EMPTY df for {symbol}")
+            # Retry with download if history fails
+            print(f"Engine Warning: Ticker.history empty for {symbol}, trying download...")
+            df = yf.download(symbol, period=actual_period, interval=interval, progress=False, auto_adjust=True)
+            
+        if df is None or df.empty:
+            print(f"Engine Error: All yf methods returned EMPTY for {symbol}")
             return None
             
         print(f"Engine: Download success for {symbol}. Shape: {df.shape}")
         
-        # Standardize MultiIndex columns (yf 0.2.x+ behavior)
+        # Flatten MultiIndex if necessary
         if isinstance(df.columns, pd.MultiIndex):
-            print(f"Engine: Flattening MultiIndex columns: {df.columns.tolist()[:2]}...")
             df.columns = df.columns.get_level_values(0)
             
         return df
     except Exception as e:
-        print(f"Engine Exception during yf fetch: {e}")
+        import traceback
+        error_msg = traceback.format_exc()
+        print(f"Engine Exception during yf fetch for {symbol}: {error_msg}")
         return None
 
 def fetch_stock_screener_data(symbol="2330", limit=500):
