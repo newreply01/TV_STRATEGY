@@ -18,8 +18,16 @@ def fetch_data(symbol, period="1mo", interval="1h"):
     else:
         fetch_symbol = symbol
     
+    print(f"[YF] Fetching {fetch_symbol} (period={period}, interval={interval})")
     df = yf.download(fetch_symbol, period=period, interval=interval, progress=False)
+    
+    # Fallback for 60d/15m which often fails on edge cases
+    if df.empty and period == "60d":
+        print(f"[YF] 60d failed for {fetch_symbol}, retrying with 30d...")
+        df = yf.download(fetch_symbol, period="30d", interval=interval, progress=False)
+
     if df.empty:
+        print(f"[YF] ERROR: No data returned for {fetch_symbol}")
         return None
         
     if isinstance(df.columns, pd.MultiIndex):
