@@ -7,13 +7,15 @@ import { LayoutDashboard, ScrollText, Home, ArrowRight } from 'lucide-react';
 export default function Navbar() {
   const pathname = usePathname();
 
-  const hideAdmin = process.env.NEXT_PUBLIC_HIDE_ADMIN === 'true';
+  const hideAdmin = process.env.NEXT_PUBLIC_HIDE_ADMIN === 'true' || process.env.NEXT_PUBLIC_VERCEL === '1';
   
   const navItems = [
     { name: '首頁', href: '/', icon: Home },
     { name: '策略中心', href: '/scripts', icon: ScrollText },
-    { name: '開發中心', href: '/development', icon: LayoutDashboard },
-    ...(hideAdmin ? [] : [{ name: '管理中心', href: '/monitor', icon: LayoutDashboard }]),
+    ...(hideAdmin ? [] : [
+      { name: '開發中心', href: '/development', icon: LayoutDashboard },
+      { name: '管理中心', href: '/monitor', icon: LayoutDashboard }
+    ]),
   ];
 
   return (
