@@ -1,8 +1,8 @@
-flask==3.0.2
-flask-cors==4.0.0
-pandas==2.2.1
-numpy==1.26.4
-yfinance==0.2.54
-psycopg2-binary==2.9.9
-requests==2.31.0
+flask
+flask-cors
+psycopg2-binary
+requests
+yfinance
+pandas
+numpy
 pandas-ta
