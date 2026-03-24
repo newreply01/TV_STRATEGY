@@ -81,7 +81,7 @@ def calculate_omni_flow(df, flow_len=24, spectral_len=10, boost=1.5):
     
     return df
 
-def get_omni_flow_data(df):
+def get_omni_flow_data(df, interval="15m"):
     """
     Format for Lightweight Charts with Professional Features
     """
