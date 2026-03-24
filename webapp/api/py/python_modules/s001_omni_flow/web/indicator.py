@@ -85,6 +85,14 @@ def get_omni_flow_data(df):
     """
     Format for Lightweight Charts with Professional Features
     """
+    # Ensure DataFrame has a DatetimeIndex for the time filter logic
+    if 'datetime' in df.columns:
+        df = df.copy()
+        df['datetime'] = pd.to_datetime(df['datetime'])
+        df.set_index('datetime', inplace=True)
+    elif not isinstance(df.index, pd.DatetimeIndex):
+        df.index = pd.to_datetime(df.index)
+
     df_calc = calculate_omni_flow(df)
     df_calc = df_calc.dropna()
     print(f"OMNI-Pro: Processing {len(df_calc)} bars.")
