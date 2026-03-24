@@ -1,4 +1,7 @@
 import os
+# Disable Numba JIT to avoid cache errors
+os.environ['NUMBA_DISABLE_JIT'] = '1'
+
 import json
 import psycopg2
 import pandas as pd

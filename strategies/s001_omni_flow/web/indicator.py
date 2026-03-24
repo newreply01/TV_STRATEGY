@@ -85,6 +85,14 @@ def get_omni_flow_data(df):
     """
     Format for Lightweight Charts with Professional Features
     """
+    # Ensure DataFrame has a DatetimeIndex for the time filter logic
+    if 'datetime' in df.columns:
+        df = df.copy()
+        df['datetime'] = pd.to_datetime(df['datetime'])
+        df.set_index('datetime', inplace=True)
+    elif not isinstance(df.index, pd.DatetimeIndex):
+        df.index = pd.to_datetime(df.index)
+
     df_calc = calculate_omni_flow(df)
     df_calc = df_calc.dropna()
     print(f"OMNI-Pro: Processing {len(df_calc)} bars.")
@@ -166,16 +174,10 @@ def get_omni_flow_data(df):
                 markers.append({"time": t, "position": "inBar", "color": "#ffff00", "shape": "arrowDown", "size": 1})
 
             
-    # Debug: Log and write to file for inspection
+    # Debug: Log for inspection
     if markers:
         from datetime import datetime
-        import json
         print(f"\n[SIGNAL-REPORT] Symbol: 2330.TW | Total: {len(markers)} (UTC)")
-        
-        # Write to dedicated file for reliability
-        with open('/home/xg/last_markers.json', 'w') as f:
-            json.dump(markers, f)
-            
         print("-" * 60)
         # Print last 20 for user check (Show TPE time for debugging)
         for m in markers[-20:]:
