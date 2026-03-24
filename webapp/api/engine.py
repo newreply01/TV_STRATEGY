@@ -14,16 +14,18 @@ from flask import Flask, jsonify, request
 from flask_cors import CORS
 import logging
 
-# Import strategy modules from logic folder
-try:
+# Move imports inside a lazy loader or route to prevent startup crash
+def get_omni_flow_data_lazy(*args, **kwargs):
     from s001_omni_flow.web.indicator import get_omni_flow_data
-    from s002_clusters_volume_profile.web.indicator import calculate_clusters_volume_profile
-except ImportError:
-    # Fallback to local structure if needed
-    from python_modules.s001_omni_flow.web.indicator import get_omni_flow_data
-    from python_modules.s002_clusters_volume_profile.web.indicator import calculate_clusters_volume_profile
+    return get_omni_flow_data(*args, **kwargs)
 
-from strategy_003 import process_strategy_003
+def calculate_vprofile_lazy(*args, **kwargs):
+    from s002_clusters_volume_profile.web.indicator import calculate_clusters_volume_profile
+    return calculate_clusters_volume_profile(*args, **kwargs)
+
+def process_s003_lazy(*args, **kwargs):
+    from strategy_003 import process_strategy_003
+    return process_strategy_003(*args, **kwargs)
 
 # Configure logging for Vercel (standard output)
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
@@ -87,7 +89,7 @@ def get_chart_data(slug):
             df_s002 = df.rename(columns={
                 'Open': 'open', 'High': 'high', 'Low': 'low', 'Close': 'close', 'Volume': 'volume'
             })
-            profile, pocs = calculate_clusters_volume_profile(df_s002, n_clusters=6)
+            profile, pocs = calculate_vprofile_lazy(df_s002, n_clusters=6)
             
             ohlc = []
             for idx, row in df.iterrows():
@@ -123,9 +125,9 @@ def get_chart_data(slug):
                 "indicator": [], "signal": [], "markers": []
             }
         elif slug == SLUG_S003:
-            data = process_strategy_003(df)
+            data = process_s003_lazy(df)
         else:
-            data = get_omni_flow_data(df)
+            data = get_omni_flow_data_lazy(df)
             
         data['metadata'] = {
             "source": source, "symbol": symbol, "interval": interval,
