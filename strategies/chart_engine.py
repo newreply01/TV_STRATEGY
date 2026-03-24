@@ -36,9 +36,9 @@ def fetch_yfinance_data(symbol="2330.TW", period="1mo", interval="15m"):
         if interval == '1m' and (period not in ['1d', '5d', '7d']):
             actual_period = "7d"
         elif interval in ['5m', '15m', '30m'] and period == '2mo':
-            # Yahoo limit for intraday < 1h is 60 days
-            actual_period = "1mo"
-            logger.warning(f"Engine: Capping {interval} period to 1mo due to Yahoo 60d limit")
+            # Yahoo limit for intraday < 1h is 60 days. Standardize 2mo to 60d.
+            actual_period = "60d"
+            logger.info(f"Engine: Standardizing {interval} period 2mo to 60d for Yahoo compatibility")
             
         logger.info(f"Engine: Downloading {symbol} via Ticker (period={actual_period}, interval={interval})")
         ticker = yf.Ticker(symbol)

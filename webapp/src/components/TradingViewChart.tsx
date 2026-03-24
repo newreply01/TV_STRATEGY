@@ -159,7 +159,7 @@ export default function TradingViewChart({ slug, symbol = 'AAPL' }: { slug: stri
     const isS002 = slug.includes('Volume-Profile');
     const isTW = symbol.toUpperCase().includes('.TW') || /^\d+$/.test(symbol);
     const interval = isS002 ? '5m' : '15m';
-    const period = isS002 ? (isTW ? '7d' : '5d') : '1mo'; 
+    const period = isS002 ? (isTW ? '7d' : '5d') : '2mo'; 
     const sourceParam = 'yahoo'; // 預留切換參數: 可改為 'local' 進行本地回測
     const host = typeof window !== 'undefined' ? window.location.hostname : '127.0.0.1';
     
