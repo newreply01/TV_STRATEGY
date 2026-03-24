@@ -166,16 +166,10 @@ def get_omni_flow_data(df):
                 markers.append({"time": t, "position": "inBar", "color": "#ffff00", "shape": "arrowDown", "size": 1})
 
             
-    # Debug: Log and write to file for inspection
+    # Debug: Log for inspection
     if markers:
         from datetime import datetime
-        import json
         print(f"\n[SIGNAL-REPORT] Symbol: 2330.TW | Total: {len(markers)} (UTC)")
-        
-        # Write to dedicated file for reliability
-        with open('/home/xg/last_markers.json', 'w') as f:
-            json.dump(markers, f)
-            
         print("-" * 60)
         # Print last 20 for user check (Show TPE time for debugging)
         for m in markers[-20:]:

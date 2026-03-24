@@ -5,7 +5,7 @@ import yfinance as yf
 import importlib.util
 import os
 
-import os
+
 
 app = Flask(__name__)
 
@@ -35,14 +35,17 @@ def fetch_data(symbol, period="1mo", interval="1h"):
     return df
 
 @app.route('/api/py/health')
+@app.route('/health')
 def health():
     return jsonify({
         "status": "OK",
         "message": "Python Engine is operational",
-        "python": sys.version
+        "python": sys.version,
+        "path": request.path
     })
 
 @app.route('/api/py/charts/<slug>')
+@app.route('/charts/<slug>')
 def get_chart_data(slug):
     symbol = request.args.get('symbol', 'AAPL')
     interval = request.args.get('interval', '5m')
@@ -74,6 +77,7 @@ def get_chart_data(slug):
         return jsonify({"error": str(e)}), 500
 
 @app.route('/api/py/indicator')
+@app.route('/indicator')
 def get_indicator():
 # ... (existing content)
     strategy_id = request.args.get('strategy', 's001_omni_flow')

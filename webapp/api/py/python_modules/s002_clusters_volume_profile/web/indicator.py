@@ -1,6 +1,10 @@
 import pandas as pd
 import numpy as np
-import psycopg2
+try:
+    import psycopg2
+except ImportError:
+    psycopg2 = None
+    print("Warning: psycopg2 not found. Local DB features will be disabled.")
 from datetime import datetime
 
 # DB Configs
