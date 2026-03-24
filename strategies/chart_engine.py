@@ -199,7 +199,9 @@ def get_chart_data(slug):
             data = process_strategy_003(df)
         else:
             # Default to S001: Omni-Flow
-            data = get_omni_flow_data(df)
+            print(f"[Engine] Calling S001 for {symbol} (interval={interval})")
+            from s001_omni_flow.web.indicator import get_omni_flow_data
+            data = get_omni_flow_data(df, interval=interval)
             
         data['metadata'] = {
             "source": source,

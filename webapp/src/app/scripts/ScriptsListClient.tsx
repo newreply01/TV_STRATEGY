@@ -21,19 +21,18 @@ export default function ScriptsListClient({ initialScripts }: { initialScripts: 
   const [mounted, setMounted] = React.useState(false);
 
   // Helper to extract TradingView snapshot URL from slug
-  const getTradingViewSnapshot = (slug: string, originalUrl: string) => {
-    // If slug is not provided, try to extract from originalUrl
-    let id = slug;
+  const getTradingViewSnapshot = (slug: string, imageUrl: string) => {
+    if (!imageUrl) return "";
     
-    // TradingView script IDs are usually the first 8 characters before the first hyphen
-    if (slug.includes('-')) {
-      id = slug.split('-')[0];
+    // If imageUrl is a full URL or internal path
+    if (imageUrl.startsWith('http') || imageUrl.startsWith('/')) {
+      return imageUrl;
     }
     
-    // If id is empty or invalid, fallback to original
-    if (!id || id.length < 5) return originalUrl;
+    // If imageUrl is just an ID (e.g., 'lpnsjMbH')
+    const id = imageUrl.length >= 5 ? imageUrl : slug.split('-')[0];
     
-    // Return the standard TradingView chart snapshot URL (light version)
+    // Return standard TradingView chart snapshot
     return `https://s3.tradingview.com/l/${id}_light.png`;
   };
 
