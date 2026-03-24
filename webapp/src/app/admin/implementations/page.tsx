@@ -1,3 +1,4 @@
+export const revalidate = 0;
 import React from 'react';
 import { query } from '@/lib/db';
 import { CheckCircle2, X, Clock, Folder, Database, ArrowLeft } from 'lucide-react';
