@@ -179,20 +179,42 @@ def calculate_clusters_volume_profile(df, n_clusters=5, iterations=10, n_bins=12
     all_profile_bins.sort(key=lambda x: x['price'])
     return all_profile_bins, pocs
 
-def main(symbol="2330"):
-    df = get_data(symbol)
+def main(symbol="2330", period="3d", interval="5m"):
+    df = get_data(symbol, period=period, interval=interval)
+    if df.empty:
+        # Final fallback
+        df = get_data(symbol, source="dummy")
+        
     profile, pocs = calculate_clusters_volume_profile(df)
     
     ohlc = []
     for _, row in df.iterrows():
         ohlc.append({
-            "time": row['datetime'].timestamp() if hasattr(row['datetime'], 'timestamp') else str(row['datetime']),
+            "time": int(row['datetime'].timestamp()) if hasattr(row['datetime'], 'timestamp') else int(row['datetime']),
             "open": float(row['open']),
             "high": float(row['high']),
             "low": float(row['low']),
             "close": float(row['close'])
         })
     
+    # Predict future times for buffer
+    if ohlc:
+        try:
+            import re
+            match = re.match(r"(\d+)([a-zA-Z]+)", interval)
+            if match:
+                val, unit = int(match.group(1)), match.group(2).lower()
+                sec = val * 60 if unit == 'm' else (val * 3600 if unit == 'h' else (val * 86400 if unit == 'd' else 300))
+            else:
+                sec = 300
+            
+            bars_to_add = 50
+            last_time = ohlc[-1]["time"]
+            for i in range(1, bars_to_add + 1):
+                ohlc.append({"time": last_time + i * sec})
+        except Exception:
+            pass
+
     return {
         "ohlc": ohlc,
         "volume_profile": profile,
