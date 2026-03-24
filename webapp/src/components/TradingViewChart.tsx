@@ -211,6 +211,10 @@ export default function TradingViewChart({ slug, symbol = 'AAPL' }: { slug: stri
           } else {
             chartRef.current.timeScale().fitContent();
           }
+          
+          // 強制增加右側間距，確保緩衝視覺化
+          const spacing = isS001 ? 50 : (isS002 ? 100 : 20);
+          chartRef.current.timeScale().applyOptions({ rightBarSpacing: spacing });
         }
         setLoading(false);
 

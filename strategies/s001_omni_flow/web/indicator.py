@@ -187,6 +187,16 @@ def get_omni_flow_data(df, interval="15m"):
             print(f"{dt:<20} | {shape:<12} | {m['position']:<10} | {m['color']}")
         print("-" * 60)
             
+    # Inject Future Empty Bars to force X-axis extension (0.5 Day = 48 bars at 15m)
+    if ohlc:
+        last_t = ohlc[-1]['time']
+        for i in range(1, 49):
+            future_t = last_t + (i * 900)
+            # Add time-only points to all series to ensure axis extension
+            ohlc.append({"time": future_t})
+            indicator_main.append({"time": future_t})
+            indicator_sig.append({"time": future_t})
+
     return {
         "ohlc": ohlc,
         "indicator": indicator_main,
