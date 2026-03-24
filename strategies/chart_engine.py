@@ -6,9 +6,20 @@ import numpy as np
 import yfinance as yf
 from flask import Flask, jsonify, request
 from flask_cors import CORS
+import logging
 from s001_omni_flow.web.indicator import get_omni_flow_data
 from s002_clusters_volume_profile.web.indicator import calculate_clusters_volume_profile
 from strategy_003 import process_strategy_003
+
+# Configure logging to write to a file explicitly
+logging.basicConfig(
+    filename='/home/xg/tradeview-strategy/strategies/chart_engine.log',
+    level=logging.INFO,
+    format='%(asctime)s - %(levelname)s - %(message)s'
+)
+logger = logging.getLogger(__name__)
+logger.info("--- Chart Engine Starting ---")
+logger.info(f"yfinance version: {yf.__version__}")
 
 app = Flask(__name__)
 # Keep CORS relaxed for localhost
@@ -24,21 +35,25 @@ def fetch_yfinance_data(symbol="2330.TW", period="1mo", interval="15m"):
         actual_period = period
         if interval == '1m' and (period not in ['1d', '5d', '7d']):
             actual_period = "7d"
+        elif interval in ['5m', '15m', '30m'] and period == '2mo':
+            # Yahoo limit for intraday < 1h is 60 days
+            actual_period = "1mo"
+            logger.warning(f"Engine: Capping {interval} period to 1mo due to Yahoo 60d limit")
             
-        print(f"Engine: Downloading {symbol} via Ticker (period={actual_period}, interval={interval})")
+        logger.info(f"Engine: Downloading {symbol} via Ticker (period={actual_period}, interval={interval})")
         ticker = yf.Ticker(symbol)
         df = ticker.history(period=actual_period, interval=interval)
         
         if df is None or df.empty:
             # Retry with download if history fails
-            print(f"Engine Warning: Ticker.history empty for {symbol}, trying download...")
+            logger.warning(f"Engine Warning: Ticker.history empty for {symbol}, trying download...")
             df = yf.download(symbol, period=actual_period, interval=interval, progress=False, auto_adjust=True)
             
         if df is None or df.empty:
-            print(f"Engine Error: All yf methods returned EMPTY for {symbol}")
+            logger.error(f"Engine Error: All yf methods returned EMPTY for {symbol}")
             return None
             
-        print(f"Engine: Download success for {symbol}. Shape: {df.shape}")
+        logger.info(f"Engine: Download success for {symbol}. Shape: {df.shape}")
         
         # Flatten MultiIndex if necessary
         if isinstance(df.columns, pd.MultiIndex):
@@ -48,7 +63,7 @@ def fetch_yfinance_data(symbol="2330.TW", period="1mo", interval="15m"):
     except Exception as e:
         import traceback
         error_msg = traceback.format_exc()
-        print(f"Engine Exception during yf fetch for {symbol}: {error_msg}")
+        logger.error(f"Engine Exception during yf fetch for {symbol}: {error_msg}")
         return None
 
 def fetch_stock_screener_data(symbol="2330", limit=500):
