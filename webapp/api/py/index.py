@@ -1,3 +1,7 @@
+import os
+# Disable Numba JIT to avoid cache errors on Vercel's read-only file system
+os.environ['NUMBA_DISABLE_JIT'] = '1'
+
 from flask import Flask, jsonify, request
 import sys
 import pandas as pd
