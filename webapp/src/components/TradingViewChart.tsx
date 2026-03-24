@@ -205,16 +205,16 @@ export default function TradingViewChart({ slug, symbol = 'AAPL' }: { slug: stri
             const isS002 = slug.includes('Volume-Profile');
             const extraSpace = isS002 ? 86400 : (isS001 ? 43200 : 0);
             
-            // 取實際資料倒數 150 根為起點，這樣 K 線才會出現在畫面左側，右側則是未來趨勢空間
+            // 取實際資料倒數 150 根為起點，不強行設定 to，保留右側緩衝感
             const firstTime = actualData[Math.max(0, actualLength - 150)].time as any;
-            chartRef.current.timeScale().setVisibleRange({ from: firstTime, to: lastTime + extraSpace });
+            chartRef.current.timeScale().setVisibleRange({ from: firstTime, to: lastTime });
           } else {
             chartRef.current.timeScale().fitContent();
           }
           
-          // 強制增加右側間距，確保緩衝視覺化
-          const spacing = isS001 ? 50 : (isS002 ? 100 : 20);
-          chartRef.current.timeScale().applyOptions({ rightBarSpacing: spacing });
+          // 精確控制右側間距 (S001 0.5天=48根, S002 1天=96根)
+          const offset = isS001 ? 48 : (isS002 ? 96 : 30);
+          chartRef.current.timeScale().applyOptions({ rightOffset: offset });
         }
         setLoading(false);
 
