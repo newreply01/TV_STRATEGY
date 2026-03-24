@@ -126,6 +126,8 @@ export default function TradingViewChart({ slug, symbol = 'AAPL' }: { slug: stri
           title: p === 0 ? 'ZERO' : `${p > 0 ? '+' : ''}${p}`,
         });
       });
+      
+      chartRef.current = chart;
     }
 
     const handleResize = () => {
@@ -134,14 +136,16 @@ export default function TradingViewChart({ slug, symbol = 'AAPL' }: { slug: stri
       }
     };
 
-    if (chartContainerRef.current) {
-        const chart = chartRef.current!;
+    if (chartRef.current) {
+        const isS001 = slug.includes('Omni-Flow');
         const isS002 = slug.includes('Volume-Profile');
-        chart.timeScale().applyOptions({
-            rightOffset: isS002 ? 150 : 30,
+        
+        chartRef.current.timeScale().applyOptions({
+            rightOffset: (isS001 || isS002) ? 150 : 30,
             barSpacing: 6,
             minBarSpacing: 0.5,
         });
+
         window.addEventListener('resize', handleResize);
     }
 
@@ -196,7 +200,9 @@ export default function TradingViewChart({ slug, symbol = 'AAPL' }: { slug: stri
             const actualData = chartData.ohlc.filter((d: any) => d.close !== undefined);
             const actualLength = actualData.length;
             const lastTime = chartData.ohlc[dataLength - 1].time as any;
-            const extraSpace = isS002 ? 86400 : 0;
+            const isS001 = slug.includes('Omni-Flow');
+            const isS002 = slug.includes('Volume-Profile');
+            const extraSpace = (isS001 || isS002) ? 86400 : 0;
             
             // 取實際資料倒數 150 根為起點，這樣 K 線才會出現在畫面左側，右側則是未來趨勢空間
             const firstTime = actualData[Math.max(0, actualLength - 150)].time as any;

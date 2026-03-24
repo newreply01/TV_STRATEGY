@@ -76,7 +76,7 @@ def get_chart_data(slug):
             df = fetch_data(symbol, period=period, interval=interval)
             if df is None: return jsonify({"error": "No data found"}), 404
             from python_modules.s001_omni_flow.web.indicator import get_omni_flow_data
-            result = get_omni_flow_data(df)
+            result = get_omni_flow_data(df, interval=interval)
             return jsonify(result)
             
         elif strategy_id == "s002_clusters_volume_profile":

@@ -81,7 +81,7 @@ def calculate_omni_flow(df, flow_len=24, spectral_len=10, boost=1.5):
     
     return df
 
-def get_omni_flow_data(df):
+def get_omni_flow_data(df, interval="15m"):
     """
     Format for Lightweight Charts with Professional Features
     """
@@ -187,6 +187,24 @@ def get_omni_flow_data(df):
             print(f"{dt:<20} | {shape:<12} | {m['position']:<10} | {m['color']}")
         print("-" * 60)
             
+    # Predict future times for buffer
+    if ohlc:
+        try:
+            import re
+            match = re.match(r"(\d+)([a-zA-Z]+)", interval)
+            if match:
+                val, unit = int(match.group(1)), match.group(2).lower()
+                sec = val * 60 if unit == 'm' else (val * 3600 if unit == 'h' else (val * 86400 if unit == 'd' else 900))
+            else:
+                sec = 900
+            
+            bars_to_add = 50 
+            last_time = ohlc[-1]["time"]
+            for i in range(1, bars_to_add + 1):
+                ohlc.append({"time": last_time + i * sec})
+        except Exception:
+            pass
+
     return {
         "ohlc": ohlc,
         "indicator": indicator_main,

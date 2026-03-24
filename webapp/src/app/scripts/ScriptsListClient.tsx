@@ -132,9 +132,9 @@ export default function ScriptsListClient({ initialScripts }: { initialScripts: 
               className="group block rounded-[2.5rem] border border-gray-200 dark:border-white/5 bg-white dark:bg-zinc-900/40 overflow-hidden hover:border-brand-primary transition-all duration-500 hover:shadow-[0_20px_50px_-15px_rgba(255,59,48,0.15)]"
             >
               <div className="aspect-[16/10] bg-gray-100 dark:bg-zinc-900 overflow-hidden relative">
-                {script.image_url ? (
+                {script.imageUrl ? (
                   <img 
-                    src={getTradingViewSnapshot(script.slug, script.image_url)} 
+                    src={getTradingViewSnapshot(script.slug, script.imageUrl)} 
                     alt={script.title}
                     className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700"
                   />
@@ -185,14 +185,14 @@ export default function ScriptsListClient({ initialScripts }: { initialScripts: 
                   </div>
                   <div className="flex items-center gap-2">
                     <div className="w-5 h-5 rounded-full bg-zinc-200 dark:bg-zinc-800 flex items-center justify-center text-[9px] font-black uppercase">
-                      {script.author[0]}
+                      {(script.author || 'U')[0]}
                     </div>
-                    <span className="text-xs text-zinc-500 font-bold">{script.author}</span>
+                    <span className="text-xs text-zinc-500 font-bold">{script.author || 'Unknown'}</span>
                   </div>
                 </div>
 
                 <p className="text-sm text-zinc-500 dark:text-zinc-500 line-clamp-3 leading-relaxed font-medium">
-                  {script.description_zh || script.description_en || '尚未提供描述'}
+                  {script.descriptionZh || script.descriptionEn || '尚未提供描述'}
                 </p>
 
                 {/* Datasets Info */}
@@ -205,7 +205,7 @@ export default function ScriptsListClient({ initialScripts }: { initialScripts: 
 
                 <div className="flex items-center justify-between pt-6 border-t border-gray-100 dark:border-white/5">
                   <span className="text-[10px] text-zinc-400 font-black uppercase tracking-widest">
-                    {new Date(script.updated_at).toLocaleDateString('zh-TW')}
+                    {new Date(script.updatedAt || new Date()).toLocaleDateString('zh-TW')}
                   </span>
                   <span className="text-brand-primary text-xs font-black uppercase tracking-widest opacity-0 group-hover:opacity-100 transition-all translate-x-4 group-hover:translate-x-0">
                     分析細節 →
