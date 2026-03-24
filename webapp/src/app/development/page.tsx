@@ -1,16 +1,20 @@
-import { query } from '@/lib/db';
+import { prisma } from '@/lib/prisma';
 import DevListClient from './DevListClient';
 
 export const revalidate = 0;
 
 async function getDevScripts() {
-  const res = await query(`
-    SELECT * 
-    FROM tradingview_scripts
-    WHERE is_web_done = false AND serial_id IS NOT NULL
-    ORDER BY serial_id DESC
-  `);
-  return res.rows;
+  return await prisma.tradingviewScript.findMany({
+    where: {
+      isWebDone: false,
+      serialId: {
+        not: null,
+      },
+    },
+    orderBy: {
+      serialId: 'desc',
+    },
+  });
 }
 
 export default async function DevelopmentPage() {
