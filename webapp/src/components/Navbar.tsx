@@ -12,6 +12,7 @@ export default function Navbar() {
   const navItems = [
     { name: '首頁', href: '/', icon: Home },
     { name: '策略中心', href: '/scripts', icon: ScrollText },
+    { name: '開發中心', href: '/development', icon: LayoutDashboard },
     ...(hideAdmin ? [] : [{ name: '管理中心', href: '/monitor', icon: LayoutDashboard }]),
   ];
 

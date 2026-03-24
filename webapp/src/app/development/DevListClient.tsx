@@ -15,7 +15,7 @@ const CATEGORY_MAP: Record<string, string> = {
 
 const CATEGORIES = ['All', 'Stock', 'ETF', 'Futures', 'Warrant', 'Other'];
 
-export default function ScriptsListClient({ initialScripts }: { initialScripts: any[] }) {
+export default function DevListClient({ initialScripts }: { initialScripts: any[] }) {
   const [filter, setFilter] = useState('All');
   const [search, setSearch] = useState('');
   const [mounted, setMounted] = React.useState(false);
@@ -66,11 +66,11 @@ export default function ScriptsListClient({ initialScripts }: { initialScripts: 
                <Database className="w-5 h-5 text-brand-primary" />
              </div>
              <h1 className="text-4xl font-black tracking-tight bg-gradient-to-r from-zinc-900 to-zinc-500 dark:from-white dark:to-zinc-500 bg-clip-text text-transparent">
-                策略中心
+                開發中心
              </h1>
           </div>
           <p className="text-zinc-500 max-w-2xl font-medium">
-             為您精選 TradingView 頂尖指標，呈現已驗收完畢、具備 Python 引擎重現能力的專業級分析。
+             呈現正在開發流程中、尚未正式發布的策略。您可以在此搶先預覽實作成果。
           </p>
         </div>
 
@@ -80,7 +80,7 @@ export default function ScriptsListClient({ initialScripts }: { initialScripts: 
               <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-zinc-500 group-focus-within:text-brand-primary transition-colors" />
               <input 
                 type="text" 
-                placeholder="搜尋策略名稱..."
+                placeholder="搜尋開發中策略..."
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
                 className="pl-11 pr-6 py-3 bg-zinc-100 dark:bg-zinc-900 border border-zinc-200 dark:border-white/5 rounded-2xl text-sm focus:outline-none focus:border-brand-primary/50 w-full sm:w-64 transition-all"
@@ -118,7 +118,7 @@ export default function ScriptsListClient({ initialScripts }: { initialScripts: 
             </div>
 
             <span className="text-xs font-black text-zinc-400 uppercase tracking-widest">
-               找到 {filteredScripts.length} 個結果
+               找到 {filteredScripts.length} 個開發中項目
             </span>
           </div>
         </div>
@@ -172,14 +172,13 @@ export default function ScriptsListClient({ initialScripts }: { initialScripts: 
                     <h2 className="text-xl font-bold line-clamp-1 group-hover:text-brand-primary transition-colors">
                       {script.title}
                     </h2>
-                    {script.is_implemented && (
+                    {script.is_implemented ? (
                       <span className="px-2 py-0.5 rounded-full bg-emerald-500 text-white text-[9px] font-black uppercase tracking-widest shadow-lg shadow-emerald-500/20">
                         已實作
                       </span>
-                    )}
-                    {script.is_web_done && (
-                      <span className="px-2 py-0.5 rounded-full bg-blue-500 text-white text-[9px] font-black uppercase tracking-widest shadow-lg shadow-blue-500/20">
-                        已完成
+                    ) : (
+                      <span className="px-2 py-0.5 rounded-full bg-amber-500 text-white text-[9px] font-black uppercase tracking-widest shadow-lg shadow-amber-500/20">
+                        待開發
                       </span>
                     )}
                   </div>
@@ -208,7 +207,7 @@ export default function ScriptsListClient({ initialScripts }: { initialScripts: 
                     {new Date(script.updated_at).toLocaleDateString('zh-TW')}
                   </span>
                   <span className="text-brand-primary text-xs font-black uppercase tracking-widest opacity-0 group-hover:opacity-100 transition-all translate-x-4 group-hover:translate-x-0">
-                    分析細節 →
+                    開發細節 →
                   </span>
                 </div>
               </div>

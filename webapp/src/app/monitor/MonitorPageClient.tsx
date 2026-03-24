@@ -191,7 +191,7 @@ export default function MonitorPageClient() {
                             系統管理中心
                         </h1>
                         <p className={`${darkMode ? 'text-zinc-400' : 'text-zinc-500'} max-w-lg font-medium`}>
-                            即時監控 TradeView Strategy 的文章開發進度、資料來源與系統穩定性。
+                            即時監控 TradeView Strategy 的開發進度、資料來源與系統穩定性。
                         </p>
                     </div>
                     <div className="flex items-center gap-4">
@@ -219,7 +219,7 @@ export default function MonitorPageClient() {
                         className={`flex-1 flex items-center justify-center gap-2 py-3 rounded-xl text-sm font-black transition-all ${activeTab === 'development' ? 'bg-brand-primary text-white shadow-lg' : 'text-zinc-500 hover:text-zinc-300'}`}
                     >
                         <Calendar className="w-4 h-4" />
-                        文章開發進度
+                        開發進度
                     </button>
                     <button
                         onClick={() => setActiveTab('infrastructure')}
@@ -369,7 +369,7 @@ export default function MonitorPageClient() {
                                     <Calendar className="w-24 h-24" />
                                 </div>
                                 <div className="relative z-10">
-                                    <h3 className="text-sm font-bold uppercase tracking-widest text-zinc-500 mb-4">文章總量規模</h3>
+                                    <h3 className="text-sm font-bold uppercase tracking-widest text-zinc-500 mb-4">策略總量規模</h3>
                                     <div className="flex items-end gap-3">
                                         <span className={`text-6xl font-black ${darkMode ? 'text-white' : 'text-zinc-900'}`}>{statusData?.stats?.total_articles || 0}</span>
                                         <span className="text-lg font-bold text-zinc-500 mb-2">篇</span>
@@ -472,8 +472,8 @@ export default function MonitorPageClient() {
                                         <Database className="w-5 h-5" />
                                     </div>
                                     <div>
-                                        <h2 className="text-xl font-black">文章開發進度清單</h2>
-                                        <p className="text-xs font-medium opacity-60">各項策略文章所需數據的盤點與開發狀態</p>
+                                        <h2 className="text-xl font-black">開發進度清單</h2>
+                                        <p className="text-xs font-medium opacity-60">各項策略所需數據的盤點與開發狀態</p>
                                     </div>
                                 </div>
                             </div>

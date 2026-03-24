@@ -53,7 +53,7 @@ export default function TradingViewChart({ slug, symbol = 'AAPL' }: { slug: stri
         pinch: true,
         axisPressedMouseMove: true,
       },
-      timeScale: { timeVisible: true, rightOffset: 120 },
+      timeScale: { timeVisible: true, rightOffset: 150 }, // 預留兩天的空位緩衝
       localization: {
         locale: 'zh-TW', dateFormat: 'MM/dd',
         timeFormatter: (t: number) => {
@@ -156,14 +156,16 @@ export default function TradingViewChart({ slug, symbol = 'AAPL' }: { slug: stri
   // Sync Data Effect
   useEffect(() => {
     let active = true;
-    // Determine target URL - S002 use 5m for better trend perspective, S001 is 15m
-    const interval = slug.includes('Volume-Profile') ? '5m' : '15m';
-    const period = slug.includes('Volume-Profile') ? '1mo' : '2mo';
+    const isS002 = slug.includes('Volume-Profile');
+    const isTW = symbol.toUpperCase().includes('.TW') || /^\d+$/.test(symbol);
+    const interval = isS002 ? '5m' : '15m';
+    const period = isS002 ? (isTW ? '7d' : '5d') : '2mo'; 
+    const sourceParam = 'yahoo'; // 預留切換參數: 可改為 'local' 進行本地回測
     const host = typeof window !== 'undefined' ? window.location.hostname : '127.0.0.1';
     
     // Support remote API URL via env var, fallback to dynamic hostname on port 26001
     const apiBase = process.env.NEXT_PUBLIC_API_URL || `http://${host}:26001`;
-    const url = `${apiBase}/api/charts/${slug}?symbol=${symbol}&interval=${interval}&period=${period}`;
+    const url = `${apiBase}/api/charts/${slug}?symbol=${symbol}&interval=${interval}&period=${period}&source=${sourceParam}`;
 
     setLoading(true);
     fetch(url).then(res => res.json()).then((chartData: ChartData) => {
@@ -186,10 +188,15 @@ export default function TradingViewChart({ slug, symbol = 'AAPL' }: { slug: stri
         }
 
         if (active && chartRef.current) {
-          // No fitContent here to respect the rightOffset
           if (chartData.ohlc && chartData.ohlc.length > 150) {
-            const lastTime = chartData.ohlc[chartData.ohlc.length-1].time as any;
-            const firstTime = chartData.ohlc[chartData.ohlc.length-150].time as any;
+            const dataLength = chartData.ohlc.length;
+            // 由於加入了未來時間節點，過濾出有實體資料的部分來精算起點
+            const actualData = chartData.ohlc.filter((d: any) => d.close !== undefined);
+            const actualLength = actualData.length;
+            const lastTime = chartData.ohlc[dataLength - 1].time as any;
+            
+            // 取實際資料倒數 150 根為起點，這樣 K 線才會出現在畫面左側，右撇才是未來趨勢空間
+            const firstTime = actualData[Math.max(0, actualLength - 150)].time as any;
             chartRef.current.timeScale().setVisibleRange({ from: firstTime, to: lastTime });
           } else {
             chartRef.current.timeScale().fitContent();
@@ -253,7 +260,7 @@ export default function TradingViewChart({ slug, symbol = 'AAPL' }: { slug: stri
         {hasVolumeProfile && data.volume_profile && (
             <div className="absolute top-12 left-0 right-0 bottom-16 z-20 pointer-events-none px-4">
                 {data.pocs && data.pocs.map((poc: any, i: number) => {
-                    const prices = data.volume_profile.map((v:any)=>v.price);
+                    const prices = data.volume_profile!.map((v:any)=>v.price);
                     const maxP = Math.max(...prices);
                     const minP = Math.min(...prices);
                     const rangeP = maxP - minP || 1;
@@ -262,19 +269,20 @@ export default function TradingViewChart({ slug, symbol = 'AAPL' }: { slug: stri
                     return (
                         <div key={i} className="absolute left-0 right-0 flex items-center pl-4 pr-20" style={{ top: `${topPos}%`, transform: 'translateY(-50%)' }}>
                             {/* Left Label (Cluster Volume) */}
-                            <div className="text-[9px] font-black whitespace-nowrap px-1 z-30" style={{ color: poc.color }}>
+                            <div className="text-xs font-black whitespace-nowrap px-1 z-30 drop-shadow-md" style={{ color: poc.color }}>
                                 {(poc.total_volume/1000).toFixed(1)}K
                             </div>
                             {/* Full Span Line (Ultra-Dense Custom Pattern) */}
                             <div className="flex-1 h-[1px]" style={{ 
                                 backgroundImage: `linear-gradient(to right, ${poc.color} 50%, transparent 50%)`,
-                                backgroundSize: '3px 1px',
+                                backgroundSize: '15px 1px',
                                 backgroundRepeat: 'repeat-x',
-                                opacity: 0.9
+                                opacity: 1,
+                                filter: 'drop-shadow(0 0 2px rgba(255,255,255,0.2))'
                             }} />
                             {/* Right Label */}
-                            <div className="text-[9px] font-black whitespace-nowrap bg-black/60 px-1 rounded shadow-lg border border-white/5 ml-2 z-30" style={{ color: poc.color }}>
-                                Total: {(poc.total_volume/1000).toFixed(1)}K
+                            <div className="text-xs font-black whitespace-nowrap bg-black/60 px-2 py-0.5 rounded shadow-lg border border-white/10 ml-2 z-30" style={{ color: poc.color }}>
+                                Vol: {(poc.total_volume/1000).toFixed(1)}K
                             </div>
                         </div>
                     );
@@ -287,8 +295,8 @@ export default function TradingViewChart({ slug, symbol = 'AAPL' }: { slug: stri
             <div className="flex-1" />
             
             {/* Overlay Volume Profile (Shifted further left to avoid Y-axis numbers) */}
-            {hasVolumeProfile && (
-                <div className="absolute top-12 right-20 bottom-16 w-16 md:w-24 lg:w-32 z-20 pointer-events-none">
+            {hasVolumeProfile && data.volume_profile && (
+                <div className="absolute top-12 right-20 bottom-16 w-40 md:w-56 lg:w-64 z-20 pointer-events-none">
                     <ResponsiveContainer width="100%" height="100%">
                         <BarChart data={data.volume_profile} layout="vertical" margin={{ top: 0, right: 0, left: 0, bottom: 0 }}>
                             <XAxis type="number" hide />
@@ -307,7 +315,7 @@ export default function TradingViewChart({ slug, symbol = 'AAPL' }: { slug: stri
       </div>
 
       <div id="chart-debug-info" className="absolute bottom-6 left-8 z-50 text-[10px] font-black uppercase tracking-widest text-zinc-700">
-        [{data?.metadata?.source?.toUpperCase() || 'OFFLINE'} | {symbol}]
+        [{data?.metadata?.source?.toUpperCase() || 'OFFLINE'} | {symbol} | {data?.metadata?.period || '---'}]
       </div>
 
       {loading && <div className="absolute inset-0 bg-black/60 backdrop-blur-sm z-40 flex items-center justify-center text-cyan-500 font-black uppercase tracking-tighter">Updating Engine...</div>}

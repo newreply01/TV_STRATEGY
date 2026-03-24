@@ -94,19 +94,25 @@ def health_check():
 
 @app.route('/api/charts/<slug>')
 def get_chart_data(slug):
-    # Parameters from query string
-    interval = request.args.get('interval', '1m')
-    period = request.args.get('period', '1d')
     symbol = request.args.get('symbol', 'AAPL')
-    df = None
-    source = "local_db"
+    # Determine default period based on exchange (Taiwan vs others)
+    is_tw = ".TW" in symbol.upper() or symbol.isdigit()
+    default_period = '7d' if is_tw else '5d'
 
-    # Use local DB only for 1m interval and 1d period
-    if period == '1d' and interval == '1m':
+    interval = request.args.get('interval', '5m')
+    period = request.args.get('period', default_period)
+    print(f"Engine Request: symbol={symbol}, period={period}, is_tw={is_tw}")
+    source_param = request.args.get('source', 'yahoo')
+    df = None
+    source = source_param
+
+    # Use local DB if explicitly requested or if it's the old 1m/1d default
+    if source == 'local' or (period == '1d' and interval == '1m'):
         df = fetch_stock_screener_data(symbol=symbol)
+        source = "local_db"
     
     if df is None or df.empty:
-        # Fallback to yfinance if local_db fails, or if not 1m/1d
+        # Fallback to yfinance if local_db fails, or if default yahoo
         print(f"Engine: Attempting yfinance fetch for {symbol} (fallback or regular)")
         yf_symbol = f"{symbol}.TW" if symbol.isdigit() else symbol
         df = fetch_yfinance_data(symbol=yf_symbol, period=period, interval=interval)
@@ -122,7 +128,7 @@ def get_chart_data(slug):
             df_s002 = df.rename(columns={
                 'Open': 'open', 'High': 'high', 'Low': 'low', 'Close': 'close', 'Volume': 'volume'
             })
-            profile = calculate_clusters_volume_profile(df_s002)
+            profile, pocs = calculate_clusters_volume_profile(df_s002, n_clusters=6)
             
             # Create OHLC for frontend
             ohlc = []
@@ -135,9 +141,34 @@ def get_chart_data(slug):
                     "close": float(row['Close'])
                 })
             
+            # Predict future times for 2 days buffer (48 hours)
+            if ohlc:
+                try:
+                    import re
+                    # parse interval string to seconds (e.g. '5m' -> 300)
+                    match = re.match(r"(\d+)([a-zA-Z]+)", interval)
+                    if match:
+                        val, unit = int(match.group(1)), match.group(2).lower()
+                        if unit == 'm': sec = val * 60
+                        elif unit == 'h': sec = val * 3600
+                        elif unit == 'd': sec = val * 86400
+                        else: sec = 300
+                    else:
+                        sec = 300
+                    
+                    # 避免 24 小時市場的 5分K 塞入 500 多根導致縮放太過極端
+                    # 預設 150~200 根即有視覺上兩天的留白效果，依照使用者需求再減半為 100 以下，現在再度減半為 50 根
+                    bars_to_add = min(int((48 * 3600) / sec), 50)
+                    last_time = ohlc[-1]["time"]
+                    for i in range(1, bars_to_add + 1):
+                        ohlc.append({"time": last_time + i * sec})
+                except Exception as e:
+                    print(f"Error appending future timescale: {e}")
+            
             data = {
                 "ohlc": ohlc,
                 "volume_profile": profile,
+                "pocs": pocs,
                 "indicator": [], # Placeholder to avoid errors
                 "signal": [],
                 "markers": []

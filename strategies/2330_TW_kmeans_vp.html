@@ -1,0 +1,137 @@
+
+<!DOCTYPE html>
+        body {
+            margin: 0; padding: 0;
+            background-color: #000000; color: #ffffff;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            display: flex; flex-direction: column; height: 100vh; overflow: hidden;
+        }
+    <title>Clusters Volume Profile: 2330.TW</title>
+    <script src="https://unpkg.com/lightweight-charts@4.2.1/dist/lightweight-charts.standalone.production.js"></script>
+    <style>
+        body {
+            margin: 0; padding: 0;
+            background-color: #000000; color: #ffffff;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            display: flex; flex-direction: column; height: 100vh; overflow: hidden;
+        }
+        header {
+            padding: 15px 30px; background: rgba(255, 255, 255, 0.02);
+            border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+            display: flex; justify-content: space-between; align-items: center; z-index: 100;
+        }
+        main { flex: 1; display: flex; position: relative; padding: 0; overflow: hidden; }
+        #chart-container { flex: 1; height: 100%; background: #000000; position: relative; }
+        #profile-overlay {
+            position: absolute; top: 40px; right: 80px; bottom: 60px; width: 300px;
+            z-index: 20; display: flex; flex-direction: column; pointer-events: none; padding-right: 0px;
+        }
+        .v-row { flex: 1; display: flex; align-items: center; position: relative; }
+        .v-bar { height: 2px; border-radius: 4px 0 0 4px; margin-left: auto; }
+        .v-marker { position: absolute; left: 0; right: 0; display: flex; align-items: center; gap: 10px; transform: translateY(-50%); }
+        .v-line { flex: 1; height: 1px; background-image: linear-gradient(to right, currentColor 50%, transparent 50%); background-size: 3px 1px; background-repeat: repeat-x; }
+        .v-label {
+            font-size: 9px; font-weight: 900; background: rgba(0, 0, 0, 0.6);
+            padding: 2px 4px; border-radius: 3px; white-space: nowrap;
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <div class="title"><span class="symbol">2330.TW</span> Clusters Volume Profile [K-Means]</div>
+        <div style="font-size: 11px; opacity: 0.4;">Exported: <script>document.write(new Date().toLocaleString())</script></div>
+    </header>
+    <main>
+        <div id="chart-container">
+            <div id="chart" style="width: 100%; height: 100%;"></div>
+            <div id="profile-overlay"></div>
+            <div id="markers-container" style="position: absolute; inset: 0; pointer-events: none; z-index: 21; margin: 40px 80px 60px 10px;"></div>
+        </div>
+    </main>
+
+    <script>
+        const data = {"ohlc": [{"time": 1773882000.0, "open": 1875.0, "high": 1880.0, "low": 1870.0, "close": 1875.0}, {"time": 1773882300.0, "open": 1870.0, "high": 1875.0, "low": 1870.0, "close": 1870.0}, {"time": 1773882600.0, "open": 1870.0, "high": 1875.0, "low": 1870.0, "close": 1870.0}, {"time": 1773882900.0, "open": 1875.0, "high": 1875.0, "low": 1870.0, "close": 1870.0}, {"time": 1773883200.0, "open": 1875.0, "high": 1875.0, "low": 1870.0, "close": 1870.0}, {"time": 1773883500.0, "open": 1875.0, "high": 1875.0, "low": 1865.0, "close": 1865.0}, {"time": 1773883800.0, "open": 1870.0, "high": 1870.0, "low": 1855.0, "close": 1860.0}, {"time": 1773884100.0, "open": 1865.0, "high": 1870.0, "low": 1860.0, "close": 1870.0}, {"time": 1773884400.0, "open": 1865.0, "high": 1870.0, "low": 1865.0, "close": 1870.0}, {"time": 1773884700.0, "open": 1870.0, "high": 1870.0, "low": 1865.0, "close": 1865.0}, {"time": 1773885000.0, "open": 1870.0, "high": 1870.0, "low": 1865.0, "close": 1865.0}, {"time": 1773885300.0, "open": 1870.0, "high": 1875.0, "low": 1865.0, "close": 1870.0}, {"time": 1773885600.0, "open": 1870.0, "high": 1870.0, "low": 1865.0, "close": 1870.0}, {"time": 1773885900.0, "open": 1870.0, "high": 1870.0, "low": 1865.0, "close": 1870.0}, {"time": 1773886200.0, "open": 1870.0, "high": 1870.0, "low": 1865.0, "close": 1865.0}, {"time": 1773886500.0, "open": 1870.0, "high": 1870.0, "low": 1865.0, "close": 1865.0}, {"time": 1773886800.0, "open": 1870.0, "high": 1870.0, "low": 1865.0, "close": 1865.0}, {"time": 1773887100.0, "open": 1870.0, "high": 1870.0, "low": 1865.0, "close": 1865.0}, {"time": 1773887400.0, "open": 1870.0, "high": 1875.0, "low": 1865.0, "close": 1875.0}, {"time": 1773887700.0, "open": 1875.0, "high": 1875.0, "low": 1870.0, "close": 1875.0}, {"time": 1773888000.0, "open": 1875.0, "high": 1875.0, "low": 1865.0, "close": 1870.0}, {"time": 1773888300.0, "open": 1870.0, "high": 1870.0, "low": 1865.0, "close": 1865.0}, {"time": 1773888600.0, "open": 1870.0, "high": 1870.0, "low": 1865.0, "close": 1865.0}, {"time": 1773888900.0, "open": 1870.0, "high": 1870.0, "low": 1865.0, "close": 1865.0}, {"time": 1773889200.0, "open": 1870.0, "high": 1870.0, "low": 1865.0, "close": 1865.0}, {"time": 1773889500.0, "open": 1865.0, "high": 1870.0, "low": 1865.0, "close": 1865.0}, {"time": 1773889800.0, "open": 1865.0, "high": 1870.0, "low": 1865.0, "close": 1865.0}, {"time": 1773890100.0, "open": 1865.0, "high": 1870.0, "low": 1865.0, "close": 1865.0}, {"time": 1773890400.0, "open": 1865.0, "high": 1870.0, "low": 1865.0, "close": 1865.0}, {"time": 1773890700.0, "open": 1865.0, "high": 1870.0, "low": 1865.0, "close": 1865.0}, {"time": 1773891000.0, "open": 1865.0, "high": 1870.0, "low": 1865.0, "close": 1865.0}, {"time": 1773891300.0, "open": 1865.0, "high": 1870.0, "low": 1865.0, "close": 1870.0}, {"time": 1773891600.0, "open": 1865.0, "high": 1870.0, "low": 1865.0, "close": 1865.0}, {"time": 1773891900.0, "open": 1870.0, "high": 1870.0, "low": 1860.0, "close": 1865.0}, {"time": 1773892200.0, "open": 1860.0, "high": 1865.0, "low": 1860.0, "close": 1860.0}, {"time": 1773892500.0, "open": 1865.0, "high": 1865.0, "low": 1860.0, "close": 1865.0}, {"time": 1773892800.0, "open": 1865.0, "high": 1865.0, "low": 1860.0, "close": 1860.0}, {"time": 1773893100.0, "open": 1865.0, "high": 1865.0, "low": 1860.0, "close": 1860.0}, {"time": 1773893400.0, "open": 1860.0, "high": 1865.0, "low": 1860.0, "close": 1860.0}, {"time": 1773893700.0, "open": 1860.0, "high": 1865.0, "low": 1855.0, "close": 1860.0}, {"time": 1773894000.0, "open": 1855.0, "high": 1860.0, "low": 1855.0, "close": 1855.0}, {"time": 1773894300.0, "open": 1855.0, "high": 1860.0, "low": 1855.0, "close": 1855.0}, {"time": 1773894600.0, "open": 1860.0, "high": 1860.0, "low": 1855.0, "close": 1855.0}, {"time": 1773894900.0, "open": 1855.0, "high": 1860.0, "low": 1850.0, "close": 1855.0}, {"time": 1773895200.0, "open": 1850.0, "high": 1860.0, "low": 1850.0, "close": 1855.0}, {"time": 1773895500.0, "open": 1855.0, "high": 1860.0, "low": 1855.0, "close": 1855.0}, {"time": 1773895800.0, "open": 1855.0, "high": 1860.0, "low": 1855.0, "close": 1855.0}, {"time": 1773896100.0, "open": 1855.0, "high": 1860.0, "low": 1855.0, "close": 1855.0}, {"time": 1773896400.0, "open": 1855.0, "high": 1860.0, "low": 1850.0, "close": 1855.0}, {"time": 1773896700.0, "open": 1855.0, "high": 1855.0, "low": 1850.0, "close": 1850.0}, {"time": 1773897000.0, "open": 1855.0, "high": 1855.0, "low": 1850.0, "close": 1855.0}, {"time": 1773897300.0, "open": 1850.0, "high": 1855.0, "low": 1850.0, "close": 1850.0}, {"time": 1773897600.0, "open": 1850.0, "high": 1860.0, "low": 1850.0, "close": 1855.0}, {"time": 1773968400.0, "open": 1860.0, "high": 1870.0, "low": 1855.0, "close": 1865.0}, {"time": 1773968700.0, "open": 1865.0, "high": 1865.0, "low": 1860.0, "close": 1865.0}, {"time": 1773969000.0, "open": 1865.0, "high": 1865.0, "low": 1855.0, "close": 1860.0}, {"time": 1773969300.0, "open": 1860.0, "high": 1860.0, "low": 1850.0, "close": 1850.0}, {"time": 1773969600.0, "open": 1850.0, "high": 1855.0, "low": 1845.0, "close": 1850.0}, {"time": 1773969900.0, "open": 1845.0, "high": 1855.0, "low": 1845.0, "close": 1855.0}, {"time": 1773970200.0, "open": 1855.0, "high": 1860.0, "low": 1850.0, "close": 1860.0}, {"time": 1773970500.0, "open": 1860.0, "high": 1860.0, "low": 1855.0, "close": 1860.0}, {"time": 1773970800.0, "open": 1855.0, "high": 1865.0, "low": 1855.0, "close": 1865.0}, {"time": 1773971100.0, "open": 1860.0, "high": 1865.0, "low": 1855.0, "close": 1855.0}, {"time": 1773971400.0, "open": 1860.0, "high": 1860.0, "low": 1855.0, "close": 1855.0}, {"time": 1773971700.0, "open": 1855.0, "high": 1860.0, "low": 1850.0, "close": 1855.0}, {"time": 1773972000.0, "open": 1855.0, "high": 1855.0, "low": 1850.0, "close": 1855.0}, {"time": 1773972300.0, "open": 1850.0, "high": 1860.0, "low": 1850.0, "close": 1860.0}, {"time": 1773972600.0, "open": 1850.0, "high": 1855.0, "low": 1850.0, "close": 1855.0}, {"time": 1773972900.0, "open": 1855.0, "high": 1860.0, "low": 1850.0, "close": 1860.0}, {"time": 1773973200.0, "open": 1860.0, "high": 1860.0, "low": 1855.0, "close": 1855.0}, {"time": 1773973500.0, "open": 1855.0, "high": 1855.0, "low": 1850.0, "close": 1855.0}, {"time": 1773973800.0, "open": 1855.0, "high": 1855.0, "low": 1850.0, "close": 1850.0}, {"time": 1773974100.0, "open": 1855.0, "high": 1860.0, "low": 1850.0, "close": 1855.0}, {"time": 1773974400.0, "open": 1855.0, "high": 1860.0, "low": 1850.0, "close": 1855.0}, {"time": 1773974700.0, "open": 1860.0, "high": 1860.0, "low": 1855.0, "close": 1855.0}, {"time": 1773975000.0, "open": 1855.0, "high": 1860.0, "low": 1855.0, "close": 1855.0}, {"time": 1773975300.0, "open": 1855.0, "high": 1860.0, "low": 1855.0, "close": 1855.0}, {"time": 1773975600.0, "open": 1860.0, "high": 1860.0, "low": 1850.0, "close": 1855.0}, {"time": 1773975900.0, "open": 1855.0, "high": 1855.0, "low": 1850.0, "close": 1855.0}, {"time": 1773976200.0, "open": 1855.0, "high": 1860.0, "low": 1850.0, "close": 1855.0}, {"time": 1773976500.0, "open": 1855.0, "high": 1860.0, "low": 1855.0, "close": 1855.0}, {"time": 1773976800.0, "open": 1855.0, "high": 1860.0, "low": 1855.0, "close": 1855.0}, {"time": 1773977100.0, "open": 1860.0, "high": 1860.0, "low": 1850.0, "close": 1855.0}, {"time": 1773977400.0, "open": 1855.0, "high": 1860.0, "low": 1855.0, "close": 1855.0}, {"time": 1773977700.0, "open": 1855.0, "high": 1860.0, "low": 1850.0, "close": 1855.0}, {"time": 1773978000.0, "open": 1855.0, "high": 1855.0, "low": 1850.0, "close": 1855.0}, {"time": 1773978300.0, "open": 1855.0, "high": 1855.0, "low": 1850.0, "close": 1850.0}, {"time": 1773978600.0, "open": 1855.0, "high": 1855.0, "low": 1850.0, "close": 1850.0}, {"time": 1773978900.0, "open": 1850.0, "high": 1855.0, "low": 1850.0, "close": 1850.0}, {"time": 1773979200.0, "open": 1855.0, "high": 1855.0, "low": 1850.0, "close": 1855.0}, {"time": 1773979500.0, "open": 1850.0, "high": 1855.0, "low": 1850.0, "close": 1855.0}, {"time": 1773979800.0, "open": 1850.0, "high": 1855.0, "low": 1845.0, "close": 1845.0}, {"time": 1773980100.0, "open": 1845.0, "high": 1845.0, "low": 1840.0, "close": 1840.0}, {"time": 1773980400.0, "open": 1840.0, "high": 1845.0, "low": 1840.0, "close": 1840.0}, {"time": 1773980700.0, "open": 1840.0, "high": 1845.0, "low": 1840.0, "close": 1840.0}, {"time": 1773981000.0, "open": 1840.0, "high": 1845.0, "low": 1840.0, "close": 1840.0}, {"time": 1773981300.0, "open": 1840.0, "high": 1845.0, "low": 1840.0, "close": 1845.0}, {"time": 1773981600.0, "open": 1845.0, "high": 1845.0, "low": 1840.0, "close": 1840.0}, {"time": 1773981900.0, "open": 1840.0, "high": 1845.0, "low": 1840.0, "close": 1840.0}, {"time": 1773982200.0, "open": 1845.0, "high": 1845.0, "low": 1840.0, "close": 1845.0}, {"time": 1773982500.0, "open": 1845.0, "high": 1845.0, "low": 1840.0, "close": 1845.0}, {"time": 1773982800.0, "open": 1845.0, "high": 1845.0, "low": 1840.0, "close": 1845.0}, {"time": 1773983100.0, "open": 1840.0, "high": 1845.0, "low": 1840.0, "close": 1840.0}, {"time": 1773983400.0, "open": 1840.0, "high": 1845.0, "low": 1840.0, "close": 1845.0}, {"time": 1773983700.0, "open": 1845.0, "high": 1845.0, "low": 1840.0, "close": 1845.0}, {"time": 1773984000.0, "open": 1845.0, "high": 1845.0, "low": 1840.0, "close": 1845.0}, {"time": 1773984300.0, "open": 1845.0, "high": 1845.0, "low": 1845.0, "close": 1845.0}, {"time": 1774227600.0, "open": 1790.0, "high": 1805.0, "low": 1785.0, "close": 1795.0}, {"time": 1774227900.0, "open": 1800.0, "high": 1800.0, "low": 1795.0, "close": 1800.0}, {"time": 1774228200.0, "open": 1800.0, "high": 1805.0, "low": 1795.0, "close": 1800.0}, {"time": 1774228500.0, "open": 1805.0, "high": 1805.0, "low": 1800.0, "close": 1800.0}, {"time": 1774228800.0, "open": 1805.0, "high": 1805.0, "low": 1795.0, "close": 1800.0}, {"time": 1774229100.0, "open": 1800.0, "high": 1800.0, "low": 1795.0, "close": 1800.0}, {"time": 1774229400.0, "open": 1800.0, "high": 1800.0, "low": 1795.0, "close": 1800.0}, {"time": 1774229700.0, "open": 1800.0, "high": 1805.0, "low": 1795.0, "close": 1805.0}, {"time": 1774230000.0, "open": 1805.0, "high": 1805.0, "low": 1800.0, "close": 1800.0}, {"time": 1774230300.0, "open": 1805.0, "high": 1810.0, "low": 1800.0, "close": 1810.0}, {"time": 1774230600.0, "open": 1810.0, "high": 1810.0, "low": 1800.0, "close": 1805.0}, {"time": 1774230900.0, "open": 1805.0, "high": 1810.0, "low": 1800.0, "close": 1805.0}, {"time": 1774231200.0, "open": 1805.0, "high": 1810.0, "low": 1805.0, "close": 1805.0}, {"time": 1774231500.0, "open": 1805.0, "high": 1810.0, "low": 1805.0, "close": 1805.0}, {"time": 1774231800.0, "open": 1810.0, "high": 1810.0, "low": 1805.0, "close": 1805.0}, {"time": 1774232100.0, "open": 1805.0, "high": 1805.0, "low": 1800.0, "close": 1800.0}, {"time": 1774232400.0, "open": 1805.0, "high": 1810.0, "low": 1800.0, "close": 1810.0}, {"time": 1774232700.0, "open": 1810.0, "high": 1810.0, "low": 1805.0, "close": 1805.0}, {"time": 1774233000.0, "open": 1805.0, "high": 1810.0, "low": 1800.0, "close": 1800.0}, {"time": 1774233300.0, "open": 1800.0, "high": 1805.0, "low": 1800.0, "close": 1800.0}, {"time": 1774233600.0, "open": 1800.0, "high": 1805.0, "low": 1800.0, "close": 1800.0}, {"time": 1774233900.0, "open": 1805.0, "high": 1805.0, "low": 1800.0, "close": 1800.0}, {"time": 1774234200.0, "open": 1805.0, "high": 1805.0, "low": 1800.0, "close": 1800.0}, {"time": 1774234500.0, "open": 1800.0, "high": 1805.0, "low": 1795.0, "close": 1800.0}, {"time": 1774234800.0, "open": 1795.0, "high": 1805.0, "low": 1795.0, "close": 1800.0}, {"time": 1774235100.0, "open": 1805.0, "high": 1805.0, "low": 1800.0, "close": 1800.0}, {"time": 1774235400.0, "open": 1805.0, "high": 1805.0, "low": 1800.0, "close": 1800.0}, {"time": 1774235700.0, "open": 1800.0, "high": 1800.0, "low": 1795.0, "close": 1795.0}, {"time": 1774236000.0, "open": 1800.0, "high": 1800.0, "low": 1795.0, "close": 1800.0}, {"time": 1774236300.0, "open": 1795.0, "high": 1805.0, "low": 1795.0, "close": 1800.0}, {"time": 1774236600.0, "open": 1805.0, "high": 1805.0, "low": 1800.0, "close": 1800.0}, {"time": 1774236900.0, "open": 1805.0, "high": 1805.0, "low": 1795.0, "close": 1795.0}, {"time": 1774237200.0, "open": 1800.0, "high": 1800.0, "low": 1795.0, "close": 1800.0}, {"time": 1774237500.0, "open": 1800.0, "high": 1800.0, "low": 1795.0, "close": 1800.0}, {"time": 1774237800.0, "open": 1800.0, "high": 1805.0, "low": 1800.0, "close": 1805.0}, {"time": 1774238100.0, "open": 1800.0, "high": 1805.0, "low": 1800.0, "close": 1800.0}, {"time": 1774238400.0, "open": 1805.0, "high": 1805.0, "low": 1795.0, "close": 1800.0}, {"time": 1774238700.0, "open": 1800.0, "high": 1800.0, "low": 1795.0, "close": 1800.0}, {"time": 1774239000.0, "open": 1800.0, "high": 1800.0, "low": 1795.0, "close": 1795.0}, {"time": 1774239300.0, "open": 1800.0, "high": 1805.0, "low": 1795.0, "close": 1805.0}, {"time": 1774239600.0, "open": 1805.0, "high": 1805.0, "low": 1800.0, "close": 1800.0}, {"time": 1774239900.0, "open": 1805.0, "high": 1805.0, "low": 1800.0, "close": 1805.0}, {"time": 1774240200.0, "open": 1805.0, "high": 1805.0, "low": 1800.0, "close": 1800.0}, {"time": 1774240500.0, "open": 1805.0, "high": 1805.0, "low": 1800.0, "close": 1800.0}, {"time": 1774240800.0, "open": 1800.0, "high": 1805.0, "low": 1800.0, "close": 1800.0}, {"time": 1774241100.0, "open": 1800.0, "high": 1805.0, "low": 1800.0, "close": 1805.0}, {"time": 1774241400.0, "open": 1805.0, "high": 1805.0, "low": 1800.0, "close": 1800.0}, {"time": 1774241700.0, "open": 1805.0, "high": 1805.0, "low": 1800.0, "close": 1805.0}, {"time": 1774242000.0, "open": 1805.0, "high": 1810.0, "low": 1800.0, "close": 1805.0}, {"time": 1774242300.0, "open": 1810.0, "high": 1810.0, "low": 1805.0, "close": 1810.0}, {"time": 1774242600.0, "open": 1810.0, "high": 1810.0, "low": 1805.0, "close": 1810.0}, {"time": 1774242900.0, "open": 1810.0, "high": 1815.0, "low": 1805.0, "close": 1815.0}, {"time": 1774243200.0, "open": 1810.0, "high": 1815.0, "low": 1805.0, "close": 1810.0}], "volume_profile": [{"price": 1785.5, "volume": 0.0, "color": "rgba(171, 71, 188, 0.75)"}, {"price": 1786.5, "volume": 0.0, "color": "rgba(171, 71, 188, 0.75)"}, {"price": 1787.5, "volume": 0.0, "color": "rgba(171, 71, 188, 0.75)"}, {"price": 1788.5, "volume": 0.0, "color": "rgba(171, 71, 188, 0.75)"}, {"price": 1789.5, "volume": 0.0, "color": "rgba(171, 71, 188, 0.75)"}, {"price": 1790.5, "volume": 0.0, "color": "rgba(171, 71, 188, 0.75)"}, {"price": 1791.5, "volume": 0.0, "color": "rgba(171, 71, 188, 0.75)"}, {"price": 1792.5, "volume": 0.0, "color": "rgba(171, 71, 188, 0.75)"}, {"price": 1793.5, "volume": 0.0, "color": "rgba(171, 71, 188, 0.75)"}, {"price": 1794.5, "volume": 0.0, "color": "rgba(171, 71, 188, 0.75)"}, {"price": 1795.5, "volume": 2057920.4, "color": "rgba(171, 71, 188, 0.75)"}, {"price": 1796.5, "volume": 2057920.4, "color": "rgba(171, 71, 188, 0.75)"}, {"price": 1797.5, "volume": 2057920.4, "color": "rgba(171, 71, 188, 0.75)"}, {"price": 1798.5, "volume": 2057920.4, "color": "rgba(171, 71, 188, 0.75)"}, {"price": 1799.5, "volume": 2057920.4, "color": "rgba(171, 71, 188, 0.75)"}, {"price": 1800.38, "volume": 291089.77, "color": "rgba(255, 167, 38, 0.75)"}, {"price": 1800.5, "volume": 2379497.4, "color": "rgba(171, 71, 188, 0.75)"}, {"price": 1801.12, "volume": 291089.77, "color": "rgba(255, 167, 38, 0.75)"}, {"price": 1801.5, "volume": 2379497.4, "color": "rgba(171, 71, 188, 0.75)"}, {"price": 1801.88, "volume": 291089.77, "color": "rgba(255, 167, 38, 0.75)"}, {"price": 1802.5, "volume": 2379497.4, "color": "rgba(171, 71, 188, 0.75)"}, {"price": 1802.62, "volume": 291089.77, "color": "rgba(255, 167, 38, 0.75)"}, {"price": 1803.38, "volume": 291089.77, "color": "rgba(255, 167, 38, 0.75)"}, {"price": 1803.5, "volume": 2379497.4, "color": "rgba(171, 71, 188, 0.75)"}, {"price": 1804.12, "volume": 291089.77, "color": "rgba(255, 167, 38, 0.75)"}, {"price": 1804.5, "volume": 2379497.4, "color": "rgba(171, 71, 188, 0.75)"}, {"price": 1804.88, "volume": 440566.82, "color": "rgba(255, 167, 38, 0.75)"}, {"price": 1805.62, "volume": 739520.92, "color": "rgba(255, 167, 38, 0.75)"}, {"price": 1806.38, "volume": 739520.92, "color": "rgba(255, 167, 38, 0.75)"}, {"price": 1807.12, "volume": 739520.92, "color": "rgba(255, 167, 38, 0.75)"}, {"price": 1807.88, "volume": 739520.92, "color": "rgba(255, 167, 38, 0.75)"}, {"price": 1808.62, "volume": 739520.92, "color": "rgba(255, 167, 38, 0.75)"}, {"price": 1809.38, "volume": 739520.92, "color": "rgba(255, 167, 38, 0.75)"}, {"price": 1810.12, "volume": 325168.27, "color": "rgba(255, 167, 38, 0.75)"}, {"price": 1810.88, "volume": 117991.95, "color": "rgba(255, 167, 38, 0.75)"}, {"price": 1811.62, "volume": 117991.95, "color": "rgba(255, 167, 38, 0.75)"}, {"price": 1812.38, "volume": 117991.95, "color": "rgba(255, 167, 38, 0.75)"}, {"price": 1813.12, "volume": 117991.95, "color": "rgba(255, 167, 38, 0.75)"}, {"price": 1813.88, "volume": 117991.95, "color": "rgba(255, 167, 38, 0.75)"}, {"price": 1814.62, "volume": 117991.95, "color": "rgba(255, 167, 38, 0.75)"}, {"price": 1840.5, "volume": 1881005.0, "color": "rgba(239, 83, 80, 0.75)"}, {"price": 1841.5, "volume": 1881005.0, "color": "rgba(239, 83, 80, 0.75)"}, {"price": 1842.5, "volume": 1881005.0, "color": "rgba(239, 83, 80, 0.75)"}, {"price": 1843.5, "volume": 1881005.0, "color": "rgba(239, 83, 80, 0.75)"}, {"price": 1844.5, "volume": 1881005.0, "color": "rgba(239, 83, 80, 0.75)"}, {"price": 1845.5, "volume": 423802.2, "color": "rgba(239, 83, 80, 0.75)"}, {"price": 1846.5, "volume": 423802.2, "color": "rgba(239, 83, 80, 0.75)"}, {"price": 1847.5, "volume": 423802.2, "color": "rgba(239, 83, 80, 0.75)"}, {"price": 1848.5, "volume": 423802.2, "color": "rgba(239, 83, 80, 0.75)"}, {"price": 1849.5, "volume": 423802.2, "color": "rgba(239, 83, 80, 0.75)"}, {"price": 1850.5, "volume": 2189822.7, "color": "rgba(239, 83, 80, 0.75)"}, {"price": 1851.5, "volume": 2189822.7, "color": "rgba(239, 83, 80, 0.75)"}, {"price": 1852.5, "volume": 2189822.7, "color": "rgba(239, 83, 80, 0.75)"}, {"price": 1853.5, "volume": 2189822.7, "color": "rgba(239, 83, 80, 0.75)"}, {"price": 1854.5, "volume": 2189822.7, "color": "rgba(239, 83, 80, 0.75)"}, {"price": 1855.5, "volume": 985850.3, "color": "rgba(239, 83, 80, 0.75)"}, {"price": 1855.62, "volume": 1742473.92, "color": "rgba(66, 165, 245, 0.75)"}, {"price": 1856.5, "volume": 985850.3, "color": "rgba(239, 83, 80, 0.75)"}, {"price": 1856.88, "volume": 1742473.92, "color": "rgba(66, 165, 245, 0.75)"}, {"price": 1857.5, "volume": 985850.3, "color": "rgba(239, 83, 80, 0.75)"}, {"price": 1858.12, "volume": 1742473.92, "color": "rgba(66, 165, 245, 0.75)"}, {"price": 1858.5, "volume": 985850.3, "color": "rgba(239, 83, 80, 0.75)"}, {"price": 1859.38, "volume": 1742473.92, "color": "rgba(66, 165, 245, 0.75)"}, {"price": 1859.5, "volume": 985850.3, "color": "rgba(239, 83, 80, 0.75)"}, {"price": 1860.62, "volume": 1806764.92, "color": "rgba(66, 165, 245, 0.75)"}, {"price": 1861.88, "volume": 1806764.92, "color": "rgba(66, 165, 245, 0.75)"}, {"price": 1863.12, "volume": 1806764.92, "color": "rgba(66, 165, 245, 0.75)"}, {"price": 1864.38, "volume": 1806764.92, "color": "rgba(66, 165, 245, 0.75)"}, {"price": 1865.62, "volume": 2112174.42, "color": "rgba(66, 165, 245, 0.75)"}, {"price": 1866.88, "volume": 2112174.42, "color": "rgba(66, 165, 245, 0.75)"}, {"price": 1868.12, "volume": 2112174.42, "color": "rgba(66, 165, 245, 0.75)"}, {"price": 1869.38, "volume": 2112174.42, "color": "rgba(66, 165, 245, 0.75)"}, {"price": 1870.62, "volume": 1048519.0, "color": "rgba(66, 165, 245, 0.75)"}, {"price": 1871.88, "volume": 1048519.0, "color": "rgba(66, 165, 245, 0.75)"}, {"price": 1873.12, "volume": 1048519.0, "color": "rgba(66, 165, 245, 0.75)"}, {"price": 1874.38, "volume": 1048519.0, "color": "rgba(66, 165, 245, 0.75)"}, {"price": 1875.62, "volume": 0.0, "color": "rgba(66, 165, 245, 0.75)"}, {"price": 1876.88, "volume": 0.0, "color": "rgba(66, 165, 245, 0.75)"}, {"price": 1878.12, "volume": 0.0, "color": "rgba(66, 165, 245, 0.75)"}, {"price": 1879.38, "volume": 0.0, "color": "rgba(66, 165, 245, 0.75)"}], "pocs": [{"price": 1800.5, "color": "rgba(171, 71, 188, 0.75)", "total_volume": 22187089.0}, {"price": 1805.62, "color": "rgba(255, 167, 38, 0.75)", "total_volume": 7657351.0}, {"price": 1850.5, "color": "rgba(239, 83, 80, 0.75)", "total_volume": 27402401.0}, {"price": 1865.62, "color": "rgba(66, 165, 245, 0.75)", "total_volume": 26839729.0}], "symbol": "2330.TW", "title": "Clusters Volume Profile [LuxAlgo]"};
+        
+        const profileOverlay = document.getElementById('profile-overlay');
+        const markersContainer = document.getElementById('markers-container');
+
+        const maxVol = Math.max(...data.volume_profile.map(p => p.volume));
+        const maxPrice = Math.max(...data.volume_profile.map(p => p.price));
+        const minPrice = Math.min(...data.volume_profile.map(p => p.price));
+        const priceRange = maxPrice - minPrice || 1;
+        
+        // Render Volume Bins (Absolute positioning mapped to chart)
+        const renderOverlay = () => {
+            profileOverlay.innerHTML = '';
+            markersContainer.innerHTML = '';
+            
+            // Re-render based on chart scale
+            [...data.volume_profile].sort((a, b) => b.price - a.price).forEach(p => {
+                const yPos = candleSeries.priceToCoordinate(p.price);
+                if(yPos === null) return;
+                
+                // create horizontal bar
+                const row = document.createElement('div');
+                row.className = 'v-row';
+                row.style.position = 'absolute';
+                row.style.top = (yPos - 2) + 'px'; // assume 4px height bin
+                row.style.height = '4px';
+                row.style.left = '0';
+                row.style.right = '0';
+                
+                const bar = document.createElement('div');
+                bar.className = 'v-bar';
+                bar.style.width = (p.volume / maxVol * 100) + '%';
+                bar.style.backgroundColor = p.color;
+                bar.style.opacity = '0.6';
+                row.appendChild(bar);
+                profileOverlay.appendChild(row);
+            });
+
+            // Render POC lines
+            (data.pocs || []).forEach(poc => {
+                const yPos = candleSeries.priceToCoordinate(poc.price);
+                if (yPos === null) return;
+                
+                const marker = document.createElement('div');
+                marker.className = 'v-marker';
+                marker.style.position = 'absolute';
+                marker.style.top = yPos + 'px';
+                marker.style.color = poc.color;
+                marker.style.width = '100%';
+                
+                marker.innerHTML = `
+                    <div class="v-label" style="background: transparent;">${(poc.total_volume/1000).toFixed(1)}K</div>
+                    <div class="v-line" style="color: ${poc.color}; opacity: 0.9;"></div>
+                    <div class="v-label" style="border: 1px solid ${poc.color}33;">Total: ${(poc.total_volume/1000).toFixed(1)}K</div>
+                `;
+                markersContainer.appendChild(marker);
+            });
+        };
+
+        // Main Chart Setup
+        const chart = LightweightCharts.createChart(document.getElementById('chart'), {
+            layout: { background: { type: 'solid', color: '#000000' }, textColor: '#d1d4dc' },
+            grid: { vertLines: { color: 'rgba(255, 255, 255, 0.05)' }, horzLines: { color: 'rgba(255, 255, 255, 0.05)' } },
+            timeScale: { borderColor: 'rgba(255, 255, 255, 0.1)', timeVisible: true, rightOffset: 150 }, // Right offset reserved space for ~2 days
+            rightPriceScale: { borderColor: 'rgba(255, 255, 255, 0.1)' }
+        });
+
+        const candleSeries = chart.addCandlestickSeries({
+            upColor: '#089981', downColor: '#f23645', borderVisible: false,
+            wickUpColor: '#089981', wickDownColor: '#f23645'
+        });
+        candleSeries.setData(data.ohlc);
+
+        // Render initially and on zoom/pan
+        chart.timeScale().subscribeVisibleLogicalRangeChange(renderOverlay);
+        chart.timeScale().subscribeSizeChange(renderOverlay);
+
+        setTimeout(renderOverlay, 100);
+
+        window.addEventListener('resize', () => {
+            chart.applyOptions({ width: document.getElementById('chart-container').offsetWidth });
+        });
+    </script>
+</body>
+</html>

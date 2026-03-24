@@ -25,6 +25,7 @@ def get_data(symbol="2330", limit=2000, source="yahoo"):
     獲取數據核心函數
     source="local": 從 PostgreSQL 資料庫獲取 (適合精確回測)
     source="yahoo": 從 Yahoo Finance 獲取 (適合快速網頁展示)
+    預設使用近三天資料
     """
     if source == "yahoo":
         try:
@@ -35,7 +36,7 @@ def get_data(symbol="2330", limit=2000, source="yahoo"):
             else:
                 fetch_symbol = symbol
                 
-            df = yf.download(fetch_symbol, period="1mo", interval="5m", progress=False)
+            df = yf.download(fetch_symbol, period="3d", interval="5m", progress=False)
             if df.empty: raise ValueError("No data from yfinance")
             
             # 統一欄位名稱
@@ -87,9 +88,10 @@ def calculate_clusters_volume_profile(df, n_clusters=5, iterations=10, n_bins=12
     volumes = latest_window['volume'].values
     
     p_min, p_max = latest_window['low'].min(), latest_window['high'].max()
-    if p_max == p_min: p_max += 0.1
-    # Initial centroids: linearly spaced
-    centroids = np.linspace(p_min, p_max, n_clusters)
+    if p_max <= p_min: p_max = p_min + 0.1
+    # Initial centroids: evenly spaced (Pine script implementation)
+    step = (p_max - p_min) / (n_clusters + 1)
+    centroids = np.array([p_min + (i + 1) * step for i in range(n_clusters)])
     assignments = np.zeros(len(prices), dtype=int)
     
     # 2. Iterations (1D K-Means)
@@ -128,19 +130,22 @@ def calculate_clusters_volume_profile(df, n_clusters=5, iterations=10, n_bins=12
         c_min, c_max = cluster_df['low'].min(), cluster_df['high'].max()
         
         # Calculate profile for this cluster
-        bins = np.linspace(c_min, c_max, max(10, n_bins // n_clusters))
+        fixed_rows = 20
+        bins = np.linspace(c_min, c_max, fixed_rows + 1)
         bin_centers = (bins[:-1] + bins[1:]) / 2
-        bin_vap = np.zeros(len(bins)-1)
+        bin_vap = np.zeros(fixed_rows)
         
         for _, row in cluster_df.iterrows():
-            # Distribute volume across bins hit by the candle (overlap detection)
-            bar_bins = (bins[:-1] < row['high']) & (bins[1:] > row['low'])
-            if bar_bins.any():
-                bin_vap[bar_bins] += row['volume'] / bar_bins.sum()
-            else:
-                # Fallback to HLC2 binning
-                idx = np.digitize(row['hlc2'], bins) - 1
-                if 0 <= idx < len(bin_vap): bin_vap[idx] += row['volume']
+            wick_range = max(row['high'] - row['low'], 0.01) # fallback mintick
+            
+            for b_idx in range(fixed_rows):
+                bin_b = bins[b_idx]
+                bin_t = bins[b_idx + 1]
+                intersect_l = max(row['low'], bin_b)
+                intersect_h = min(row['high'], bin_t)
+                
+                if intersect_h > intersect_l:
+                    bin_vap[b_idx] += row['volume'] * (intersect_h - intersect_l) / wick_range
         
         # Total Volume and POC for the cluster
         total_vol = cluster_df['volume'].sum()
