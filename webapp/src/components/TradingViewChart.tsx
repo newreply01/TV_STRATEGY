@@ -136,8 +136,9 @@ export default function TradingViewChart({ slug, symbol = 'AAPL' }: { slug: stri
 
     if (chartContainerRef.current) {
         const chart = chartRef.current!;
+        const isS002 = slug.includes('Volume-Profile');
         chart.timeScale().applyOptions({
-            rightOffset: 30,
+            rightOffset: isS002 ? 150 : 30,
             barSpacing: 6,
             minBarSpacing: 0.5,
         });
@@ -195,10 +196,11 @@ export default function TradingViewChart({ slug, symbol = 'AAPL' }: { slug: stri
             const actualData = chartData.ohlc.filter((d: any) => d.close !== undefined);
             const actualLength = actualData.length;
             const lastTime = chartData.ohlc[dataLength - 1].time as any;
+            const extraSpace = isS002 ? 86400 : 0;
             
-            // 取實際資料倒數 150 根為起點，這樣 K 線才會出現在畫面左側，右撇才是未來趨勢空間
+            // 取實際資料倒數 150 根為起點，這樣 K 線才會出現在畫面左側，右側則是未來趨勢空間
             const firstTime = actualData[Math.max(0, actualLength - 150)].time as any;
-            chartRef.current.timeScale().setVisibleRange({ from: firstTime, to: lastTime });
+            chartRef.current.timeScale().setVisibleRange({ from: firstTime, to: lastTime + extraSpace });
           } else {
             chartRef.current.timeScale().fitContent();
           }
