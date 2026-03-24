@@ -81,7 +81,7 @@ def get_chart_data(slug):
             
         elif strategy_id == "s002_clusters_volume_profile":
             from python_modules.s002_clusters_volume_profile.web.indicator import main as get_s002_data
-            result = get_s002_data(symbol)
+            result = get_s002_data(symbol, period=period, interval=interval)
             return jsonify(result)
             
         return jsonify({"error": "Strategy implementation not found"}), 404
