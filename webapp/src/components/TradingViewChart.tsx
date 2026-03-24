@@ -32,6 +32,7 @@ export default function TradingViewChart({ slug, symbol = 'AAPL' }: { slug: stri
   const signalSeriesRef = useRef<any>(null);
 
   const [isFocused, setIsFocused] = useState(false);
+  const [hoverData, setHoverData] = useState<any>(null);
 
   useEffect(() => {
     if (!chartContainerRef.current) return;
@@ -212,6 +213,25 @@ export default function TradingViewChart({ slug, symbol = 'AAPL' }: { slug: stri
           }
         }
         setLoading(false);
+
+        // Crosshair Move Handling
+        chartRef.current.subscribeCrosshairMove((param) => {
+           if (param.time && param.seriesData.size > 0) {
+              const ohlc = param.seriesData.get(candlestickSeriesRef.current);
+              const flow = flowSeriesRef.current ? param.seriesData.get(flowSeriesRef.current) : null;
+              const signal = signalSeriesRef.current ? param.seriesData.get(signalSeriesRef.current) : null;
+              
+              setHoverData({
+                time: param.time,
+                ohlc: ohlc,
+                flow: flow,
+                signal: signal
+              });
+           } else {
+              setHoverData(null);
+           }
+        });
+
       } catch (e: any) {
         console.error('[CHART ERROR]', e);
         if (active) setError(e.message);
