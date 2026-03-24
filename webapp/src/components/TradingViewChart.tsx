@@ -164,12 +164,9 @@ export default function TradingViewChart({ slug, symbol = 'AAPL' }: { slug: stri
     const host = typeof window !== 'undefined' ? window.location.hostname : '127.0.0.1';
     
     // Support remote API URL via env var, fallback to dynamic hostname on port 26001
-    const apiBase = process.env.NEXT_PUBLIC_API_URL || 
-                    (typeof window !== 'undefined' && window.location.hostname !== 'localhost' && !window.location.hostname.includes('127.0.0.1')
-                      ? '' // If on cloud and no API_URL set, try relative or empty (user must set it)
-                      : `http://${host}:26001`);
+    const apiBase = process.env.NEXT_PUBLIC_API_URL || '/api/py';
                       
-    const url = `${apiBase}/api/charts/${slug}?symbol=${symbol}&interval=${interval}&period=${period}&source=${sourceParam}`;
+    const url = `${apiBase}/charts/${slug}?symbol=${symbol}&interval=${interval}&period=${period}&source=${sourceParam}`;
 
     setLoading(true);
     fetch(url).then(res => res.json()).then((chartData: ChartData) => {
