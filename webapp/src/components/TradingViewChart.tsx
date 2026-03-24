@@ -271,7 +271,46 @@ export default function TradingViewChart({ slug, symbol = 'AAPL' }: { slug: stri
       )}
       onMouseDown={() => setIsFocused(true)}
     >
-      {/* Permanent HUD */}
+      {/* Strategy Legend HUD (Professional View) */}
+      <div className="absolute top-6 left-8 z-30 pointer-events-none flex flex-col gap-1">
+        <div className="flex items-center gap-3">
+           <span className="text-lg font-black text-white tracking-tighter">
+             {symbol} <span className="opacity-30 text-xs ml-1 font-medium">{isS001 ? '15m' : '5m'}</span>
+           </span>
+           <div className="flex items-center gap-2">
+              <span className="text-[10px] font-black px-1.5 py-0.5 rounded bg-brand-primary/10 text-brand-primary border border-brand-primary/20">LIVE</span>
+           </div>
+        </div>
+        
+        <div className="flex items-center gap-4 text-[11px] font-bold">
+           {hoverData ? (
+             <>
+               <div className="flex items-center gap-1.5 bg-black/40 px-2 py-0.5 rounded-full border border-white/5 backdrop-blur-sm">
+                  <span className="text-zinc-500 uppercase">O</span><span className={hoverData.ohlc?.close > hoverData.ohlc?.open ? "text-cyan-400" : "text-rose-500"}>{hoverData.ohlc?.open?.toFixed(2)}</span>
+                  <span className="text-zinc-500 uppercase">H</span><span className={hoverData.ohlc?.close > hoverData.ohlc?.open ? "text-cyan-400" : "text-rose-500"}>{hoverData.ohlc?.high?.toFixed(2)}</span>
+                  <span className="text-zinc-500 uppercase">L</span><span className={hoverData.ohlc?.close > hoverData.ohlc?.open ? "text-cyan-400" : "text-rose-500"}>{hoverData.ohlc?.low?.toFixed(2)}</span>
+                  <span className="text-zinc-500 uppercase">C</span><span className={hoverData.ohlc?.close > hoverData.ohlc?.open ? "text-cyan-400" : "text-rose-500"}>{hoverData.ohlc?.close?.toFixed(2)}</span>
+               </div>
+               {isS001 && hoverData.flow && (
+                 <div className="flex items-center gap-3">
+                    <div className="flex items-center gap-1 bg-cyan-500/10 px-2 py-0.5 rounded-full border border-cyan-500/20 text-cyan-400">
+                       <span className="uppercase text-[9px] opacity-70">Flow</span>
+                       <span className="font-black">{hoverData.flow.value?.toFixed(2)}</span>
+                    </div>
+                    {hoverData.signal && (
+                       <div className="flex items-center gap-1 bg-white/5 px-2 py-0.5 rounded-full border border-white/10 text-zinc-300">
+                          <span className="uppercase text-[9px] opacity-70">Sig</span>
+                          <span className="font-bold">{hoverData.signal.value?.toFixed(2)}</span>
+                       </div>
+                    )}
+                 </div>
+               )}
+             </>
+           ) : (
+             <span className="text-zinc-600 animate-pulse uppercase tracking-widest text-[9px]">Awaiting Market Data Stream...</span>
+           )}
+        </div>
+      </div>
       {!isFocused && (
         <div className="absolute inset-0 z-[60] flex items-center justify-center bg-black/5 pointer-events-none">
           <div className="px-4 py-2 bg-brand-primary text-white text-sm font-black rounded-xl shadow-2xl opacity-0 group-hover:opacity-100 transition-all duration-300 translate-y-2 group-hover:translate-y-0 text-center">
