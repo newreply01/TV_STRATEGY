@@ -135,6 +135,15 @@ def get_chart_data(slug):
     else:
         return jsonify({"error": f"No data found from {source} for {symbol}"}), 404
 
+@app.errorhandler(Exception)
+def handle_exception(e):
+    logger.error(f"Unhandled Exception: {str(e)}")
+    return jsonify({
+        "error": str(e),
+        "type": str(type(e).__name__),
+        "status": "error"
+    }), 500
+
 # Vercel entry point
 # No app.run() needed, but we can wrap it for local dev
 if __name__ == "__main__":
