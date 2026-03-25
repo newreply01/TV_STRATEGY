@@ -189,14 +189,16 @@ def main(symbol="2330"):
             "close": float(row['close'])
         })
     
-    # Inject Future Empty Bars (1.5 Days = 144 bars at 15m)
+    # Inject Future Empty Bars (1.5 Days)
     if ohlc:
         last_t = ohlc[-1]['time']
-        for i in range(1, 145):
-            future_t = last_t + (i * 900)
+        step = 300 if '5' in interval else (900 if '15' in interval else 3600)
+        # For 1.5 days at 5m: 1.5 * 24 * 12 = 432 bars
+        # For 1.5 days at 15m: 1.5 * 24 * 4 = 144 bars
+        num_bars = 432 if '5' in interval else 144
+        for i in range(1, num_bars + 1):
+            future_t = last_t + (i * step)
             ohlc.append({"time": future_t})
-            # Also add to profile as placeholder if needed
-            profile.append({"time": future_t, "price": None, "volume": None, "color": "transparent"})
             
     return {
         "ohlc": ohlc,

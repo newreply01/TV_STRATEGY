@@ -187,15 +187,14 @@ def get_omni_flow_data(df, interval="15m"):
             print(f"{dt:<20} | {shape:<12} | {m['position']:<10} | {m['color']}")
         print("-" * 60)
             
-    # Inject Future Empty Bars (0.5 Day = 48 bars at 15m)
+    # Inject Future Empty Bars (0.5 Day)
     if ohlc:
         last_t = ohlc[-1]['time']
+        # Dynamically determine step from interval (e.g. '15m' -> 900)
+        step = 900 if '15' in interval else (300 if '5' in interval else 3600)
         for i in range(1, 49):
-            future_t = last_t + (i * 900)
+            future_t = last_t + (i * step)
             ohlc.append({"time": future_t}) 
-            # Adding null values to trigger time labels
-            indicator_main.append({"time": future_t, "value": None})
-            indicator_sig.append({"time": future_t, "value": None})
 
     return {
         "ohlc": ohlc,
