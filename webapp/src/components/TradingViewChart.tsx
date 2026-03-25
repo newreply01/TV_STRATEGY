@@ -205,11 +205,10 @@ export default function TradingViewChart({ slug, symbol = 'AAPL' }: { slug: stri
             const isS002 = slug.includes('Volume-Profile');
             const extraSpace = isS002 ? 86400 : (isS001 ? 43200 : 0);
             
-            // 依靠後端注入的未來虛擬節點來延伸時間軸
+            // 一次顯示所有數據範圍 (從第一根到最後一根注入的虛擬節點)
+            const firstTime = chartData.ohlc[0].time as any;
             const lastFutureTime = chartData.ohlc[dataLength - 1].time as any;
-            const firstTime = actualData[Math.max(0, actualLength - 80)].time as any;
             
-            // 使用 requestAnimationFrame 確保數據已同步到 timescale
             requestAnimationFrame(() => {
               if (chartRef.current) {
                 chartRef.current.timeScale().setVisibleRange({ 
