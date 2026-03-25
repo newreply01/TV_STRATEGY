@@ -27,9 +27,10 @@ export default function ScriptsListClient({ initialScripts }: { initialScripts: 
     if (imageUrl.startsWith('http') || imageUrl.startsWith('/')) return imageUrl;
     
     const id = imageUrl.length >= 5 ? imageUrl : slug.split('-')[0];
+    const firstLetter = id.charAt(0).toLowerCase();
     
-    // According to verify: /l/{id}.png is highly reliable for link-based IDs
-    return `https://s3.tradingview.com/l/${id}.png`;
+    // Verified 200 OK: s3.tradingview.com/{first_char}/{id}.png
+    return `https://s3.tradingview.com/${firstLetter}/${id}.png`;
   };
 
   React.useEffect(() => {
