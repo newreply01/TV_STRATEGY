@@ -208,7 +208,8 @@ def main(symbol="2330", period="3d", interval="5m"):
             else:
                 sec = 300
             
-            bars_to_add = 50
+            seconds_per_05day = 43200
+            bars_to_add = seconds_per_05day // sec if sec > 0 else 1
             last_time = ohlc[-1]["time"]
             for i in range(1, bars_to_add + 1):
                 ohlc.append({"time": last_time + i * sec})

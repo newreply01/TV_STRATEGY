@@ -44,7 +44,7 @@ export default function TradingViewChart({ slug, symbol = 'AAPL' }: { slug: stri
       height: 600,
       handleScroll: { mouseWheel: false, pressedMouseMove: true, horzTouchDrag: true, vertTouchDrag: true },
       handleScale: { mouseWheel: false, pinch: true, axisPressedMouseMove: true },
-      timeScale: { timeVisible: true, rightOffset: 30 },
+      timeScale: { timeVisible: true, rightOffset: 0 },
       localization: {
         locale: 'zh-TW',
         dateFormat: 'MM/dd',
@@ -159,7 +159,7 @@ export default function TradingViewChart({ slug, symbol = 'AAPL' }: { slug: stri
           requestAnimationFrame(() => {
             if (chartRef.current) {
               chartRef.current.timeScale().setVisibleRange({ from: start, to: end });
-              chartRef.current.timeScale().applyOptions({ rightOffset: 10 });
+              chartRef.current.timeScale().applyOptions({ rightOffset: 0 });
             }
           });
         }

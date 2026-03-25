@@ -187,12 +187,13 @@ def get_omni_flow_data(df, interval="15m"):
             print(f"{dt:<20} | {shape:<12} | {m['position']:<10} | {m['color']}")
         print("-" * 60)
             
-    # Inject Future Empty Bars (0.5 Day)
+    # Inject Future Empty Bars (0.5 Day = 43200 seconds)
     if ohlc:
         last_t = ohlc[-1]['time']
         # Dynamically determine step from interval (e.g. '15m' -> 900)
         step = 900 if '15' in interval else (300 if '5' in interval else 3600)
-        for i in range(1, 49):
+        num_bars_05d = 43200 // step if step > 0 else 1
+        for i in range(1, num_bars_05d + 1):
             future_t = last_t + (i * step)
             ohlc.append({"time": future_t}) 
 

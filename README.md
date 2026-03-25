@@ -32,20 +32,31 @@
    - 當您親自確認該策略的功能、畫面與數據皆符合預期，可正式對外發布時，**請在管理中心的狀態欄直接點擊下方藍色的「未確認 / 已完成」開關**。
    - 點擊後將會同步將資料表中的 `is_web_done` 屬性標記為 `true`，代表該策略的所有開發生命週期已透過人工驗收真正結束。
 
+## 🏗️ 架構說明：`strategies/` vs `webapp/api/py/`
+
+本專案包含兩個存放 Python 策略邏輯的目錄，其用途與修改規則如下：
+
+### 1. `strategies/` 目錄 (主要開發區)
+- **用途**：這是目前本地系統正在運行的「實時」邏輯所在地。
+- **運行機制**：PM2 服務 `tradeview-chart-engine` 直接執行此目錄下的 `chart_engine.py` (監聽 Port 26001)。
+- **修改規則**：**後續開發與功能調整，應以此目錄為主。** 修改後需重啟 PM2 服務 (`pm2 restart tradeview-chart-engine`) 才能生效。
+
+### 2. `webapp/api/py/` 目錄 (Vercel 部署區)
+- **用途**：這是 Next.js 框架內部的 Python API 目錄，專為 Vercel Serverless Functions 部署而設計。
+- **運行機制**：當專案部署至 Vercel 時，雲端環境會執行此處的腳本。
+- **修改規則**：**除非因為 Vercel 部署發生錯誤或有特定雲端需求，否則不宜隨意修改此目錄。** 若在此處進行了修正，建議同步檢查 `strategies/` 是否也需要對應更新。
+
+---
+
 ## 📁 重要路徑與端口
 - **前端頁面 (Next.js)**: [http://localhost:26000](http://localhost:26000)
 - **圖表引擎 (Flask)**: [http://localhost:26001](http://localhost:26001)
 - **資料庫 (Postgres)**: `localhost:5533`
 - **前端原始碼**: `webapp/src/app/monitor/MonitorPageClient.tsx`
-- **監控 API**: `webapp/src/app/api/monitor/route.ts`
+- **主要運行引擎**: `strategies/chart_engine.py` (由 PM2 管理)
 - **Prisma Schema**: `webapp/prisma/schema.prisma`
-- **抓取腳本**: `strategies/sync_progress_from_supabase.py` (開發中)
 
-## 🗂️ 跨專案資源參考 (開發必備)
-| 專案 | 服務 Port | 資料庫 Port | 資料庫名稱 | Node 版本 |
-| :--- | :--- | :--- | :--- | :--- |
-| **Tradeview Strategy** | **26000** | **5533** | `tradeview_strategy` | v25.8.1 |
-| **Stock Screener** | **31000** | **5433** | `stock_screener` | v25.8.1 |
+---
 
 ## 🚀 進程管理 (PM2 獨立隔離)
 
@@ -64,12 +75,12 @@
 cd webapp
 export PM2_HOME=$(pwd)/../.pm2
 pm2 list
-pm2 logs tradeview-strategy-monitor
+pm2 logs tradeview-chart-engine
 ```
 
 ### 3. 進程資訊
-- **進程名稱**: `tradeview-strategy-monitor`
-- **運行端口**: `26000` (Next.js Dev Server)
+- **進程名稱**: `tradeview-chart-engine` (Python Flask 服務)
+- **進程名稱**: `tradeview-strategy-monitor` (Next.js 服務)
 - **環境目錄**: `project_root/.pm2`
 
 ---
@@ -78,4 +89,4 @@ pm2 logs tradeview-strategy-monitor
 > 為了避免版本衝突，各專案皆配有 `./dev.sh` 啟動腳本，會自動切換至正確的 Node 版本並套用隔離環境。
 
 ---
-*最後更新時間: 2026-03-22 (資料庫 Port 切換完成 - 5533)*
+*最後更新時間: 2026-03-25 (新增策略目錄架構說明與 X 軸緩衝優化)*

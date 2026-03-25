@@ -176,9 +176,8 @@ def get_chart_data(slug):
                     else:
                         sec = 300
                     
-                    # 避免 24 小時市場的 5分K 塞入 500 多根導致縮放太過極端
-                    # 預設 150~200 根即有視覺上兩天的留白效果，依照使用者需求再減半為 100 以下，現在再度減半為 50 根
-                    bars_to_add = min(int((48 * 3600) / sec), 50)
+                    # Calculate bars for exactly 12 hours (0.5 day)
+                    bars_to_add = 43200 // sec if sec > 0 else 1
                     last_time = ohlc[-1]["time"]
                     for i in range(1, bars_to_add + 1):
                         ohlc.append({"time": last_time + i * sec})
