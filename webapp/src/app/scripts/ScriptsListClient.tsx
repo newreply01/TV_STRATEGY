@@ -29,11 +29,10 @@ export default function ScriptsListClient({ initialScripts }: { initialScripts: 
       return imageUrl;
     }
     
-    // ID mapping for local strategies if DB has just IDs
     const id = imageUrl.length >= 5 ? imageUrl : slug.split('-')[0];
-    
-    // Use official snapshot path: https://s3.tradingview.com/snapshots/[first_letter]/[id].png
     const firstLetter = id.charAt(0).toLowerCase();
+    
+    // Official TradingView snapshot path
     return `https://s3.tradingview.com/snapshots/${firstLetter}/${id}.png`;
   };
 

@@ -189,6 +189,12 @@ def main(symbol="2330"):
             "close": float(row['close'])
         })
     
+    # Inject Future Empty Bars (1 Day = 96 bars at 15m)
+    if ohlc:
+        last_t = ohlc[-1]['time']
+        for i in range(1, 97):
+            ohlc.append({"time": last_t + (i * 900)})
+            
     return {
         "ohlc": ohlc,
         "volume_profile": profile,
