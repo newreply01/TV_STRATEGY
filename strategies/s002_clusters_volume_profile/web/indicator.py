@@ -194,6 +194,8 @@ def main(symbol="2330"):
         last_t = ohlc[-1]['time']
         for i in range(1, 97):
             ohlc.append({"time": last_t + (i * 900)})
+            # Also add to profile or other items if they define the timeframe
+            # But usually Candlestick + TimeScale is enough
             
     return {
         "ohlc": ohlc,

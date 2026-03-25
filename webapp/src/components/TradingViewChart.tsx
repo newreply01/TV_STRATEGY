@@ -205,12 +205,18 @@ export default function TradingViewChart({ slug, symbol = 'AAPL' }: { slug: stri
             const isS002 = slug.includes('Volume-Profile');
             const extraSpace = isS002 ? 86400 : (isS001 ? 43200 : 0);
             
-            // 依靠後端注入的未來虛擬節點來延伸時間軸，前端僅需顯示最後一部分數據
-            const firstTime = actualData[Math.max(0, actualLength - 100)].time as any;
+            // 依靠後端注入的未來虛擬節點來延伸時間軸
             const lastFutureTime = chartData.ohlc[dataLength - 1].time as any;
-            chartRef.current.timeScale().setVisibleRange({ 
-              from: firstTime, 
-              to: lastFutureTime 
+            const firstTime = actualData[Math.max(0, actualLength - 80)].time as any;
+            
+            // 使用 requestAnimationFrame 確保數據已同步到 timescale
+            requestAnimationFrame(() => {
+              if (chartRef.current) {
+                chartRef.current.timeScale().setVisibleRange({ 
+                  from: firstTime, 
+                  to: lastFutureTime 
+                });
+              }
             });
           } else {
             chartRef.current.timeScale().fitContent();

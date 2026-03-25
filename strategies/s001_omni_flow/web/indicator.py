@@ -192,9 +192,10 @@ def get_omni_flow_data(df, interval="15m"):
         last_t = ohlc[-1]['time']
         for i in range(1, 49):
             future_t = last_t + (i * 900)
-            ohlc.append({"time": future_t})
-            indicator_main.append({"time": future_t}) # Empty values will create a gap/null in chart
-            indicator_sig.append({"time": future_t})
+            # Must include open/close as None if candle series needs it, or just time
+            ohlc.append({"time": future_t}) 
+            indicator_main.append({"time": future_t, "value": None})
+            indicator_sig.append({"time": future_t, "value": None})
 
     return {
         "ohlc": ohlc,
