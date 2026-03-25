@@ -1,6 +1,8 @@
 import { prisma } from '@/lib/prisma';
 import { notFound } from 'next/navigation';
 import ScriptDetailClient from './ScriptDetailClient';
+ 
+export const revalidate = 0;
 
 async function getScript(slug: string) {
   const script = await prisma.tradingviewScript.findUnique({
