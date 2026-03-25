@@ -1,0 +1,1436 @@
+--- s031: Market Microstructure Analytics ---
+[b]The Hidden Toll on Every Trade[/b]
+
+Every time you buy or sell a financial instrument, you pay a cost that never appears on your brokerage statement. It is not a commission. It is not a fee. It is the spread between the price at which someone is willing to sell to you and the price at which someone is willing to buy from you. That gap, measured in ticks, basis points, or fractions of a percent, is the bid-ask spread. Over a single trade it looks small. Over thousands of trades, across a year, for a fund managing billions, it compounds into one of the most significant sources of performance drag in all of finance.
+
+For decades, institutional traders have measured this cost obsessively. Research desks at hedge funds and investment banks have dedicated entire teams to understanding when spreads are wide, why they widen, who is causing them to widen, and what that signal implies about the near-term behaviour of a market. Retail traders, however, have had almost no access to this kind of analysis. The reason is simple: measuring the bid-ask spread in real time requires access to the order book, tick-by-tick trade data, and quote data that most platforms either do not provide or lock behind expensive data terminals.
+
+This indicator changes that. Using only the OHLCV data that every chart on TradingView already contains, it reconstructs spread estimates and liquidity conditions through seven statistically validated models drawn directly from the academic market microstructure literature. It cannot replicate what a full order book feed provides, and the documentation is explicit about where the approximations are. But it gets considerably closer than anything available to the typical chart-based trader, and on short intraday charts it delivers information that is genuinely useful for both execution decisions and regime assessment.
+
+[b]
+What Market Microstructure Actually Measures[/b]
+
+Market microstructure is the academic field that studies how prices are formed at the level of individual transactions. Its central question is not where a price will go tomorrow but how the mechanics of trading itself affect price formation right now. Two papers published decades apart established the framework this indicator builds on.
+
+The first was by Roll (1984), who noticed something elegant: in an efficient market, the prices of consecutive trades should not be correlated with each other, because any predictability would be arbitraged away. But if you look at actual trade-by-trade price changes, you consistently find negative autocorrelation. Prices bounce back and forth. The reason, Roll argued, is the bid-ask spread itself. Buyers trade at the ask and sellers at the bid, so consecutive trades alternate between two price levels. This bouncing creates a predictable negative covariance in price changes, and the size of that covariance is directly related to the size of the spread. From this insight he derived the formula S = 2 times the square root of the negative covariance of consecutive price changes. If you observe a series of trades and measure how negatively they correlate with each other, you can back out the spread without ever seeing a quote.
+
+The second foundational contribution came from Kyle (1985), who approached the problem from a completely different angle. He asked: if a market contains some traders who have private information about the true value of an asset, how do their orders affect price? His answer was the lambda coefficient, a measure of how much the price moves per unit of net order flow. A high lambda means the market is thin and informed: each additional unit of buying or selling pushes the price significantly. A low lambda means the market absorbs flow without moving much. Lambda is not just a spread measure; it is a measure of how much information asymmetry exists in the market at any given moment. This is the adverse selection component of the spread, and it is arguably the most strategically useful signal the indicator produces.
+
+
+[b]The Spread Estimators[/b]
+
+The first layer of computation produces four distinct estimates of the bid-ask spread, each using a different statistical approach.
+
+The Roll (1984) estimator is the oldest and most widely cited. It computes the rolling covariance between a price change and the price change that came before it, then takes two times the square root of the negative of that covariance. One important detail: Roll's model is defined in terms of absolute price changes, not log-returns. Using log-returns introduces a scaling distortion tied to the price level of the asset, which biases the spread estimate upward at high prices. This implementation correctly uses delta-P throughout.
+
+The Corwin-Schultz (2012) estimator takes a fundamentally different approach. Rather than looking at the serial structure of price changes, it uses the high-low range of a bar. The core insight is that the high price of any trading period is most likely a transaction that occurred at the ask, while the low price is most likely a transaction at the bid. If you look at a two-period window, the combined high-low range reflects the true price variance over those two periods plus the spread component. A single-period range conflates variance and spread; the two-period structure allows them to be separated algebraically. The resulting formula involves a decomposition using the constant k = 3 minus 2 times the square root of 2, which emerges from the statistical properties of the high-low range under continuous diffusion. Corwin and Schultz (2012) validated this estimator extensively against actual quoted spreads across thousands of US equities and found it performs well both in cross-section and over time.
+
+The Abdi-Ranaldo (2017) estimator is the most recent of the three and, in empirical tests, the most stable. For each bar, it computes a quantity called c, defined as the log of the close price minus the average of the log-high and log-low. This is the signed deviation of the close price from the geometric midpoint of the bar's range, expressed in log-space. Abdi and Ranaldo proved that the expected value of the product of c at time t and c at time t plus one equals negative one quarter of the spread squared. This means that by measuring how negatively c correlates with the next period's c, you can recover the spread. The estimator inherits much of the intuition of Roll but anchors itself to the intrabar price range rather than the close-to-close change, which tends to reduce noise substantially. To handle cases where the high and low are identical, which occurs on 1-tick bars or extremely liquid instruments, the implementation excludes invalid pairs from the covariance calculation rather than substituting zeros, which would bias the estimate toward zero.
+
+The effective spread proxy takes yet another approach. Rather than estimating the quoted spread, it attempts to estimate the effective spread, which is the actual cost paid by a specific trade. The formula is two times the trade direction multiplied by the distance between the transaction price and the quote midpoint. Trade direction is approximated using the tick rule, which assigns a positive sign to transactions at prices higher than the previous price and a negative sign to those at lower prices, carrying the previous sign forward when the price is unchanged. This classification method was formalised by Lee and Ready (1991) and remains the standard approach for assigning direction when quote data is unavailable. The bar midpoint substitutes for the true quote midpoint, which introduces a systematic upward bias because the high and low of a bar are extreme transaction prices, not quotes. The effective spread proxy is therefore most reliable as a relative indicator of whether transaction costs are rising or falling, rather than as an absolute estimate of the quoted spread.
+
+
+[b]The Liquidity Metrics[/b]
+
+The second layer moves beyond spread estimation into broader liquidity measurement. The key distinction is this: the spread tells you what it costs to execute one trade right now. Liquidity metrics tell you something about the structure of the market, how deep it is, how much information is embedded in the current order flow, and how efficiently prices are absorbing volume.
+
+The Amihud (2002) illiquidity ratio is the most widely used liquidity measure in the academic asset pricing literature. Its construction is conceptually simple: it divides the absolute value of a log return by the dollar volume of trading in the same period. What this measures is price impact per dollar traded. If a stock moves one percent and 10 million dollars changed hands, the ratio is small. If the same one percent move happened on only 50,000 dollars of volume, the ratio is large, indicating a thin market where small amounts of capital move prices significantly. Unlike the spread measures, which capture the cost of a single round trip, the Amihud ratio captures market depth. This implementation uses dollar volume rather than share or contract volume, which is the correct specification for comparability across instruments at different price levels. The ratio is scaled by a factor of 100 million for display purposes; its absolute level is asset-dependent and should always be interpreted relative to the instrument's own history.
+
+Kyle lambda, estimated here via ordinary least squares regression of price changes on signed volume, is the most theoretically sophisticated metric in the indicator. Each bar's signed volume is the total volume signed by the tick rule direction: positive if the bar closed higher than the previous bar, negative if it closed lower. The regression coefficient from regressing price changes on this signed volume is the lambda estimate. A high positive lambda means prices are moving more than expected for the amount of flow being absorbed, which is the signature of informed trading. When lambda rises, someone in the market likely knows something that others do not, and market makers are widening their spreads in response. The critical implementation detail here is that the volume must not be normalised before the regression. Normalising the signed volume changes the regression coefficient from a price-impact-per-share measure to a dimensionless sensitivity measure, which is a different quantity and does not correspond to Kyle's original model.
+
+The Parkinson (1980) range-based volatility estimator serves a supporting role: it estimates intrabar variance from the high-low range using the formula sigma-squared equals one over four times the natural log of two, multiplied by the square of the log ratio of high to low. This estimator is approximately five times more statistically efficient than the classic close-to-close variance estimator for the same number of observations (Parkinson 1980). Its role in this indicator is to help decompose the high-low range: the range reflects both volatility and the spread, and the ratio of the composite spread estimate to the Parkinson volatility tells you which component is dominant at any given time.
+
+
+[b]The Composite and the Regime System[/b]
+
+Having computed multiple independent estimates of the spread, the natural question is how to combine them. Simple averaging is theoretically suboptimal when the estimators have different levels of noise. The precision-weighted composite assigns each estimator a weight inversely proportional to its robust variance, so that noisier estimators contribute less to the final reading.
+
+The key word is robust. Rather than computing standard rolling variance, which is dominated by extreme observations and can make a normally well-behaved estimator look unreliable for weeks after a single outlier bar, this implementation uses a variance estimator based on the Median Absolute Deviation, or MAD. The MAD is the median of the absolute deviations from the rolling median. Multiplied by the consistency factor 1.4826, it provides an equivalent to the standard deviation that is resistant to outliers with a breakdown point of 0.5, meaning up to half the observations in a window can be extreme values without corrupting the estimate. This approach follows Rousseeuw and Croux (1993), who established the formal properties of MAD-based scale estimators.
+
+Two further safeguards stabilise the weights. A ridge regularisation term, set to five percent of the mean robust variance across active estimators, prevents any weight from exploding toward infinity when an estimator is temporarily near-constant. And a weight cap, set by default at 70 percent of the total, prevents any single estimator from dominating the composite during regimes where it happens to be locally smooth. The live weights are displayed in the dashboard so the user can always see how the composite is currently distributed.
+
+The regime detection system answers the question of whether the current spread level is historically unusual. This is done through a robust z-score: the composite spread is compared to its rolling median, and the deviation is normalised by the MAD. The result is a standardised score that tells you how many robust standard deviations the current spread is from its recent typical level. A score of two or above signals a statistically unusual widening event. The same procedure is applied independently to the Amihud illiquidity ratio and to the absolute value of Kyle lambda.
+
+These three scores are then combined into the Liquidity Stress Index, computed as their equal-weighted average after each component has been winsorised at plus or minus three robust standard deviations. The winsorisation prevents a single extreme reading in one dimension from overwhelming the composite. Each component is then winsorised before averaging to prevent a single extreme dimension from dominating. The result is mapped to a zero-to-100 scale using the hyperbolic tangent function, where 50 represents neutral conditions, readings in the 65 to 80 range indicate elevated stress, and readings above 80 indicate severe stress across multiple liquidity dimensions simultaneously.
+
+
+[b]Practical Use Cases[/b]
+
+For a retail trader, the most immediately useful output is the composite spread and its regime classification. When the composite spread widens and the regime indicator shifts to Elevated or Stress, entering a new position becomes more expensive than usual. On illiquid instruments this widening can be dramatic, consuming a significant fraction of the expected profit in transaction costs before the trade even begins. Conversely, when spreads are compressed, the market is functioning efficiently and execution is cheap. Timing entries and exits around spread conditions is a simple, evidence-based way to reduce the invisible drag that erodes returns over time.
+
+The spread trend indicator, which compares a five-period exponential moving average of the composite spread against a twenty-period average, provides a simple directional signal. A widening trend often precedes a period of higher volatility, lower liquidity, or increased uncertainty. This does not tell you which direction the price will move, but it tells you that the environment is becoming less predictable and more costly to trade, which is operationally important information.
+
+For professional traders and systematic strategy developers, the Kyle lambda signal has specific applications. When lambda is elevated relative to its own history, which the dashboard displays as the adverse selection z-score, it indicates that price changes are disproportionate to the measured order flow. This is consistent with the presence of informed traders, a phenomenon central to the theoretical work of Kyle (1985) and Glosten and Milgrom (1985). Elevated adverse selection is one of the clearest early warning signs of an impending directional move driven by asymmetric information, such as pre-announcement positioning, earnings whispers, or macroeconomic data leakage.
+
+The Amihud illiquidity ratio is particularly valuable for cross-asset comparisons and for monitoring the liquidity conditions of a specific instrument over time. Portfolio managers can use it to time their entries and exits in less liquid securities: entering when illiquidity is below its historical median and exiting before a period of known low liquidity such as a holiday period or low-volume session. Research by Amihud and Mendelson (1986) established that expected returns are positively correlated with illiquidity, meaning that investors demand higher compensation for holding assets where transaction costs are high. The illiquidity z-score in this indicator allows that premium to be tracked in real time.
+
+The spread-to-volatility ratio is a metric that practitioners familiar with the work of Corwin and Schultz (2012) will recognise immediately. It expresses the composite spread as a percentage of the Parkinson volatility estimate. When this ratio is high, the spread accounts for a large fraction of the observed price range, which typically indicates a market where market makers are cautious and price discovery is slow. When it is low, the price range is driven primarily by genuine information, not by the mechanics of the spread. This ratio is useful for distinguishing between a volatile and actively traded market, which is generally healthy, and a wide-spread market that looks volatile but is actually just illiquid.
+
+The Liquidity Stress Index in its scaled zero-to-100 form provides an accessible summary for traders who do not want to track multiple metrics simultaneously. During normal market conditions the reading sits near 50. When all three components, the spread, the illiquidity ratio, and the adverse selection estimate, are simultaneously elevated relative to their own histories, the index rises sharply. The historical examples of this pattern occurring together include the flash crash of May 2010, the August 2015 China-driven volatility spike, the COVID-19 crash of March 2020, and various cryptocurrency deleveraging events. In each case, the simultaneous widening of spreads, collapse of market depth, and spike in price impact coefficients preceded the most severe price dislocations by enough time to be actionable.
+
+
+[b]Configuration and Settings[/b]
+
+The Estimation Window controls the rolling window for all covariance and liquidity calculations. A shorter window, around 10 to 20 bars, makes the estimators more responsive to recent changes but increases noise. A longer window, around 50 bars, produces smoother estimates that better reflect structural conditions but lag more. The default of 20 is a reasonable starting point for most intraday timeframes.
+
+The EMA Smoothing parameter applies an exponential moving average to each raw spread estimate before it is used in the composite and displayed on the chart. This reduces bar-to-bar noise without introducing the same lag that a longer estimation window would create. Setting it to 1 disables smoothing entirely, which is useful for research purposes but not for trading.
+
+The Regime Window determines how far back the robust z-scores look when assessing whether current conditions are unusual. A setting of 100 means the indicator asks whether the current spread is unusual relative to the last 100 bars. For daily charts, 100 bars is approximately five months of trading. For tick charts, it represents the most recent 100 tick bars. This parameter should be set large enough to capture at least one full market cycle of the relevant timeframe.
+
+The Maximum Composite Weight prevents any single estimator from being assigned more than the specified fraction of total weight. The default of 70 percent is conservative; in practice, during regimes where all three estimators agree and produce similar variances, the weights tend to distribute fairly evenly. The cap becomes most important when one estimator is temporarily quiet and its MAD-based variance falls to near zero, which would otherwise assign it almost all the weight.
+
+The LSI Winsorisation Cap limits the influence of extreme readings in any single component before they contribute to the Liquidity Stress Index. At the default of three robust standard deviations, a reading of ten, which would represent a truly exceptional event, contributes the same as a reading of three. This prevents a single data anomaly or calculation artifact from permanently elevating the stress index.
+
+
+[b]Structural Limitations[/b]
+
+No representation is made that these outputs are equivalent to actual exchange quote data. They are not. TradingView provides bars, not tick-by-tick trades, and the academic models on which this indicator is based were developed for transaction-level data. The Roll estimator assumes that each observation is a single trade; when a bar aggregates hundreds or thousands of trades, the covariance structure it observes is a convolution of many individual trade-level covariances, and the result understates the true spread. This bias grows with bar duration and trade frequency. On 1-tick or 5-tick bars the bias is minimal; on daily bars it can be substantial.
+
+The tick rule classification, which assigns trade direction to bars and underpins both the Kyle lambda and effective spread estimates, was designed for individual trades. Applied to the close price of aggregated bars, it misclassifies a material fraction of bars. Ellis, Michaely and O'Hara (2000) documented misclassification rates of 30 to 50 percent on daily stock data. On short intraday bars the performance is better, but it never reaches the accuracy achievable with actual quote data.
+
+The rolling MAD computation is a streaming approximation to the exact finite-window MAD. In a stationary process the difference is negligible and the heavy-tail robustness property is preserved. In rapidly changing regimes the approximation introduces a small second-order error that does not materially affect the interpretation of the outputs.
+
+The effective spread proxy suffers from a systematic upward bias because it uses the bar midpoint rather than the true quote midpoint. This bias is largest when the intrabar range is wide relative to the actual spread, which is precisely when the estimate is most needed. On very short tick bars the range collapses toward the actual spread and the bias diminishes, but on longer bars the effective spread reading should be treated as an upper bound rather than a point estimate.
+
+Pine Script v6 introduced the built-in variables bid and ask, which return the current best bid and ask prices from a connected broker feed when accessed on the 1-tick timeframe via request.security(syminfo.tickerid, "1T", bid) and request.security(syminfo.tickerid, "1T", ask). This is a genuine improvement over bar-based proxies for the single most recent bar. However, these variables carry three constraints that prevent them from replacing the statistical estimators in this indicator. First, they carry no historical record: the values exist only at the current bar and return na on all prior bars, which makes it impossible to compute rolling covariances, MAD-based z-scores, or any of the regime detection logic that requires a lookback window. Second, the data is only available through a live broker connection on TradingView. Users on free accounts, paper trading environments, or instruments not covered by their connected broker will receive na throughout. Third, instrument coverage is uneven: major forex pairs, selected cryptocurrency pairs on exchanges such as Binance, and equities through brokers such as Interactive Brokers are generally supported, but futures, CFDs on many instruments, and equities through data-only feeds often return no data. The statistical estimators in this indicator therefore remain the primary analytical engine. If a broker connection is active, the live bid-ask spread retrieved via these built-in variables can serve as a real-time reference point to validate whether the rolling estimates are in a plausible range for the current session, but it cannot contribute to the historical signal calculations.
+
+None of the outputs should be used as the sole basis for any trading decision.
+
+
+[b]References[/b]
+
+Abdi, F. & Ranaldo, A. (2017) A Simple Estimation of Bid-Ask Spreads from Daily Close, High, and Low Prices. Review of Financial Studies, 30(12).
+
+Amihud, Y. (2002) Illiquidity and Stock Returns: Cross-Section and Time-Series Effects. Journal of Financial Markets, 5(1), 31-56.
+
+Amihud, Y. & Mendelson, H. (1986) Asset Pricing and the Bid-Ask Spread. Journal of Financial Economics, 17(2).
+
+Corwin, S.A. & Schultz, P. (2012) A Simple Way to Estimate Bid-Ask Spreads from Daily High and Low Prices. Journal of Finance, 67(2).
+
+Ellis, K., Michaely, R. & O'Hara, M. (2000) The Accuracy of Trade Classification Rules: Evidence from Nasdaq. Journal of Financial and Quantitative Analysis, 35(4).
+
+Glosten, L.R. & Milgrom, P.R. (1985) Bid, Ask and Transaction Prices in a Specialist Market with Heterogeneously Informed Traders. Journal of Financial Economics, 14(1).
+
+Hasbrouck, J. (2009) Trading Costs and Returns for U.S. Equities: Estimating Effective Costs from Daily Data. Journal of Finance, 64(3).
+
+Kyle, A.S. (1985) Continuous Auctions and Insider Trading. Econometrica, 53(6).
+
+Lee, C.M.C. & Ready, M.J. (1991) Inferring Trade Direction from Intraday Data. Journal of Finance, 46(2).
+
+Parkinson, M. (1980) The Extreme Value Method for Estimating the Variance of the Rate of Return. Journal of Business, 53(1).
+
+Roll, R. (1984) A Simple Implicit Measure of the Effective Bid-Ask Spread in an Efficient Market. Journal of Finance, 39(4).
+
+Rousseeuw, P.J. & Croux, C. (1993) Alternatives to the Median Absolute Deviation. Journal of the American Statistical Association, 88(424).
+
+
+==================================================
+
+--- s032: Volume Flow Analysis [UAlgo] ---
+Volume Flow Analysis is a price mapped volume study that distributes historical activity across price levels and separates that activity into directional pressure, stealth style movement, imbalance zones, absorption zones, Point of Control, Value Area, and profile shape. Instead of reading volume only bar by bar, the script converts a rolling section of chart history into a horizontal market map where each price level receives its own buy pressure, sell pressure, and movement efficiency profile.
+
+The script works on the latest bar and rebuilds the full map from a rolling historical window. That window can either use the full user selected lookback or a shorter effective depth when decay is enabled. This gives more recent bars a stronger influence while older bars gradually lose weight. The result is a profile that can behave either like a stable historical map or like a more adaptive flow view depending on the selected decay factor.
+
+Inside each price bucket, the script estimates directional pressure by splitting volume into buy side and sell side portions based on where price closed inside the bar range. It then distributes those portions across all buckets touched by the bar using proportional overlap. At the same time, it builds a separate stealth flow style measure based on range per unit of volume, which acts as a proxy for how much price movement occurred relative to participation.
+
+From there, the script identifies the Point of Control, expands outward to build the seventy percent Value Area, classifies the overall profile shape, highlights extreme buy or sell imbalances, detects absorption style conditions, and optionally extends those key zones across the historical range. A legend table summarizes the active state of the map so the user can read the distribution quickly.
+
+In practical use, Volume Flow Analysis is useful for studying where participation concentrated, where directional pressure was strongest, where flow became unbalanced, and whether the profile currently resembles a balanced, short covering, long liquidation, or double distribution structure.
+
+[b]🔹 Features[/b]
+
+[b]🔸 Price Bucket Volume Mapping[/b]
+The script divides the active price range into user defined buckets and allocates volume into those levels according to actual price overlap. This creates a true horizontal flow map instead of a simple vertical volume display.
+
+[b]🔸 Buy Pressure and Sell Pressure Separation[/b]
+Each price bucket stores both estimated buy side volume and estimated sell side volume. These two components are then drawn side by side so the user can see which side dominated each price level.
+
+[b]🔸 Decay Weighted Historical Memory[/b]
+Older bars can gradually lose influence through the decay factor. This lets the profile emphasize fresher activity while still preserving historical structure.
+
+[b]🔸 Stealth Flow Layer[/b]
+The script includes an additional stealth flow style metric based on range relative to volume. This highlights zones where price moved efficiently with relatively less participation.
+
+[b]🔸 Point of Control and Value Area[/b]
+The indicator automatically finds the highest volume bucket as the Point of Control and expands from that level until seventy percent of total volume is captured to form the Value Area.
+
+[b]🔸 Imbalance Detection[/b]
+Price levels with one sided pressure above the selected imbalance ratio are highlighted as buy or sell imbalance zones. These can also be extended across the profile range.
+
+[b]🔸 Absorption Detection[/b]
+Buckets with unusually high total volume but unusually low stealth flow are marked as absorption. This can suggest heavy participation with reduced price efficiency.
+
+[b]🔸 Profile Shape Classification[/b]
+The script classifies the overall profile as D shape, B shape, P shape, or b shape using the distribution of volume across the upper, middle, and lower thirds of the profile.
+
+[b]🔸 Range Box and Historical Scope Label[/b]
+A dashed range box shows the active calculation window and displays the effective number of bars used in the current map.
+
+[b]🔸 Built In Legend and Summary Table[/b]
+A table in the lower right corner explains the map colors and also reports the current buy sell balance, profile shape, and whether imbalance or absorption layers are active.
+
+[b]🔹 Calculations[/b]
+
+[b]1) Determining the Effective Historical Window[/b]
+
+[pine]
+int nCalc = i_decay == 1.0 ? i_lookback : int(math.ceil(math.log(0.01) / math.log(i_decay)))
+int N = math.max(1, math.min(nCalc, i_lookback))
+N := math.min(N, bar_index)
+[/pine]
+
+This is the first major step of the script.
+
+If decay is set to 1.0, the script simply uses the full user selected lookback.
+
+If decay is below 1.0, the script solves for how many bars are needed until the decay weight falls to roughly one percent of its original value. That value becomes the effective calculation depth.
+
+Then the script clamps that depth so it never exceeds the lookback input and never exceeds available chart history.
+
+So the map can behave in two different ways:
+a full fixed history profile,
+or a dynamically shortened profile where older bars become practically irrelevant.
+
+[b]2) Finding the Active Price Range and Bucket Size[/b]
+
+[pine]
+float pH = high[0]
+float pL = low[0]
+for i = 0 to N - 1
+pH := math.max(pH, high[i])
+pL := math.min(pL, low[i])
+
+float bSz = (pH - pL) / i_buckets
+[/pine]
+
+This block establishes the vertical bounds of the map.
+
+The script scans the effective historical window and finds the highest price and lowest price inside it. Then it divides that full range by the selected number of price levels.
+
+The result is the bucket size, which determines the height of every price cell in the flow map.
+
+So the whole analysis space is always defined by the actual recent trading range rather than by arbitrary static levels.
+
+[b]3) Initializing Buy, Sell, and Stealth Arrays[/b]
+
+[pine]
+array<float> bVol = array.new<float>(i_buckets, 0.0)
+array<float> sVol = array.new<float>(i_buckets, 0.0)
+array<float> stV = array.new<float>(i_buckets, 0.0)
+[/pine]
+
+These three arrays are the main storage layer of the profile.
+
+[i]bVol[/i] stores buy pressure per bucket.
+[i]sVol[/i] stores sell pressure per bucket.
+[i]stV[/i] stores the stealth flow style metric per bucket.
+
+As each historical bar is processed, its weighted contribution is distributed into these arrays according to price overlap.
+
+So the script is building three parallel price maps at the same time.
+
+[b]4) Splitting Each Bar Into Buy and Sell Pressure[/b]
+
+[pine]
+float b_v = rng == 0 ? (v_i / 2) : (v_i * (c_i - l_i) / rng)
+float s_v = v_i - b_v
+[/pine]
+
+This is the directional volume model.
+
+If a bar has zero range, volume is split evenly between buy side and sell side.
+
+Otherwise, the script estimates buy pressure from where the close sits inside the bar range. A close nearer the high gives more weight to buy pressure. A close nearer the low gives less weight to buy pressure. Sell pressure is simply the remainder.
+
+This is not exchange level aggressor data, but it is a practical price location based estimate of directional pressure inside each candle.
+
+So every bar contributes both a buy component and a sell component to the profile.
+
+[b]5) Defining the Stealth Flow Proxy[/b]
+
+[pine]
+float st_m = v_i == 0 ? rng : rng / v_i
+[/pine]
+
+This line creates the stealth flow style measurement.
+
+The idea is simple. If price covers a relatively large range with relatively little volume, the ratio becomes larger. If price needs heavy volume to achieve the same range, the ratio becomes smaller.
+
+So this metric behaves like a movement efficiency proxy:
+higher values suggest cleaner movement per unit of volume,
+lower values suggest heavier participation per unit of movement.
+
+It is important to interpret this as a derived proxy rather than a direct exchange measured stealth order flow.
+
+[b]6) Applying Decay Weight to Historical Bars[/b]
+
+[pine]
+float d_m = math.pow(i_decay, i)
+[/pine]
+
+Every historical bar receives a decay multiplier based on how far back it is.
+
+The most recent bar gets the largest weight. Older bars receive progressively smaller weights as long as decay is below one.
+
+This means the final profile is not just a raw accumulation of past activity. It is a weighted accumulation where recent flow can dominate older structure if the user wants a more adaptive map.
+
+[b]7) Distributing a Bar Across All Touched Buckets[/b]
+
+[pine]
+int minIdx = math.max(0, math.floor((l_i - pL) / bSz))
+int maxIdx = math.min(i_buckets - 1, math.floor((h_i - pL) / bSz))
+for j = minIdx to maxIdx
+float b_min = pL + j * bSz
+float b_max = b_min + bSz
+float ovr = math.max(0, math.min(h_i, b_max) - math.max(l_i, b_min))
+if ovr > 0
+float prop = ovr / rng
+bVol.set(j, bVol.get(j) + b_v * prop * d_m)
+sVol.set(j, sVol.get(j) + s_v * prop * d_m)
+stV.set(j, stV.get(j) + st_m * prop * d_m)
+[/pine]
+
+This is one of the most important calculations in the whole script.
+
+For every bar, the script determines which price buckets were touched by that bar. It then measures how much of the bar overlapped each bucket. That overlap fraction is used to distribute buy pressure, sell pressure, and stealth flow into the correct levels.
+
+So if a bar spends more of its range inside a given bucket, more of its volume contribution goes into that bucket.
+
+This makes the map much more realistic than assigning the full bar volume to only one price level.
+
+[b]8) Handling Zero Range Bars[/b]
+
+[pine]
+else
+int idx = math.max(0, math.min(i_buckets - 1, math.floor((c_i - pL) / bSz)))
+bVol.set(idx, bVol.get(idx) + b_v * d_m)
+sVol.set(idx, sVol.get(idx) + s_v * d_m)
+stV.set(idx, stV.get(idx) + st_m * d_m)
+[/pine]
+
+If a bar has no range, the script cannot distribute it by overlap. In that case, it assigns the full weighted contribution to the bucket containing the close.
+
+This ensures that flat or compressed bars still contribute to the profile without breaking the overlap logic.
+
+[b]9) Building Total Volume, Point of Control, and Summary Totals[/b]
+
+[pine]
+float tVolMax = 0.0
+float stMax = 0.0
+float stMin = 1e10
+int poc = 0
+float pocV = 0.0
+float sumV = 0.0
+array<float> tVol = array.new<float>(i_buckets, 0.0)
+
+for j = 0 to i_buckets - 1
+float t = bVol.get(j) + sVol.get(j)
+float st = stV.get(j)
+tVol.set(j, t)
+sumV += t
+if t > tVolMax
+tVolMax := t
+if t > pocV
+pocV := t
+poc := j
+[/pine]
+
+After all bars are processed, the script combines buy and sell pressure for each bucket into total volume.
+
+At the same time, it calculates:
+the total profile volume,
+the maximum bucket volume,
+the Point of Control bucket,
+and the minimum and maximum stealth values.
+
+The Point of Control is simply the bucket with the largest accumulated total volume.
+
+So this stage turns the raw arrays into a complete profile summary.
+
+[b]10) Calculating the Seventy Percent Value Area[/b]
+
+[pine]
+float trg = sumV * 0.70
+float cur = pocV
+int vH = poc
+int vL = poc
+while cur < trg and (vH < i_buckets - 1 or vL > 0)
+float vUp = vH < i_buckets - 1 ? tVol.get(vH + 1) : -1.0
+float vDn = vL > 0 ? tVol.get(vL - 1) : -1.0
+if vUp >= vDn and vUp >= 0
+vH += 1
+cur += vUp
+else if vDn > vUp and vDn >= 0
+vL -= 1
+cur += vDn
+else
+break
+[/pine]
+
+This is the Value Area expansion algorithm.
+
+The script starts at the Point of Control and keeps adding the next larger neighboring bucket, either above or below, until the accumulated total reaches seventy percent of overall profile volume.
+
+The upper and lower boundaries of that expansion become the Value Area High and Value Area Low.
+
+So the Value Area always forms around the Point of Control and grows toward whichever neighboring levels contain the most activity.
+
+[b]11) Classifying the Profile Shape[/b]
+
+[pine]
+float vTop = 0.0
+float vMid = 0.0
+float vBot = 0.0
+int third = math.floor(i_buckets / 3)
+for j = 0 to i_buckets - 1
+float v = tVol.get(j)
+if j < third
+vBot += v
+else if j < third * 2
+vMid += v
+else
+vTop += v
+[/pine]
+
+[pine]
+string shp = "D-Shape (Balanced)"
+if vTop > sumV * 0.20 and vBot > sumV * 0.20 and vMid < sumV * 0.50
+shp := "B-Shape (Double Dist)"
+else if poc > i_buckets * 0.5 and vTop > vBot * 1.3
+shp := "P-Shape (Short Covering)"
+else if poc < i_buckets * 0.5 and vBot > vTop * 1.3
+shp := "b-Shape (Long Liquidation)"
+[/pine]
+
+The script divides the profile into upper, middle, and lower thirds and compares how much volume sits in each section.
+
+If upper and lower thirds both carry meaningful volume while the middle is relatively weak, the script labels the profile as a B shape.
+If the Point of Control sits high and the upper section dominates, it labels the profile as a P shape.
+If the Point of Control sits low and the lower section dominates, it labels the profile as a b shape.
+Otherwise, the default label is D shape.
+
+So the shape classifier is reading where the distribution is concentrated and how balanced it looks across the full price range.
+
+[b]12) Computing the Average Stealth Level[/b]
+
+[pine]
+float avgSt = 0.0
+int stCnt = 0
+for j = 0 to i_buckets - 1
+if stV.get(j) > 0
+avgSt += stV.get(j)
+stCnt += 1
+avgSt := stCnt > 0 ? avgSt / stCnt : 0.0
+[/pine]
+
+This block computes the average positive stealth value across all populated buckets.
+
+That average later becomes part of the absorption logic. Buckets with much lower than average stealth, combined with very high total volume, are flagged as absorption.
+
+So the script uses the stealth map not only for display width, but also for analysis.
+
+[b]13) Detecting Imbalances and Absorption[/b]
+
+[pine]
+bool imbB = i_showImb and s > 0 and b / s >= i_imbRatio
+bool imbS = i_showImb and b > 0 and s / b >= i_imbRatio
+bool absr = i_showAbs and t > avgV * 1.5 and st < avgSt * 0.5
+[/pine]
+
+These are the main analytical event conditions.
+
+A buy imbalance exists when buy pressure is at least the selected ratio times larger than sell pressure.
+A sell imbalance exists when sell pressure is at least the selected ratio times larger than buy pressure.
+
+Absorption is defined differently. It requires:
+total bucket volume above one and a half times the average bucket volume,
+and stealth flow below half the average stealth value.
+
+That means the bucket saw heavy participation but relatively poor movement efficiency, which can suggest absorbed flow.
+
+So imbalances mark one sided aggression, while absorption marks heavy activity with suppressed movement.
+
+[b]14) Scaling the Visual Width of Each Layer[/b]
+
+[pine]
+int wS = int((s / tVolMax) * i_width)
+int wB = int((b / tVolMax) * i_width)
+int wSt = int(((st - stMin) / math.max(1e-10, stMax - stMin)) * (i_width / 2))
+[/pine]
+
+The map is drawn horizontally, so the script converts each metric into width.
+
+Sell pressure width and buy pressure width are scaled relative to the largest total bucket volume.
+Stealth flow width is scaled separately relative to the stealth range and is limited to half the main map width.
+
+So every bucket gets a visual footprint that reflects its relative pressure and stealth intensity.
+
+[b]15) Drawing the Buy, Sell, and Stealth Blocks[/b]
+
+[pine]
+if wS > 0
+_boxes.push(box.new(xStart, pHi, xStart + wS, pLo, bgcolor = cS, border_color = bc, border_width = bw))
+if wB > 0
+_boxes.push(box.new(xStart + wS, pHi, xStart + wS + wB, pLo, bgcolor = cB, border_color = bc, border_width = bw))
+if i_showSt and wSt > 0
+_boxes.push(box.new(xStart + wS + wB, pHi, xStart + wS + wB + wSt, pLo, bgcolor = c_stealth, border_color = bc, border_width = 1))
+[/pine]
+
+This is the actual map renderer.
+
+The sell block is drawn first.
+The buy block is drawn immediately after it.
+If stealth flow display is enabled, the stealth block is drawn after both pressure blocks.
+
+So each price level becomes a compact three part flow bar:
+sell pressure,
+buy pressure,
+and optional stealth flow.
+
+[b]16) Extending Imbalance and Absorption Zones Across the Range[/b]
+
+[pine]
+if i_showZones
+if imbB
+_boxes.push(box.new(bar_index - N + 1, pHi, bar_index + 1, pLo, bgcolor = color.new(c_buy, 90), border_color = na))
+if imbS
+_boxes.push(box.new(bar_index - N + 1, pHi, bar_index + 1, pLo, bgcolor = color.new(c_sell, 90), border_color = na))
+if absr
+_boxes.push(box.new(bar_index - N + 1, pHi, bar_index + 1, pLo, bgcolor = color.new(color.rgb(255, 0, 255), 85), border_color = na))
+[/pine]
+
+If zone extension is enabled, the script projects imbalance and absorption buckets horizontally across the entire historical calculation window.
+
+This makes key buckets easier to see in relation to actual price bars rather than only inside the right side profile map.
+
+So the indicator can show both a profile view and a chart level zone view at the same time.
+
+[b]17) Drawing the Range Box and Historical Scope Label[/b]
+
+[pine]
+if i_showRng
+_boxes.push(box.new(bar_index - N + 1, pH, bar_index + 1, pL, bgcolor = na, border_color = c_range, border_style = line.style_dashed))
+_labels.push(label.new(bar_index - int(N / 2) + 1, pH, "N: " + str.tostring(N), textcolor = c_range, style = label.style_label_down, color = color.new(color.black, 100), size = size.small))
+[/pine]
+
+This block outlines the active analysis window on the chart.
+
+The dashed box marks the highest and lowest prices used by the profile, and the label shows the effective bar count N.
+
+So the user can always see exactly which portion of chart history is feeding the current flow map.
+
+[b]18) Drawing the Point of Control[/b]
+
+[pine]
+if i_showPOC
+float pPrice = pL + (poc + 0.5) * bSz
+int endX = i_extPOC ? bar_index + i_width : bar_index + 1
+_lines.push(line.new(bar_index - N + 1, pPrice, endX, pPrice, color = c_poc, width = 2))
+[/pine]
+
+The Point of Control line is drawn at the midpoint of the highest volume bucket.
+
+If extension is enabled, the line continues forward through the map width. Otherwise it stops at the right edge of the historical window.
+
+So the Point of Control remains a clear reference level for the most active price area inside the map.
+
+[b]19) Drawing the Value Area[/b]
+
+[pine]
+if i_showVA
+float vaTop = pL + (vH + 1) * bSz
+float vaBot = pL + vL * bSz
+_boxes.push(box.new(bar_index + 1, vaTop, bar_index + 1 + i_width, vaBot, border_color = c_va, bgcolor = color.new(c_va, 90), border_style = line.style_dashed))
+[/pine]
+
+This draws the seventy percent Value Area as a translucent box on the right side of the profile.
+
+The top and bottom are derived from the expanded Value Area bucket boundaries, and the box spans the full map width.
+
+So the user can immediately see where most of the profile activity was concentrated around the Point of Control.
+
+[b]20) Buy Sell Dominance Summary[/b]
+
+[pine]
+float tB = bVol.sum()
+float tS = sVol.sum()
+float tV = tB + tS
+float pB = tV > 0 ? (tB / tV) * 100 : 0
+float pS = tV > 0 ? (tS / tV) * 100 : 0
+string dTxt = pB >= pS ? "Bullish " + str.tostring(pB, "#") + "%" : "Bearish " + str.tostring(pS, "#") + "%"
+[/pine]
+
+This block calculates the total buy side share and total sell side share across the whole profile.
+
+Whichever side holds the greater percentage becomes the dominant flow label in the table.
+
+So the summary does not only show local bucket conditions. It also provides a broad view of which side controlled more of the weighted participation inside the entire mapped range.
+
+==================================================
+
+--- s033: Price Memory Heatmap [BullByte] ---
+[b]Price Memory Heatmap - Dynamic Support & Resistance Through Market Memory[/b]
+
+Price Memory Heatmap visualizes where markets remember. It identifies price levels where repeated reactions have occurred, measures their intensity through a proprietary heat system, and displays them as dynamic zones that strengthen with each new reaction and naturally fade when the market moves on.
+
+This is not a combination of existing indicators. It is a unified analytical framework built around one original concept: price levels accumulate heat from confirmed reactions and lose heat through exponential decay when untouched. The result is a self-organizing, self-cleaning map of historically significant price zones that evolves with every bar.
+
+---
+
+[b]WHAT THIS INDICATOR DOES[/b]
+
+Price Memory Heatmap tracks price levels where significant market reactions have occurred. Each level is treated as a living entity with memory:
+
+→ Gains heat when price reacts at it (confirmed pivots and wick rejections)
+→ Loses heat over time when untouched (exponential decay)
+→ Displays visual intensity proportional to accumulated reaction history
+→ Gets removed automatically when its heat falls below a minimum threshold
+→ Classifies real-time price behavior at each zone (Rejection, Sweep, Break, Retest, Absorption)
+
+The indicator tracks up to 20 memory levels simultaneously and displays only the most significant ones based on heat intensity and reaction count. Zones are color-coded from cool (low activity) to hot (high activity), giving instant visual hierarchy of level importance.
+
+[b]Key outputs:[/b]
+→ Heat-mapped zones showing historical reaction intensity
+→ Classification labels (Developing, Active, Strong, Dominant)
+→ Hit count showing total confirmed reactions at each level
+→ Relative volume multiplier showing conviction behind reactions
+→ Level age tracking (Fresh, Seasoned, Veteran)
+→ Real-time behavior detection integrated into zone labels
+→ Summary dashboard ranking all active levels by heat
+
+---
+
+[b]WHY THIS INDICATOR EXISTS[/b]
+
+Traditional support and resistance tools draw static lines. They cannot tell you whether a level was tested once or ten times, whether reactions were backed by strong volume or weak, whether the level was formed yesterday or months ago, or how price is currently interacting with that level.
+
+Price Memory Heatmap addresses each of these gaps through a single cohesive system:
+
+[b]PROBLEM:[/b] "Is this level significant?"
+→ [b]SOLUTION:[/b] Heat intensity and classification tier tell you immediately. A Dominant zone with 8 hits is far more significant than a Developing zone with 2 hits.
+
+[b]PROBLEM:[/b] "Was there conviction behind reactions at this level?"
+→ [b]SOLUTION:[/b] Relative volume multiplier shows whether reactions attracted above-average volume (e.g., 2.3x means 2.3 times the average bar volume).
+
+[b]PROBLEM:[/b] "Is this level still relevant?"
+→ [b]SOLUTION:[/b] Exponential decay naturally fades untouched levels. If the market has forgotten a level, the indicator forgets it too.
+
+[b]PROBLEM:[/b] "How is price interacting with this level right now?"
+→ [b]SOLUTION:[/b] Real-time behavior detection classifies the current interaction as Rejection, Sweep, Break, Retest, or Absorption.
+
+[b]PROBLEM:[/b] "How old is this level?"
+→ [b]SOLUTION:[/b] Age tracking categorizes each level as Fresh (recently formed), Seasoned (survived multiple decay cycles), or Veteran (persistent structural significance).
+
+---
+
+[b]HOW PRICE MEMORY WORKS[/b]
+
+The lifecycle of a memory level:
+
+[b]BIRTH[/b] - A confirmed pivot swing (high or low) creates a new memory level, or merges into a nearby existing level if one exists within the merge distance.
+
+[b]REINFORCEMENT[/b] - Each subsequent reaction at the level adds heat. Reactions with above-average volume add proportionally more heat. The level's price adjusts as a weighted average of all reactions.
+
+[b]DECAY[/b] - Every bar without a reaction, the level's heat is multiplied by the decay rate (default 0.992). This creates a natural half-life where untouched levels gradually lose prominence.
+
+[b]DEATH[/b] - When heat falls below the death threshold (default 0.08), the level is permanently removed. This keeps the chart clean and focused on relevant levels.
+
+The heat value drives everything:
+→ Zone color intensity (hotter = more prominent visual)
+→ Classification tier (Dominant, Strong, Active, Developing)
+→ Dashboard ranking (sorted by heat, hottest first)
+→ Glow effect intensity (stronger glow on high-heat zones near price)
+
+Additionally, wick rejections are detected as secondary reaction sources. When a candle wicks into an existing level and rejects (closes away), it adds heat at half the rate of a confirmed pivot, preventing over-weighting of intrabar noise while still capturing meaningful reactions.
+
+---
+
+[b]WHY THIS IS NOT A MASHUP[/b]
+
+This indicator uses pivot detection, ATR, and volume data internally, but it does not combine or display existing indicators. The distinction is fundamental:
+
+A mashup displays independent indicators together on one chart.
+This indicator uses standard calculations as [b]INPUT MECHANISMS[/b] feeding a completely original processing engine whose output cannot be replicated by any combination of existing tools.
+
+→ [b]Pivots[/b] = Detection mechanism only (identifies where reactions occur)
+→ [b]ATR[/b] = Scaling parameter only (normalizes distances across any asset)
+→ [b]Volume[/b] = Weighting modifier only (amplifies high-conviction reactions)
+→ [b]Heat Accumulation + Decay[/b] = ORIGINAL (no existing indicator does this)
+→ [b]Dynamic Level Lifecycle[/b] = ORIGINAL (birth, reinforce, decay, death)
+→ [b]Behavior Detection at Levels[/b] = ORIGINAL (classifies interaction patterns)
+
+No component is displayed independently. Everything feeds the central price memory concept.
+
+---
+
+[b]HOW TO READ THE ZONES[/b]
+
+[b]ZONE COLORS (Dark Theme - default):[/b]
+→ Purple/Blue tones = Low heat, Developing level (fewer reactions)
+→ Red tones = Medium heat, Active or Strong level
+→ Orange/Yellow/Gold tones = High heat, Dominant level (many confirmed reactions)
+
+[b]ZONE COLORS (Light Theme):[/b]
+→ Gray/Steel tones = Low heat
+→ Red/Dark Red tones = Medium to high heat
+
+[b]ZONE COLORS (Classic S/R Theme):[/b]
+→ Green = Level currently acting as support (price above the zone)
+→ Red = Level currently acting as resistance (price below the zone)
+
+[b]ZONE THICKNESS:[/b]
+Zones expand slightly as heat increases and pulse larger when price approaches (proximity effect). The glow effect adds a soft outer halo that intensifies on high-heat levels near current price, providing immediate visual emphasis on the most important nearby zones.
+
+[b]ZONE LIFESPAN:[/b]
+Each zone extends from its birth bar to a configurable number of bars into the future (default 15). This visual extension is purely for display - it helps identify where zones project ahead of price. Older zones with maintained heat indicate structural levels where the market has shown persistent memory.
+
+---
+
+[b]HOW TO READ THE LABELS[/b]
+
+Each visible zone displays a label with key information. The label format depends on the selected [b]Label Mode.[/b] When behavior is detected, it is appended to the end of the label.
+
+[b]MINIMAL MODE EXAMPLE:[/b]
+"STR 5 2.3x SEA REJ↑"
+→ [b]STR[/b] = Classification (Strong)
+→ [b]5[/b] = Hit count (5 confirmed reactions)
+→ [b]2.3x[/b] = Relative volume (2.3 times average per reaction)
+→ [b]SEA[/b] = Age (Seasoned - 50 to 200 bars old)
+→ [b]REJ↑[/b] = Current behavior (Bullish Rejection detected)
+
+[b]STANDARD MODE EXAMPLE:[/b]
+"Strong | 5 hits | 2.3x | SEA | Rejection ↑"
+→ Full classification name
+→ Hit count with label
+→ Relative volume multiplier
+→ Age abbreviation
+→ Full behavior name with direction
+
+[b]DETAILED MODE EXAMPLE:[/b]
+"Strong | Resistance | 5 | 2.3x | 1.2345 | Seasoned | Sweep ↓"
+→ Classification
+→ Current support/resistance status
+→ Hit count
+→ Relative volume
+→ Exact price
+→ Full age name
+→ Full behavior name
+
+[b]LARGE MODE:[/b]
+Same information as Standard but rendered in larger text for visibility.
+
+When no behavior is currently detected, the behavior portion is simply omitted from the label.
+
+[b]CLASSIFICATION TIERS:[/b]
+→ [b]Developing[/b] = Heat below 40% of max OR fewer than 3 hits
+→ [b]Active[/b] = Heat above 40% AND 3 or more hits
+→ [b]Strong[/b] = Heat above 60% AND 4 or more hits
+→ [b]Dominant[/b] = Heat above 80% AND 5 or more hits
+
+[b]AGE CATEGORIES:[/b]
+→ [b]Fresh (NEW)[/b] = Less than 50 bars since first detection
+→ [b]Seasoned (SEA)[/b] = Between 50 and 200 bars old
+→ [b]Veteran (VET)[/b] = More than 200 bars old
+
+A Veteran level with high heat indicates deep structural significance - a price where the market has reacted repeatedly over an extended period and continues to hold relevance.
+
+[b]RELATIVE VOLUME EXPLAINED:[/b]
+The volume shown is NOT raw volume. It is a normalized multiplier showing how much volume reactions attracted compared to the average bar:
+→ [b]1.0x[/b] = Average volume at reactions
+→ [b]2.0x[/b] or higher = Above-average conviction behind reactions
+→ [b]Below 0.5x[/b] = Below-average conviction
+→ [b]"-"[/b] = Volume data unavailable for this asset
+
+Volume is calculated using attributed notional value: only the fraction of bar volume proportional to the zone width is counted, preventing large-range bars from inflating readings.
+
+---
+
+[b]HOW TO READ THE DASHBOARD[/b]
+
+The dashboard provides a ranked summary of all active memory levels. It appears as a table overlay on the chart (position configurable).
+
+[b]COLUMN-BY-COLUMN:[/b]
+
+[b]#[/b] → Rank by heat intensity. An asterisk (*) marks the highest-heat level. Numbers rank the rest.
+[b]PRICE[/b] → The exact price of the memory level, formatted to the asset's tick precision. This is the weighted-average price across all reactions at this level.
+
+[b]CLASS[/b] → Classification tier (Developing, Active, Strong, Dominant). In Classic S/R theme, a suffix "S" (Support) or "R" (Resistance) is appended based on whether price is above or below the level.
+
+[b]HEAT[/b] → Visual heat bar using 8 segments.
+→ "||||||||" = Maximum heat (hottest level)
+→ "||||...." = Moderate heat
+→ "|......." = Low heat (may decay out soon)
+
+[b]HITS[/b] → Total number of confirmed reactions at this level. This includes both pivot-confirmed reactions and qualified wick rejections.
+
+[b]RVOL[/b] → Relative volume multiplier averaged across all reactions at this level. Higher values indicate stronger volume conviction behind the reactions that built this level.
+
+[b]STATUS[/b] → A dynamic field showing one of three things:
+→ Behavior pattern name if currently detected (e.g., "REJ↑", "SWP↓", "BRK↑")
+→ "At level" if price is within 0.15% of the zone (highlighted in green)
+→ Distance as percentage if price is away (e.g., "1.25% above")
+
+[b]AGE[/b] → How long the level has existed (NEW, SEA, VET).
+
+[b]FOOTER[/b] → Shows total memory levels being tracked, how many are currently visible, and the current decay rate setting.
+
+---
+
+[b]BEHAVIOR DETECTION[/b]
+
+When price approaches a memory zone, the indicator analyzes real-time price action to classify how the market is interacting with that level. The detected behavior is displayed as part of the zone label and in the dashboard [b]STATUS[/b] column.
+
+Behaviors are checked in priority order. Only the highest-priority match is displayed.
+
+[b]BREAK (Highest Priority):[/b]
+→ Price opens on one side of the zone and closes decisively on the other
+→ Requires strong body (more than 50% of candle range)
+→ Close direction must match candle direction (bullish close for Break ↑)
+→ Indicates the level has failed and may flip from support to resistance or vice versa
+→ Once a Break is detected, the level is marked internally so future Retest detection becomes possible
+
+[b]SWEEP:[/b]
+→ Price extends significantly beyond the zone (1.5x zone height past the edge) then reverses
+→ The extended wick must be larger than the body and more than 35% of total range
+→ Close must be back near or inside the zone
+→ This pattern often represents a liquidity grab - price pushes through to trigger stops then reverses
+
+[b]REJECTION:[/b]
+→ A prominent wick touches or enters the zone, and the body closes away
+→ Wick must exceed 45% of the candle's total range
+→ Body must have meaningful size (more than 25% of range) confirming conviction
+→ Indicates the level is actively defending - buyers or sellers are stepping in
+
+[b]RETEST:[/b]
+→ Price returns to a level that was previously broken
+→ Requires all lookback bars to have been on one side (away from zone)
+→ Current bar must touch the zone
+→ This is the classic "support becomes resistance" or "resistance becomes support" confirmation
+
+[b]ABSORPTION (Lowest Priority):[/b]
+→ Multiple consecutive bars with bodies inside the zone
+→ Average body size is small relative to average range (less than 45%)
+→ Indicates accumulation or distribution is occurring within the zone
+→ Often precedes significant directional moves
+
+Behaviors persist in the label until a new behavior is detected. When price moves away from the zone, the last detected behavior remains visible, giving context about the most recent significant interaction.
+
+---
+
+[b]RECOMMENDED TIMEFRAMES AND SETTINGS[/b]
+
+[b]SCALPING (1-minute to 15-minute charts):[/b]
+→ Pivot Sensitivity: 2 to 4
+→ Decay Rate: 0.980 to 0.985 (faster fade for fast markets)
+→ Min Hits: 2
+→ Focus on Fresh and Seasoned levels
+
+[b]DAY TRADING (15-minute to 1-hour charts):[/b]
+→ Pivot Sensitivity: 5 to 8
+→ Decay Rate: 0.990 to 0.992 (default range)
+→ Min Hits: 2 to 3
+→ Balanced mix of age categories
+
+[b]SWING TRADING (4-hour to daily charts):[/b]
+→ Pivot Sensitivity: 10 to 15
+→ Decay Rate: 0.994 to 0.996 (slower fade)
+→ Min Hits: 3
+→ Focus on Seasoned and Veteran levels
+
+[b]POSITION TRADING (daily to weekly charts):[/b]
+→ Pivot Sensitivity: 15 to 25
+→ Decay Rate: 0.997 to 0.999 (very slow fade)
+→ Min Hits: 3 to 4
+→ Focus on Veteran levels with high heat
+
+[b]GENERAL TIPS:[/b]
+→ Higher timeframes benefit from increased Pivot Sensitivity
+→ Volatile assets benefit from increased Merge Distance
+→ For cleaner charts, increase Min Hits to Display
+→ For more context, increase Max Memory Slots and Show Top N Levels
+
+---
+
+[b]PRACTICAL EXAMPLES[/b]
+
+[b]EXAMPLE 1 - IDENTIFYING HIGH-PROBABILITY REACTION ZONES:[/b]
+A Dominant-classified zone (gold/yellow) showing 7 or more hits with Veteran age tells you this is a deeply embedded structural level. The market has reacted here many times over hundreds of bars and the level continues to maintain high heat. When price approaches this zone, the probability of a meaningful reaction is elevated compared to a Developing zone with 2 hits.
+
+[b]EXAMPLE 2 - CONFIRMING A BREAKOUT:[/b]
+Price approaches a Strong resistance zone. The label updates to show "Break ↑" as price closes decisively above. The dashboard [b]STATUS[/b] column changes from "0.5% below" to "BRK↑". If price later returns to this zone and the label shows "Retest ↑", this confirms the classic resistance-to-support flip pattern. The zone's wasBroken flag ensures Retest detection only activates after a confirmed Break.
+
+[b]EXAMPLE 3 - SPOTTING LIQUIDITY SWEEPS:[/b]
+A high-heat zone sits above price. Price spikes through the zone with a long upper wick but closes back inside or below. The label displays "Sweep ↓" indicating a potential stop-hunt pattern. The wick exceeded 1.5 times the zone height beyond its edge and the upper wick dominated the candle's body - both requirements for Sweep classification.
+
+[b]EXAMPLE 4 - READING VOLUME CONVICTION:[/b]
+Two zones appear near current price. Zone A shows "2.8x" relative volume while Zone B shows "0.6x". The reactions that built Zone A attracted nearly 3 times the average bar volume, suggesting strong institutional interest. Zone B's reactions occurred on below-average volume, suggesting less conviction. This context helps prioritize which zone is more likely to produce a meaningful reaction.
+
+[b]EXAMPLE 5 - USING LEVEL AGE FOR CONTEXT:[/b]
+A Veteran level (more than 200 bars old) that still maintains high heat has survived hundreds of decay cycles. Each cycle multiplies its heat by 0.992 (default). After 200 bars of decay without any new reactions, heat would fall to roughly 20% of its peak. For a Veteran level to remain Dominant, it must have received consistent reinforcement over time - indicating genuine structural significance rather than a one-time event.
+
+---
+[b]Chart Example[/b]
+
+1. Price on the S&P 500 E-mini Futures 15-minute chart is consolidating within a tight range between two heavily-tested Veteran zones, with the gold Dominant level acting as a persistent floor and an orange 22-hit Veteran zone overhead cycling through live behaviors as price repeatedly tests it from below. A structured ladder of purple Developing and red Active zones extends well below current price, with a Retest ↓ pattern visible at a mid-range level indicating a previously broken area is now being revisited from above. The dashboard confirms 17 memory levels tracked with 8 visible, the top-ranked Dominant zone holding a full heat bar and Break ↑ in its STATUS column throughout the session.
+
+[image]https://www.tradingview.com/x/FCQgBdyE/[/image]
+
+
+2. Price on the Nifty 50 Index 5-minute chart surged strongly through a cluster of high-heat gold zones during the session, reaching a peak at a thin Developing resistance level before pulling back sharply into a contested area between a Dominant zone and a Strong zone sitting just below it. The upper region shows two gold/yellow zones in close proximity - a Dominant and a Strong, both with Sweep behaviors active in their labels, indicating a liquidity grab above followed by a sharp reversal back into the zone cluster. The dashboard shows two Dominant-classified levels in the top two ranks, with a rich mix of Veteran and Seasoned ages confirming this price area carries deep structural memory.
+
+[image]https://www.tradingview.com/x/ENk2SC1t/[/image]
+---
+
+[b]SETTINGS REFERENCE[/b]
+
+[b]CORE SETTINGS:[/b]
+→ [b]Pivot Sensitivity[/b] - Bars on each side to confirm a swing. Lower = more sensitive, more levels.
+→ [b]Merge Distance[/b] - How close two reactions must be (in ATR multiples) to merge into one level.
+→ [b]ATR Period[/b] - Period for volatility normalization (default 14).
+
+[b]MEMORY SETTINGS:[/b]
+→ [b]Decay Rate[/b] - Per-bar multiplier for heat decay. 0.992 = balanced default.
+→ [b]Heat Per Reaction[/b] - Base heat added per confirmed reaction. Modified by volume weighting.
+→ [b]Death Threshold[/b] - Minimum heat to survive. Below this, the level is removed.
+→ [b]Max Memory Slots[/b] - Maximum simultaneous levels tracked (default 20).
+→ [b]Min Hits to Display[/b] - Reactions required before a zone becomes visible (default 2).
+→ [b]Show Top N Levels[/b] - Maximum zones rendered on chart (default 8).
+
+[b]DETECTION SETTINGS:[/b]
+→ [b]Wick Rejections[/b] - Enable wick-based reaction detection (adds heat at half rate of pivots).
+→ [b]Min Wick Ratio[/b] - Required wick percentage for wick reactions (default 55%).
+→ [b]Volume-Weighted Heat[/b] - Weight reactions by relative volume.
+→ [b]Behavior Detection[/b] - Enable real-time pattern classification at zones.
+→ [b]Behavior Lookback[/b] - Bars analyzed for behavior patterns (default 3).
+
+[b]APPEARANCE SETTINGS:[/b]
+→ [b]Color Theme[/b] - Dark (purple to gold gradient), Light (gray to red), Classic S/R (green/red).
+→ [b]Zone Thickness[/b] - Visual height of zones as ATR fraction.
+→ [b]Glow Effect[/b] - Soft outer halo that intensifies near price.
+→ [b]Proximity Radius[/b] - Distance at which proximity effects activate.
+
+[b]LABEL SETTINGS:[/b]
+→ [b]Show Zone Labels[/b] - Toggle zone information labels.
+→ [b]Label Mode[/b] - Information density (Minimal, Standard, Detailed, Large).
+→ [b]Show Hit Count[/b] - Include reaction count in labels.
+→ [b]Show Relative Volume[/b] - Include volume multiplier in labels.
+→ [b]Reaction Dots[/b] - Show dots at exact reaction prices (off by default for chart clarity).
+
+[b]DASHBOARD SETTINGS:[/b]
+→ [b]Show Dashboard[/b] - Toggle the summary table.
+→ [b]Position[/b] - Screen position (8 options).
+→ [b]Text Size[/b] - Font size (Tiny, Small, Normal).
+→ [b]Rows[/b] - Number of levels shown in dashboard (default 5).
+
+---
+
+[b]ALERTS[/b]
+
+Three alert conditions are available:
+
+[b]"Price entered hot zone"[/b] - Triggers when price enters a high-heat zone with 3 or more hits and heat above 50% of maximum. Useful for monitoring approaches to significant levels.
+
+[b]"New behavior detected"[/b] - Triggers when a new behavior pattern (Rejection, Sweep, Break, Retest, Absorption) is classified at any visible level. Useful for real-time event notification.
+
+[b]"New reaction"[/b] - Triggers when a new pivot is confirmed. Useful for tracking all reaction events across all levels.
+
+All alerts describe observed events. They do not predict future price movement or generate buy/sell signals.
+
+---
+
+[b]IMPORTANT NOTES[/b]
+
+[b]RETROACTIVE ANCHORING:[/b]
+Pivot-based levels are confirmed after the Pivot Sensitivity number of bars have passed. The level is drawn at the true swing bar but only becomes known after confirmation. This is standard pivot behavior used across all pivot-based indicators and does not constitute future data usage.
+
+[b]VOLUME DATA AVAILABILITY:[/b]
+Some assets, particularly certain forex pairs, may not report volume data. When volume is unavailable, relative volume displays show "-" and volume weighting is automatically disabled. The indicator functions fully without volume data.
+
+[b]EARLY CHART BEHAVIOR:[/b]
+Zones and behavior labels may be sparse early in chart history. The indicator needs sufficient bars to detect pivots, accumulate heat, and meet the minimum hit count. Allow at least 100 bars for the system to populate meaningfully.
+
+[b]PERFORMANCE:[/b]
+Reaction dots (when enabled) are only rendered within the most recent 500 bars to maintain chart performance. All memory calculations remain unaffected regardless of dot visibility.
+
+---
+
+[b]DISCLAIMER[/b]
+
+This indicator is provided for educational and analytical purposes only. It visualizes historical price reaction zones and does not predict future price movement, generate buy/sell signals, or constitute financial advice.
+
+Past reactions at specific price levels do not guarantee future behavior. Market conditions change and levels that held previously may fail in the future. Always conduct your own analysis, use proper risk management, and never risk more than you can afford to lose.
+
+The author assumes no liability for any trading decisions made using this tool. Trading involves significant risk of loss. Use this indicator as one component of a comprehensive trading approach, not as a standalone decision-making system.
+
+---
+
+[b]BullByte[/b]
+
+==================================================
+
+--- s034: RiizA ---
+🚀 RiiZA v14 | Global Version (English)
+RiiZA v14 is an all-in-one professional trading suite designed to merge technical indicators with Institutional Trading concepts (SMC/ICT). This version features optimized Short (Sell) signal logic, presenting all data in a clean, positive format.
+
+🛠 Key Functionalities
+Adaptive ATR Signals: High-precision trend tracking with adjustable sensitivity to filter out market noise.
+
+Smart Killzone Boxes: Automatically tracks Asia, London, and NY sessions with real-time liquidity level mapping.
+
+Institutional Tools: * Automatic Fair Value Gaps (FVG) & Order Blocks (OB) detection.
+
+Volume Imbalance (VI) highlighting for price action analysis.
+
+Displacement Tracker: Spots high-momentum candles that indicate market reversals or continuations.
+
+Session Countdown: Integrated dashboard for candle closure and upcoming session alerts.
+
+📌 Not / Disclaimer
+Bu indikatör bir karar destek aracıdır ve yatırım tavsiyesi içermez. Stratejinizi her zaman uygun bir risk yönetimi ile destekleyin
+
+==================================================
+
+--- s035: Intuitive Trade Regime [TraderZen] ---
+[b]The 3D Geometry of Momentum.[/b]
+
+Try this on your favorite chart! Every trader thinks in images. We say the market "took a turn," that price is "going sideways" .. that a breakout "jumped over resistance." We describe a selloff as a "cliff drop" and a rally as a "rapid rise." We watch price "bounce off support" or "breach the borders" of a range. These are not casual metaphors — they are how the mind actually processes price action.
+
+This indicator is built for that visual mind. It translates the structure of price movement into shapes that feel familiar — not because they have been studied, but because they have been seen. The goal is not to add more data to the chart. It is to make what is already there easier to perceive.
+
+[b]The Staircase[/b]
+
+Price does not move in lines. It moves in segments — rises and flats, drops and pauses. In structure, this is no different from a staircase. Each trend segment is a step, and the shape of that step tells a story.
+
+The [i]tread[/i] — the horizontal span — shows how long a regime held. A wide tread means price spent time consolidating before the next move. A narrow one means momentum carried through without pause.
+
+The [i]riser[/i] — the vertical face between steps — shows the magnitude of the shift. A tall riser marks a decisive regime change. A short one marks a continuation, a nudge in the same direction.
+
+The [i]landing[/i] — a wider, flatter segment — appears when the market pauses to establish a range before committing. It is the moment between moves where direction has not yet been decided.
+
+And the [i]nosing[/i] — the overshoot at each edge — reveals how aggressively price tested the boundary before accepting it.
+
+When these elements are narrow and steep, the staircase is rickety — momentum is high but potentially unstable. When they are wide and gradual, the staircase is solid — a measured, deliberate trend. When they alternate in size, the staircase is winding — a market searching for direction.
+
+This is not a metaphor layered onto the chart. It is what the channel segments actually form. The indicator simply makes the staircase visible.
+
+[b]Perspective as Information[/b]
+
+One of the more unusual features of this indicator is its use of 3D depth — not for decoration, but for orientation.
+
+In a downward move, the depth faces project upward and behind, as if you are standing above and looking down at the price descending below you. The top surface of each segment is visible. You see where price came from.
+
+In an upward move, the depth reverses. The faces project downward and forward, as if you are looking up at a structure rising above you. The underside of each segment is exposed. You see the climb from below.
+
+This is not arbitrary. It mirrors how we naturally perceive direction. Looking down implies a fall. Looking up implies a rise. The perspective reinforces the regime — making it something you feel, not just something you read from a label.
+
+The direction of depth is fully configurable, with independent control for bull and bear segments. But the defaults are set to match this natural orientation: upward moves seen from below, downward moves seen from above.
+
+[b]Compression and Expansion[/b]
+
+The width of the channel adapts to volatility. When the channel tightens, price is compressing — energy is building. When it widens, expansion is underway — the move is in progress.
+
+In tight bear segments, the depth face breaks into a cascading waterfall pattern — stepped terraces that descend like water over ledges. This is not cosmetic. Narrow bear channels often represent rapid, liquidation-driven moves, and the waterfall texture makes that character immediately visible.
+
+In tight bull segments, the depth face becomes jagged — an ascending cliff with rough, uneven edges. Narrow bull channels often reflect sharp, momentum-driven rallies, and the rocky texture communicates that energy at a glance.
+
+These effects activate automatically when the channel compresses below a configurable threshold relative to ATR. When the channel is wide, the faces remain smooth and clean.
+
+[b]What the Channel Tells You[/b]
+
+The mid line is the structural anchor. In Lead mode, it sits on the opposite side of price — acting as support in uptrends and resistance in downtrends, decaying slowly away from price like a trailing reference. In Follow mode, it tracks toward price, blending with the local basis.
+
+The bands define the expected range. Price staying within the bands confirms the current regime. A confirmed break beyond the band triggers a regime change — marked by a triangle on the chart.
+
+Retests occur when price touches the far band without conviction. These are marked with smaller arrows and often represent pullback entries within the trend.
+
+Continuation steps fire when price pushes further in the current direction, extending the trend. Refresh events occur when a segment has aged out or drifted too far from the local basis — the channel quietly re-anchors without changing direction.
+
+Each of these events reshapes the staircase. A regime flip starts a new step. A continuation extends the current one. A refresh adjusts the footing without changing the path.
+
+[b]Themes[/b]
+
+The indicator ships with preset visual themes that configure the gradient, transparency, and 3D settings as a group:
+
+[list]
+[*] [b]Classic[/b] — Clean channel with gradient fills. No 3D effects. The original look for those who prefer simplicity.
+[*] [b]Price Slabs[/b] — Solid 3D segments with depth and perspective. The staircase made tangible. Waterfall and cliff effects enabled.
+[*] [b]Neon Glass[/b] — Translucent 3D segments with a lighter touch. The structure is visible but does not dominate the chart.
+[*] [b]Custom[/b] — Full control over every parameter. Build your own visual language.
+[/list]
+
+All themes respect your chosen colors. Switching themes changes the structure and feel — not the palette.
+
+[b]A Note on Design Philosophy[/b]
+
+Most indicators ask the trader to interpret numbers. This one asks the trader to observe shapes. The thesis is simple: if the visual representation is honest — if the shapes genuinely correspond to the character of the move — then pattern recognition does what it has always done. The trader sees what is happening, and the chart stops being a puzzle to decode.
+
+The 3D effects, the staircase structure, the perspective shifts — these are not aesthetic choices. They are attempts to give price action a physical presence on the chart, so that reading a trend feels less like analyzing data and more like watching something move.
+
+That is what intuitive means here. Not simplified. Not dumbed down. Just shaped for the way the eye already works.
+
+[b]Disclaimer[/b]
+
+This indicator is a visual analysis tool designed to aid in the interpretation of price action. It does not generate buy or sell signals, and nothing presented here constitutes financial advice, a trading recommendation, or a solicitation to trade any financial instrument. Past visual patterns do not guarantee future price behavior. All trading involves risk, including the potential loss of principal. Users are solely responsible for their own trading decisions and should consult a qualified financial advisor before acting on any information derived from this or any other technical tool. The author assumes no liability for any losses incurred through the use of this indicator.
+
+[i]Built by TraderZen[/i]
+
+
+==================================================
+
+--- s036: PineScript integration with Notepad++ (UDL) ---
+THIS IS NOT AN INDICATOR!
+
+This is PineScript integration with Notepad++ text editor (NPP). It supports PineScript v6 as of January 2026. Provides autocompletion, function list and syntax highlighting for *.pine files.
+
+Why would anyone need this?
+[list=1]
+[*]Pine Editor doesn't provide function list yet
+[*]Pine Editor doesn't allow changing fonts or syntax colors
+[/list]
+Provided files together define a color scheme as close to current color scheme of Pine Editor as is possible in NPP. You can change the colors to suit your needs better. For example, I provide a file that changes all user-defined functions to be colored the same way Pine Editor colors imported functions. This provides clear distinction between system and user code.
+
+Also Dark Mode users (on Windows) might not even know that Pine Editor uses Bold for types because it also uses Consolas font which has very thin Bold. Changing a font will make (standard) types stand out more.
+
+INSTALLATION
+[list]
+[*]Go to the source code of this release
+[*]For each @ filename inside the code create such a file and ensure it has encoding 'UTF-8' without BOM
+[*]Copy the following strings up until the first empty line
+[*]Paste those strings into newly created file
+[*]Remove "// " in front of each of the strings
+[*]Save the file
+[*]Follow additional instructions for that file if any
+[/list]
+Restart Notepad++ after creating all the files.
+
+If you don't want the fuss with copying strings, get the files from [url=https://github.com/roman-orekhov/PineScipt-UDL]GitHub[/url]. There you can also see installation instructions, NPP screenshots and a theme to use with this UDL.
+
+
+==================================================
+
+--- s037: Gold Priceaction V2.00 ---
+[b]1. Introduction[/b]
+
+Welcome to Gold Priceaction V2.00, an incredibly powerful, all-in-one custom indicator built on Pine Script v5 specifically for TradingView. Unlike traditional lagging indicators that rely on past moving averages, this tool reads the raw footprint of the market. It is engineered to automatically map out institutional price action, dynamic support and resistance, exact trendlines, and high-probability entry zones in real-time.
+
+Whether you are a scalper, day trader, or swing trader, Gold Priceaction V2.00 gives you an objective, crystal-clear view of market direction—removing emotion and guesswork from your trading routine.
+
+[b]2. Why it Works Exceptionally Well for Gold (XAUUSD)[/b]
+
+The Gold (XAUUSD) market is notoriously volatile and highly manipulated by large institutional players (banks and hedge funds). Gold charts frequently experience "liquidity grabs"—sudden spikes that hunt retail traders' stop losses before reversing into the true trend direction.
+
+Gold Priceaction V2.00 is tailored exactly for this environment. Instead of blindly following a breakout, this indicator mathematically calculates true swing points to identify areas where the market is most likely to reverse (Support/Resistance) or continue (Target Breakouts). By highlighting premium and discount zones alongside equal highs/lows (liquidity pools), it allows you to trade with the "Smart Money" rather than becoming their exit liquidity.
+
+[b]3. Core Features & Functions (What’s Inside & How It Works)[/b]
+
+📈 [b]Dynamic Trendlines:[/b] Forget drawing subjective lines manually. The indicator uses a complex algorithmic loop to find the sharpest, most accurate Ascending (Bullish) and Descending (Bearish) trendlines in real-time. It projects these lines forward, giving you dynamic, diagonal support and resistance levels.
+
+🛑 [b]Real-Time Support & Resistance:[/b] The script constantly analyzes market data to find minor and major pivot points.
+• [b]Strong Highs/Lows:[/b] Act as massive, rigid Support and Resistance boundaries. 
+• [b]Weak Highs/Lows:[/b] Act as magnets. The indicator anticipates that these weak points will be broken, turning them into your primary Take Profit (Target) levels.
+
+🎯 [b]Clean Future Target Projection:[/b] Most indicators clutter your screen with dozens of old, useless lines. Gold Priceaction V2.00 features an advanced auto-cleanup system. It automatically deletes past targets that have already been hit and only projects a single, bold horizontal line deep into the future. This shows you exactly where the price is magnetically drawn to next.
+
+📦 [b]Institutional Zones (Order Blocks & FVGs):[/b] The indicator automatically highlights the hidden footprint of big banks:
+• [b]Order Blocks (Supply/Demand Zones):[/b] Identifies the last bearish candle before a strong bullish move (and vice versa). These colored boxes act as high-probability entry zones for reversals or continuations. 
+• [b]Fair Value Gaps (FVG):[/b] Spots sudden imbalances in price where the market moved too fast, leaving a "gap." Price almost always returns to rebalance these zones.
+
+🕰️ [b]Multi-Timeframe Context (PDH/PDL):[/b] Context is everything. You can enable higher timeframe levels directly on your lower timeframe chart (e.g., 5-minute chart).
+• [b]PDH / PDL:[/b] Previous Daily High and Low. 
+• [b]PWH / PWL:[/b] Previous Weekly High and Low. 
+• [b]PMH / PML:[/b] Previous Monthly High and Low. 
+These act as massive macro support/resistance areas where major reversals frequently happen.
+
+[b]4. How to Use It in Live Trading (The 4-Step Playbook)[/b]
+
+[b]Step 1: Determine the Trend[/b]
+Look at the real-time Dashboard on your screen. If the "Market Trend" says BULLISH, you only look for BUY setups. If it says BEARISH, you only look for SELL setups.
+
+[b]Step 2: Wait for Price to Reach an Entry Zone[/b]
+Do not buy at the top! Let the price retrace (pullback) down into a Discount Zone, a Bullish Order Block, or touch the Ascending Trendline.
+
+[b]Step 3: Look for Confirmation[/b]
+Wait for a minor trend shift on a lower timeframe. If you are in a Bullish zone, wait for the indicator to print a "Support Hold" or a lower-timeframe "Resistance Break" to prove buyers are stepping in.
+
+[b]Step 4: Execute & Manage Risk[/b]
+• [b]Entry:[/b] Enter the market when the setup is confirmed. 
+• [b]Stop Loss (SL):[/b] Look at the Dashboard. It dynamically calculates the safest, tightest Stop Loss based on the "Immediate Swing Level" to minimize your risk. 
+• [b]Take Profit (TP):[/b] Ride the trade directly to the "🎯 Future Target" line projected on your chart.
+
+[b]5. Recommended Timeframes[/b]
+• [b]Scalping (Quick Trades):[/b] 1-Minute (1m) or 3-Minute (3m) charts. 
+• [b]Intraday (Day Trading):[/b] 5-Minute (5m) and 15-Minute (15m) charts. (Highly Recommended for Gold). 
+• [b]Swing Trading (Holding for days):[/b] 1-Hour (1H) or 4-Hour (4H) charts.
+
+[b]6. The Interactive Dashboard & Customization[/b]
+The indicator includes a completely clean, user-friendly settings menu. We have hidden all the messy background code values so your chart title remains pristine.
+
+[b]Dashboard Customization:[/b]
+• [b]Positioning:[/b] Using the settings menu (gear icon), you can move the dashboard anywhere on your screen (Top Right, Bottom Center, Right Center, Left Center, etc.) so it never blocks your price action.
+• [b]Target Probability Score:[/b] A built-in logic metric reading from 0% to 100%. It calculates the trend bias, verifies if the price is safely holding above support, and checks RSI confluence (Overbought/Oversold levels) to give you a live win-rate probability color-coded in Red, Yellow, or Green.
+• [b]Styling:[/b] You can fully customize the colors of your candles, Order Blocks, and zones to perfectly match TradingView's Light or Dark modes.
+
+❓ [b]Frequently Asked Questions (FAQ)[/b]
+
+[b]Q1: Does this indicator repaint?[/b]
+A: No. The historical Support/Resistance lines and Order Blocks are drawn based on confirmed closed candles. Once a swing point is confirmed mathematically, it does not repaint or shift backward.
+
+[b]Q2: Is this only for Gold?[/b]
+A: While it is highly optimized for the volatility and structure of XAUUSD, the pure price action mathematics behind it work excellently on Forex pairs (EURUSD, GBPUSD), Crypto (BTC, ETH), and Indices (US30, NAS100).
+
+[b]Q3: Why are my old Target lines disappearing?[/b]
+A: That is by design! To keep your chart clean and easy to read, the indicator deletes old, irrelevant "past" targets and only shows you the "Future Target" that matters right now.
+
+[b]Q4: How do I get rid of all the text on my indicator title bar?[/b]
+A: You don't have to! In Gold Priceaction V2.00, all input variables have been explicitly hidden (display.none). The indicator name on your chart will stay clean and professional without long strings of text.
+
+[b]Q5: What does "Premium" and "Discount" mean?[/b]
+A: Think of it like shopping. The indicator draws a grid between the highest and lowest points of the current trend.
+• [b]Premium Level (Red):[/b] The price is too high/expensive. (Best place to SELL). 
+• [b]Discount Level (Green):[/b] The price is cheap/on sale. (Best place to BUY).
+
+
+==================================================
+
+--- s038: SMT Divergences & BOS Detector Synthicator ---
+**SMT Divergences + BOS (Break of Structure) – Synthicator**
+
+This open-source indicator combines **Smart Money Technique (SMT) divergence** with **market structure (Break of Structure – BOS)** to provide a more complete view of price behavior across correlated assets. The goal is to help traders identify potential reversals and confirmations by aligning inter-market divergence with structural shifts.
+
+
+What This Indicator Does
+
+This tool performs two core functions:
+
+1. **SMT Divergence Detection**
+
+* Compares price action between the current chart and one or two user-selected symbols
+* Identifies divergence when one market forms a higher high (or lower low) while the other fails to confirm
+* Highlights potential **weakness in trend continuation**
+
+2. **Break of Structure (BOS) Detection**
+
+* Tracks swing highs and lows to determine market structure
+* Detects bullish and bearish BOS when price breaks key structural levels
+* Helps confirm **trend continuation or reversal**
+
+⚙️ How It Works
+
+\\SMT Logic:
+
+* Uses pivot-based swing detection to identify significant highs and lows
+* Calculates slope between pivots on both the main symbol and comparison symbols
+* Detects divergence when slope direction between assets is inconsistent
+* Supports:
+
+* Multi-symbol comparison
+* Optional symbol inversion (useful for inverse correlations like DXY vs Gold)
+
+\\BOS Logic:
+
+* Identifies internal and swing structure using dynamic pivot tracking
+* Monitors when price crosses previous highs/lows to define BOS
+* Classifies structure into bullish or bearish bias
+* Optionally displays:
+
+* Internal structure
+* Swing structure
+* Strong/weak highs and lows
+
+📊 Key Features
+
+* Combined **SMT + BOS framework** in a single indicator
+* Multi-symbol SMT comparison
+* Optional inversion for correlated/inversely correlated assets
+* Configurable pivot sensitivity (multiple N values)
+* Real-time divergence plotting with labels and lines
+* BOS detection with trend bias visualization
+* Customizable styles, labels, and display options
+* Historical vs Present mode for cleaner charts
+
+📈 How to Use
+
+1. Select your comparison symbols
+
+* Example: Gold (XAUUSD) vs DXY or Silver
+2. Look for SMT signals:
+
+* **Bullish SMT** → selling pressure weakening
+* **Bearish SMT** → buying pressure weakening
+3. Wait for BOS confirmation:
+
+* Bullish BOS → potential continuation upward
+* Bearish BOS → potential continuation downward
+4. Combine both:
+
+* SMT divergence + BOS = higher probability setup
+
+// Credits
+
+This open-source script builds upon previously published open source work:
+
+* **algoryze** – SMT divergence concepts
+* **LuxAlgo** – BOS detection concepts
+
+The original ideas have been extended and integrated into a unified framework with additional features such as multi-symbol comparison, inversion logic, and combined SMT + BOS workflow.
+
+⚠️ Disclaimer
+
+This indicator is for educational purposes only and should be used in conjunction with proper risk management and additional confluence.
+
+==================================================
+
+--- s039: Ready, Aim, Fire! ---
+═════════════════════════════════════════════════════════════
+TRADINGVIEW PUBLICATION — Ready, Aim, Fire! [NPR21] - March 19, 2026
+════════════════════════════════════════════════════════════D
+
+Ready, Aim, Fire! is a momentum-state oscillator that identifies trade-ready inflection points through a three-phase signal progression.
+
+█ HOW IT WORKS
+
+The indicator combines three independent engines into a unified visual system:
+
+1. STOCHASTIC STATE ENGINE — Three stochastic oscillators (periods 5, 8, and 17) with exponential smoothing track momentum crossovers. Each qualifying crossover advances the state counter:
+   • READY: First crossover detected. Momentum is coiling.
+   • AIM: Second consecutive crossover in the same direction. Momentum is loaded and directional bias is strengthening.
+
+2. FISHER TRANSFORM MOMENTUM LINE — A recursive Fisher Transform applied to the slowest stochastic (K17) compresses momentum into a bounded oscillator. The magenta momentum line oscillates above and below zero, providing instant visual confirmation of directional pressure and momentum extremes relative to the overbought/oversold levels.
+
+3. FIRE! SIGNALS — When the Fisher Transform derivative flips sign (momentum inflects), a directional FIRE! label appears:
+   • Green FIRE! (label up) = bullish inflection — momentum turning upward.
+   • Red FIRE! (label down) = bearish inflection — momentum turning downward.
+   These are the original MajorBuy / MajorSell inflection signals with enhanced visual presentation.
+
+█ ADDITIONAL COMPONENTS
+
+• TEMA TREND FILTER — A Triple Exponential Moving Average with ATR buffer determines the prevailing trend state. The zero line color reflects this: green (bullish), red (bearish), or yellow (neutral/transitional).
+
+• ADX STRENGTH MARKERS — Colored squares appear on the zero line when ADX turns upward, confirming trend strength is increasing. The zero line creates a visual gap around each square for clarity.
+
+• BACKGROUND CLOUDS — Shaded zones between the overbought and oversold levels indicate the current phase. Deeper color = AIM (loaded). Lighter color = READY (coiling). Green clouds for bullish cycles, red clouds for bearish cycles.
+
+█ SIGNAL INTERPRETATION
+
+The three-phase progression provides context for each FIRE! signal:
+
+• FIRE! during READY: Momentum is inflecting early in the cycle. Lower conviction — fewer confirming crossovers behind it. Use additional confluence.
+• FIRE! during AIM: Momentum is inflecting after multiple crossovers have loaded in the same direction. Higher conviction — the state engine confirms directional bias.
+• FIRE! in OB/OS territory: The Fisher line is at an extreme when it inflects. These signals often mark significant turning points.
+
+█ INPUTS AND CUSTOMIZATION
+
+• Smoothing Length (default 28): Controls the TEMA period and ADX calculation. Higher values produce smoother signals with fewer whipsaws.
+• Overbought/Oversold Level (default 1.2): Sets the horizontal threshold lines. Adjust based on instrument volatility.
+• Toggle controls for FIRE! labels, inflection arrows, READY/AIM labels, ADX markers, and background clouds — customize the visual density to your preference.
+• Alert support for FIRE! signals with optional AIM-state filtering.
+
+█ USAGE NOTES
+
+• This indicator is designed as a lower-pane oscillator. It does not overlay on price.
+• Works on any liquid market and any timeframe. Developed and tested on micro futures (MNQ, MES, MYM, MGC, MCL) but equally applicable to forex, stocks, crypto, and commodities.
+• Best used in confluence with price action, market structure, and your existing methodology — not as a standalone entry system.
+• The three-phase progression (READY → AIM → FIRE!) provides a framework for trade preparation, not prediction.
+
+█ ORIGIN
+
+Converted from ThinkScript (ThinkOrSwim) to Pine Script v6 with professional visual enhancements by NPR21. Original momentum-state concept by David H. Starr (© 2010-2020). Pine Script conversion, FIRE! label system, ADX square markers, and all visual design elements are original work by NPR21.
+
+==================================================
+
+--- s040: Footprint Delta Trap [PakunFX] ---
+[b]📌 Overview[/b]
+Footprint Delta Trap PRO is an original order-flow-based reversal strategy designed to detect liquidity traps using a combination of footprint delta imbalance, candlestick structure, and POC positioning.
+
+This script introduces a refined logic that identifies situations where aggressive buying or selling fails, signaling potential reversals.
+
+⚠️ This script is for educational and research purposes only.
+
+---
+
+[b]🎯 What This Script Does[/b]
+This indicator detects "trap scenarios" where strong market participation (delta imbalance) is absorbed and rejected, often leading to reversals.
+
+It focuses on:
+[list]
+[*] Detecting abnormal delta spikes (aggressive buyers/sellers)
+[*] Identifying rejection via wick structure
+[*] Validating location using POC (Point of Control)
+[/list]
+
+---
+
+[b]🧠 Core Logic Explained[/b]
+The strategy is based on the idea that strong volume alone is not enough — what matters is whether price ACCEPTS or REJECTS that pressure.
+
+[list]
+[*] Strong positive delta + price fails to move higher → bearish trap
+[*] Strong negative delta + price fails to move lower → bullish trap
+[*] Wick structure confirms rejection
+[*] POC validates the liquidity zone
+[/list]
+
+This allows the script to detect failed breakouts and exhaustion moves.
+
+---
+
+[b]⚙️ Why This Combination[/b]
+Each component has a specific role:
+
+[list]
+[*] Delta → Measures aggressive order flow
+[*] Wick/Body Ratio → Confirms rejection structure
+[*] POC → Defines fair value and liquidity zones
+[/list]
+
+This combination is designed to filter out weak signals and focus on high-probability trap setups.
+
+---
+
+[b]📊 How to Use[/b]
+[list]
+[*] Use on high-liquidity markets (crypto, indices, forex)
+[*] Recommended timeframes: 5m–1H
+[*] Focus on signals after strong moves or near key levels
+[*] Combine with support/resistance or market structure
+[/list]
+
+---
+
+[b]📈 Signals[/b]
+[list]
+[*] BUY → Bullish trap detected (selling pressure absorbed)
+[*] SELL → Bearish trap detected (buying pressure absorbed)
+[*] PRE signals → Early formation (not yet confirmed)
+[/list]
+
+---
+
+[b]🔍 What Makes This Unique[/b]
+[list]
+[*] Focuses on failed aggression instead of traditional trend following
+[*] Integrates order flow, price action, and volume profile concepts
+[*] Uses multi-layer filtering (delta + structure + POC)
+[/list]
+
+This is not a generic indicator mashup, but a structured approach to identifying liquidity traps.
+
+---
+
+[b]🖥 Chart Information[/b]
+This script displays:
+[list]
+[*] Entry signals (BUY / SELL)
+[*] Delta strength and ratio
+[*] POC and Value Area zones
+[*] Candle structure metrics
+[/list]
+
+---
+
+[b]⚠️ Disclaimer[/b]
+This script is based on historical data and does not guarantee future results.
+Always use proper risk management.
+
+==================================================
+

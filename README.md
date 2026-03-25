@@ -31,6 +31,13 @@
 3. **人工驗收與最終完成**：
    - 當您親自確認該策略的功能、畫面與數據皆符合預期，可正式對外發布時，**請在管理中心的狀態欄直接點擊下方藍色的「未確認 / 已完成」開關**。
    - 點擊後將會同步將資料表中的 `is_web_done` 屬性標記為 `true`，代表該策略的所有開發生命週期已透過人工驗收真正結束。
+### 3. 內容與縮圖優化 (Mandatory Optimization)
+每從來源網站復刻一篇文章，**必須** 執行此步驟以確保網頁內容完整（包含完整描述與高品質轉譯）：
+- **執行指令**：`python strategies/update_strategy_metadata.py --serial Sxxx`
+- **邏輯說明**：
+  - 自動抓取 TradingView 完整 `description_full`。
+  - **轉譯政策**：若 `.env` 中未提供 `GOOGLE_API_KEY`，應由開發者/AI 助手依據原文進行手動高品質轉譯並更新至 `description_full_zh`，以維持全域頁面的一致性與專業度。
+  - **縮圖同步**：自動同步官方 `image_url` 至資料庫。
 
 ## 🏗️ 架構說明：`strategies/` vs `webapp/api/py/`
 

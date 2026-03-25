@@ -1,0 +1,630 @@
+--- s021: TASC 2026.03 One Percent A Week ---
+[b]█ OVERVIEW[/b]
+
+This script implements "A High-Probability Weekly Trading Strategy For TQQQ" as dictated in the [url=https://traders.com/Documentation/FEEDbk_docs/2026/03/TradersTips.html]March 2026 edition of the TASC Traders' Tips[/url], "Trading Snapbacks In A Leveraged ETF”. In this article the author creates a mean reversion strategy intended for systematic and discretionary traders with the goal of having a minimal number of rules, low time commitment, and a consistent weekly profit target.
+
+
+[b]█ INSTRUMENT SELECTION[/b]
+
+TQQQ is a 3x leveraged fund based on the Nasdaq-100 index. The article focuses specifically on this instrument because of its key characteristics that are suitable for this type of strategy:
+[list=1]
+[*]Strong trend behavior during bullish periods
+[*]Frequent and sometimes steep intraday pullbacks
+[*]High volatility, even on otherwise quiet market days
+[*]Long-term compounding when the underlying index rises
+[/list]
+
+[b]█ THE STRATEGY[/b]
+
+Simply put, the goal of this strategy is to trade TQQQ using an objective system with simple rules and no weekend holds, targeting 1% weekly returns while controlling drawdowns and preventing overtrading.
+
+This strategy was created to exploit short-term pullbacks during strong uptrends on TQQQ. With this in mind, the strategy is naturally long-only. Additionally, the strategy executes only one trade per week, which naturally limits trade activity and makes for a more robust system.
+
+While this strategy may not outperform buy-and-hold returns, it can offer more consistent behavior with relatively modest drawdowns and gains over time. The resulting equity curve is typically smoother overall than that of a typical buy-and-hold position, and therefore potentially more favorable from a long-term performance perspective.
+
+[b]▌ Properties[/b]
+
+[list]
+[*][b]Position Sizing:[/b] Sizing is 10% of equity, the same as in the article.
+
+[*][b]Commissions:[/b] Commission value is set to $0. Most major US brokers charge $0 commission on stocks and ETF trades, including leveraged ETFs such as TQQQ. 
+
+[*][b]Slippage:[/b]  Slippage is set to 0. This strategy uses only limit orders, with the exception of a market-on-close order for the end of the week as a hard exit. For this reason slippage is not a consideration for this script.
+[/list]
+
+[b]█ THE RULES[/b]
+[list=1]
+[*] [b]Track Monday's Opening Price: [/b][i]Each week, Monday's open is noted.
+
+[/i]
+[*] [b]Enter on a 1% dip from the Open: [/b][i]On the open, a limit buy order is set at -1% from the open.
+
+[/i]
+[*] [b]Set a 1% profit target: [/b][i]If the buy order is filled, a limit sell (take-profit) order is set at the start of the following day for +1% from the fill price. By waiting until the start of the following day, this allows for occasional profits greater than 1% each week.
+
+[/i]
+[*] [b]Breakeven if 0.5% drawdown occurs: [/b][i]While in a position, if a drawdown of 0.5% or greater is observed, we immediately set a limit sell order at the entry price (breakeven).
+
+[/i]
+[*] [b]Hard stop at Friday close: [/b][i]A market-on-close order is set for EOD Friday to exit us from any position which has not met the target or breakeven limits.
+
+[/i]
+[/list]
+
+[b]█ DISPLAY[/b]
+
+[image]https://www.tradingview.com/x/NmS8Bib7/[/image]
+
+In addition to the strategy script's order executions, the display consists of four lines for visualizing the levels that the strategy uses for execution.
+
+[list=1]
+[*][b]Weekly Open:[/b] This yellow line plots at the start of the week. Once the profit target order is placed, this line stops plotting.
+[*][b]Weekly 1% Dip:[/b] This blue dashed line also plots at the start of the week. Similar to the Weekly Open line, this line also stops plotting once the profit target order is placed.
+[*][b]0.5% Drawdown:[/b] This red dashed line starts plotting once the strategy is in an active position.
+[*][b]Profit Target:[/b] This solid green line begins plotting once the profit target order has been placed at the start of the day after the buy order was filled.
+[/list]
+
+The strategy aims to educate users about the specific trading approach outlined in the article. Therefore, it does not include customizable inputs to adjust calculations or levels. However, users can still adjust strategy parameters such as trade sizes, commissions, margin, etc. in the "Properties" tab. 
+
+[i][b]Note:[/b] Certain lines may not be visible if the conditions for display only last one bar. This is simply caused by the strategy executions and price action.[/i]
+
+==================================================
+
+--- s022: cracks in correlation (smt) ---
+introducing what (in my opinion) might be the best open-source smt divergence indicator yet!
+
+as you may know, an SMT divergence forms when 2 correlated pairs' structure diverges (i.e. NQ makes a higher high and ES makes a lower high). when this happens, smart money traders take advantage of the "crack in correlation" and enter positions looking for the assets to converge again. with this indicator, you will NEVER miss an smt again!
+
+allow me to bore you with the technicals for a bit. while most smt indicators only compare 2 pivots, this one (using the amazing ZigZag library by Trendoscope), allows us to compare up to 32 different pivots at once, ensuring that every high is compared with every other high. this setting is controlled using the "memory buffer" counter inside the inputs of the indicator. raising this setting will make the indicator take more time to load, but will also show you more potential smts. using this zigzag, we're able to check whether the corresponding asset's structure is the same as the current one.
+
+all of the other settings should be self-explanatory, but should you have any questions, you can reach out to me in the comments below or on my other social media (visit my profile!).
+
+as this indicator is open-source, feel free to reuse it as you wish, but if you are re-using significant portions of it, please credit me. it would mean a lot to me :>
+
+thank you for using my indicator. happy trading!
+發行說明
+tiny stinky bugs fix
+
+==================================================
+
+--- s023: Asset Drift Model ---
+This Asset Drift Model is a statistical tool designed to detect whether an asset exhibits a systematic directional tendency in its historical returns. Unlike traditional momentum indicators that react to price movements, this indicator performs a formal hypothesis test to determine if the observed drift is statistically significant, economically meaningful, and structurally stable across time. The result is a classification that helps traders understand whether historical evidence supports a directional bias in the asset.
+
+The core question the indicator answers is simple: Has this asset shown a reliable tendency to move in one direction over the past three years, and is that tendency strong enough to matter?
+
+
+What is drift and why does it matter
+
+In financial economics, drift refers to the expected rate of return of an asset over time. The concept originates from the geometric Brownian motion model, which describes asset prices as following a random walk with an added drift component (Black and Scholes, 1973). If drift is zero, price movements are purely random. If drift is positive, the asset tends to appreciate over time. If negative, it tends to depreciate.
+
+The existence of drift has profound implications for trading strategy. Eugene Fama's Efficient Market Hypothesis (Fama, 1970) suggests that in efficient markets, risk-adjusted drift should be minimal because prices already reflect all available information. However, decades of empirical research have documented persistent anomalies. Jegadeesh and Titman (1993) demonstrated that stocks with positive past returns continue to outperform, a phenomenon known as momentum. DeBondt and Thaler (1985) found evidence of long-term mean reversion. These findings suggest that drift is not constant and can vary across assets and time periods.
+
+For practitioners, understanding drift is fundamental. A positive drift implies that long positions have a statistical edge over time. A negative drift suggests short positions may be advantageous. No detectable drift means the asset behaves more like a random walk, where directional strategies have no inherent advantage.
+
+
+How professionals use drift analysis
+
+Institutional investors and hedge funds have long incorporated drift analysis into their systematic strategies. Quantitative funds typically estimate drift as part of their alpha generation process, using it to tilt portfolios toward assets with favorable expected returns (Grinold and Kahn, 2000).
+
+The challenge lies not in calculating drift but in determining whether observed drift is genuine or merely statistical noise. A naive approach might conclude that any positive average return indicates positive drift. However, financial returns are noisy, and short samples can produce misleading estimates. This is why professional quants rely on formal statistical inference.
+
+The standard approach involves testing the null hypothesis that expected returns equal zero against the alternative that they differ from zero. The test statistic is typically a t-ratio: the sample mean divided by its standard error. However, financial returns often exhibit serial correlation and heteroskedasticity, which invalidate simple standard errors. To address this, practitioners use heteroskedasticity and autocorrelation consistent standard errors, commonly known as HAC or Newey-West standard errors (Newey and West, 1987).
+
+Beyond statistical significance, professional investors also consider economic significance. A statistically significant drift of 0.5 percent annually may not justify trading costs. Conversely, a large drift that fails to reach statistical significance due to high volatility may still inform portfolio construction. The most robust conclusions require both statistical and economic thresholds to be met.
+
+
+Methodology
+
+The Asset Drift Model implements a rigorous inference framework designed to minimize false positives while detecting genuine drift.
+
+Return calculation
+
+The indicator uses logarithmic returns over non-overlapping 60-day periods. Non-overlapping returns are essential because overlapping returns introduce artificial autocorrelation that biases variance estimates (Richardson and Stock, 1989). Using 60-day horizons rather than daily returns reduces noise and captures medium-term drift relevant for position traders.
+
+The sample window spans 756 trading days, approximately three years of data. This provides 12 independent observations for the full sample and 6 observations per half-sample for structural stability testing.
+
+Statistical inference
+
+The indicator calculates the t-statistic for the null hypothesis that mean returns equal zero. To account for potential residual autocorrelation, it applies a simplified HAC correction with one lag, appropriate for non-overlapping returns where autocorrelation is minimal by construction.
+
+Statistical significance requires the absolute t-statistic to exceed 2.0, corresponding to approximately 95 percent confidence. This threshold follows conventional practice in financial econometrics (Campbell, Lo, and MacKinlay, 1997).
+
+Power analysis
+
+A critical but often overlooked aspect of hypothesis testing is statistical power: the probability of detecting drift when it exists. With small samples, even substantial drift may fail to reach significance due to high standard errors. The indicator calculates the minimum detectable effect at 95 percent confidence and requires observed drift to exceed this threshold. This prevents classifying assets as having no drift when the test simply lacks power to detect it.
+
+Robustness checks
+
+The indicator applies multiple robustness checks before classifying drift as genuine.
+
+First, the sign test examines whether the proportion of positive returns differs significantly from 50 percent. This non-parametric test is robust to distributional assumptions and verifies that the mean is not driven by outliers.
+
+Second, mean-median agreement ensures that the mean and median returns share the same sign. Divergence indicates skewness that could distort inference.
+
+Third, structural stability splits the sample into two halves and requires consistent signs of both means and t-statistics across sub-periods. This addresses the concern that drift may be an artifact of a specific regime rather than a persistent characteristic (Andrews, 1993).
+
+Fourth, the variance ratio test detects mean-reverting behavior. Lo and MacKinlay (1988) showed that if returns follow a random walk, the variance of multi-period returns should scale linearly with the horizon. A variance ratio significantly below one indicates mean reversion, which contradicts persistent drift. The indicator blocks drift classification when significant mean reversion is detected.
+
+
+Classification system
+
+Based on these tests, the indicator classifies assets into three categories.
+
+Strong evidence indicates that all criteria are met: statistical significance, economic significance (at least 3 percent annualized drift), adequate power, and all robustness checks pass. This classification suggests the asset has exhibited reliable directional tendency that is both statistically robust and economically meaningful.
+
+Weak evidence indicates statistical significance without economic significance. The drift is detectable but small, typically below 3 percent annually. Such assets may still have directional tendency but the magnitude may not justify concentrated positioning.
+
+No evidence indicates insufficient statistical support for drift. This does not prove the asset is driftless; it means the available data cannot distinguish drift from random variation. The indicator provides the specific reason for rejection, such as failed power analysis, inconsistent sub-samples, or detected mean reversion.
+
+
+Dashboard explanation
+
+The dashboard displays all relevant statistics for transparency.
+
+Classification shows the current drift assessment: Positive Drift, Negative Drift, Positive (weak), Negative (weak), or No Drift.
+
+Evidence indicates the strength of evidence: Strong, Weak, or None, with the specific reason for rejection if applicable.
+
+Inference shows whether the sample is sufficient for analysis. Blocked indicates fewer than 10 observations. Heuristic indicates 10 to 19 observations, where asymptotic approximations are less reliable. Allowed indicates 20 or more observations with reliable inference.
+
+The t-statistics for full sample and both half-samples show the test statistics and sample sizes. Double asterisks denote significance at the 5 percent level.
+
+Power displays OK if observed drift exceeds the minimum detectable effect, or shows the MDE threshold if power is insufficient.
+
+Sign Test shows the z-statistic for the proportion test. An asterisk indicates significance at 10 percent.
+
+Mean equals Median indicates agreement between central tendency measures.
+
+Struct(m) shows structural stability of means across half-samples, including the standardized level deviation.
+
+Struct(t) shows whether t-statistics have consistent signs across half-samples.
+
+VR Test shows the variance ratio and its z-statistic. An asterisk indicates the ratio differs significantly from one.
+
+Econ. Sig. indicates whether drift exceeds the 3 percent annual threshold.
+
+Drift (ann.) shows the annualized drift estimate.
+
+Regime indicates whether the asset exhibits mean-reverting behavior based on the variance ratio test.
+
+
+Practical applications for traders
+
+For discretionary traders, the indicator provides a quantitative foundation for directional bias decisions. Rather than relying on intuition or simple price trends, traders can assess whether historical evidence supports their directional thesis.
+
+For systematic traders, the indicator can serve as a regime filter. Trend-following strategies may perform better on assets with detectable positive drift, while mean-reversion strategies may suit assets where drift is absent or the variance ratio indicates mean reversion.
+
+For portfolio construction, drift analysis helps identify assets where long-only exposure has historical justification versus assets requiring more balanced or tactical positioning.
+
+
+Limitations
+
+This indicator performs retrospective analysis and does not predict future returns. Past drift does not guarantee future drift. Markets evolve, regimes change, and historical patterns may not persist.
+
+The three-year sample window captures medium-term tendencies but may miss shorter regime changes or longer structural shifts. The 60-day return horizon suits position traders but may not reflect intraday or weekly dynamics.
+
+Small samples yield heuristic rather than statistically robust results. The indicator flags such cases but users should interpret them with appropriate caution.
+
+
+References
+
+Andrews, D.W.K. (1993) Tests for parameter instability and structural change with unknown change point. Econometrica, 61(4).
+
+Black, F. and Scholes, M. (1973) The pricing of options and corporate liabilities. Journal of Political Economy, 81(3).
+
+Campbell, J.Y., Lo, A.W. and MacKinlay, A.C. (1997) The econometrics of financial markets. Princeton: Princeton University Press.
+
+DeBondt, W.F.M. and Thaler, R. (1985) Does the stock market overreact? Journal of Finance, 40(3).
+
+Fama, E.F. (1970) Efficient capital markets: a review of theory and empirical work. Journal of Finance, 25(2).
+
+Grinold, R.C. and Kahn, R.N. (2000) Active portfolio management. 2nd ed. New York: McGraw-Hill.
+
+Jegadeesh, N. and Titman, S. (1993) Returns to buying winners and selling losers. Journal of Finance, 48(1).
+
+Lo, A.W. and MacKinlay, A.C. (1988) Stock market prices do not follow random walks. Review of Financial Studies, 1(1).
+
+Newey, W.K. and West, K.D. (1987) A simple, positive semi-definite, heteroskedasticity and autocorrelation consistent covariance matrix. Econometrica, 55(3).
+
+Richardson, M. and Stock, J.H. (1989) Drawing inferences from statistics based on multiyear asset returns. Journal of Financial Economics, 25(2).
+
+
+==================================================
+
+--- s024: [MAD] Gann o Maticus ---
+[b]Gannomat — Full Automated Gann Grids & Astro Cycles[/b]
+[i]Automatic Gann quadrant boxes with geometric arc projections. Cycle boundaries from standard timeframes or real planetary astronomy.[/i]
+
+[i]Thanks BarefootJoey, master of Astrolib[/i]
+
+[b]What Does This Indicator Do?[/b]
+
+Gannomat draws a [b]Gann quadrant box[/b] on your chart — a rectangle where the width represents a time period and the height represents a price range. Inside each box, it projects [b]geometric arc curves[/b] from all four corners at multiple proportional levels (1x0 through 5x0, plus diagonal variants 1x1 through 5x1). These arcs create a web of curved support and resistance lines based on the time–price geometry of the quadrant.
+
+Each time a new period begins — either a new timeframe candle or a new astronomical event — the box resets and a fresh set of arcs is drawn.
+
+The indicator also plots [b]pivot point markers[/b] (R3, R2, R1, PP, S1, S2, S3) as small circles whenever their values change, and draws [b]diagonal cross lines[/b] connecting opposite corners of the box.
+
+When using Astrocycles mode, an [b]info table[/b] in the top-right corner shows the active planet, cycle type, current cycle duration in days, and the dates of the last and next astronomical event.
+
+[b]━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━[/b]
+[b]INPUT REFERENCE[/b]
+[b]━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━[/b]
+[b]General[/b]
+[list]
+[*][b]Line Width[/b] (Default: 1) — Thickness of all drawn lines and arc curves. Increase for better visibility on higher-resolution screens.
+[*][b]Box Color[/b] (Default: Gray 50%) — Color of the quadrant box outline, its vertical/horizontal edges, and the diagonal cross lines.
+[*][b]Gann Circles Color[/b] (Default: Blue) — Color reserved for Gann circle overlays.
+[*][b]Cleanup Old Drawings[/b] (Default: On) — When enabled, previous box and arc drawings are removed when a new period starts. Turn off if you want to keep all historical boxes visible.
+[/list]
+[b]Time Settings[/b]
+[list]
+[*][b]Timeframe / Cycle[/b] (Default: 1 Day) — This is the most important setting. It controls how wide each Gann box is.
+[/list]
+Available options:
+[list]
+[*]15 Min, 1 Hour, 4 Hours, 6 Hours, 8 Hours, 12 Hours — Intraday periods. Use these on lower timeframe charts (1m–15m–1H).
+[*]1 Day — One trading day. The most common starting point.
+[*]1 Week, 2 Weeks, 3 Weeks, 4 Weeks — Weekly periods. Good for swing trading on daily charts.
+[*]1 Month, 3 Months, 6 Months — Monthly/quarterly periods. Use on daily or weekly charts for longer-term analysis.
+[*][b]Astrocycles[/b] — The box width is no longer a fixed timeframe. Instead, each new box begins when a specific planetary event occurs (configured in Astro Settings). The box width varies from cycle to cycle based on the actual interval between consecutive events.
+[/list]
+[b]Astro Settings[/b]
+[i]These settings only take effect when Timeframe / Cycle is set to [b]Astrocycles[/b].[/i]
+[list]
+[*][b]Astro Planet[/b] (Default: Moon) — Which celestial body drives the cycle timing. Each planet has a different orbital period, producing cycles of different lengths:
+[/list]
+[list]
+[*]Moon — ~27 days per cycle. Fast cycles, good for daily charts.
+[*]Mercury — ~88 days. Short inner-planet cycles.
+[*]Venus — ~225 days. Medium cycles.
+[*]Mars — ~687 days (~1.9 years). Good for weekly charts.
+[*]Jupiter — ~12 years. Long-term cycles for monthly charts.
+[*]Saturn — ~29 years. Very long-term structural cycles.
+[*]Uranus, Neptune, Pluto — Multi-decade to multi-century cycles. For the longest-term analysis.
+[/list]
+[list]
+[*][b]Astro Cycle[/b] (Default: High Latitude) — The type of astronomical event that marks the start of each new period:
+[/list]
+[list]
+[*][b]High Latitude[/b] — The planet reaches its maximum ecliptic latitude (furthest above the ecliptic plane). Works for all planets including Moon.
+[*][b]Low Latitude[/b] — The planet reaches its minimum ecliptic latitude (furthest below the ecliptic plane). Works for all planets including Moon.
+
+[*][b]High Longitude[/b] — The planet reaches a stationary point where its geocentric longitude stops increasing and begins to decrease (start of retrograde motion). This is the [i]retrograde station[/i]. Not applicable to Moon.
+[*][b]Low Longitude[/b] — The planet reaches a stationary point where its geocentric longitude stops decreasing and begins to increase again (end of retrograde / start of direct motion). This is the [i]direct station[/i]. Not applicable to Moon.
+
+[*][b]Heliocentric Conjunction[/b] — Earth and the selected planet are aligned on the same side of the Sun (0° heliocentric separation). Not available for Moon.
+[*][b]Heliocentric Opposition[/b] — Earth and the selected planet are on opposite sides of the Sun (180° heliocentric separation). Not available for Moon.
+[/list]
+[list]
+[*][b]Show Info Table[/b] (Default: On) — Displays a panel in the top-right corner showing: Cycle Type, Planet, Duration (days), Last Event date, and Next Event date (UTC).
+[/list]
+[b]Quadrant Scaling[/b]
+[i]These settings control the [b]height[/b] (Y-axis / price range) of each Gann box.[/i]
+[list]
+[*][b]Scale Mode[/b] (Default: Classic Pivots) — How the top and bottom price levels of the box are calculated:
+[/list]
+[list]
+[*][b]Classic Pivots[/b] — The box height is defined by two pivot levels you choose (see Upper/Lower Pivot below). In standard timeframe mode, pivots are calculated from the previous period's High, Low, Close via request.security. In Astrocycles mode, pivots are calculated from the previous astronomical cycle's High, Low, Close.
+[*][b]Prev Cycle Range[/b] — The box height equals the High-to-Low range of the previous completed cycle. This adapts the box to actual market movement. If no previous cycle data is available yet, falls back to Classic Pivots.
+[*][b]Donchian Channel[/b] — The box top is the highest high and the box bottom is the lowest low over the last N bars (set by Donchian Len).
+[*][b]ATR Bands[/b] — The box is centered on a base price (Close, HL2, or EMA) and extends upward/downward by ATR × Multiplier. This creates volatility-adaptive boxes.
+[*][b]StdDev Bands[/b] — Same concept as ATR Bands but uses standard deviation instead. Similar to Bollinger Band width. The box is centered on a simple moving average.
+[*][b]Percentile Channel[/b] — The box top is the upper percentile of highs and the box bottom is the lower percentile of lows over the lookback period. This provides a statistical price range.
+[/list]
+[list]
+[*][b]Upper Pivot[/b] (Default: R3) — Which pivot level defines the top of the box. Only used when Scale Mode is Classic Pivots. Options: R3, R2, R1, PP, S1, S2, S3.
+[*][b]Lower Pivot[/b] (Default: S1) — Which pivot level defines the bottom of the box. Only used when Scale Mode is Classic Pivots. Options: R3, R2, R1, PP, S1, S2, S3.
+[*][b]Base Source[/b] (Default: Close) — Center line for ATR Bands and StdDev Bands modes. Close uses the closing price, HL2 uses the midpoint of high and low, EMA uses an exponential moving average.
+[*][b]Donchian Len[/b] (Default: 20) — Lookback period in bars for the Donchian Channel highest-high / lowest-low calculation.
+[*][b]ATR Len[/b] (Default: 14) — Lookback period for the Average True Range calculation.
+[*][b]ATR Mult[/b] (Default: 2.0) — How many ATRs above and below the base price to extend the box.
+[*][b]StdDev Len[/b] (Default: 20) — Lookback period for the standard deviation calculation.
+[*][b]StdDev Mult[/b] (Default: 2.0) — How many standard deviations above and below the SMA to extend the box.
+[*][b]Pct Len[/b] (Default: 50) — Lookback period for the percentile calculation.
+[*][b]Low %[/b] (Default: 10) — Lower percentile threshold (0–49). A value of 10 means the box bottom is at the 10th percentile of lows.
+[*][b]High %[/b] (Default: 90) — Upper percentile threshold (51–100). A value of 90 means the box top is at the 90th percentile of highs.
+[*][b]Min Height (ATR Mult)[/b] (Default: 0.5) — Minimum allowed box height, expressed as a multiple of the current ATR. If the calculated box height is smaller than this, the box is expanded symmetrically around its midpoint. Set to 0 to disable. Useful to prevent collapsed or invisible boxes during low-volatility consolidation.
+[/list]
+[b]Pivot Colors[/b]
+[list]
+[*][b]R3 Color[/b] (Default: Dark Green #004900)
+[*][b]R2 Color[/b] (Default: Medium Green #006F00)
+[*][b]R1 Color[/b] (Default: Bright Green #009600)
+[*][b]PP Color[/b] (Default: Gray #555555)
+[*][b]S1 Color[/b] (Default: Red #FF0000)
+[*][b]S2 Color[/b] (Default: Red-Pink #FF002A)
+[*][b]S3 Color[/b] (Default: Deep Pink #FF014A)
+[/list]
+Each pivot level is plotted as a small circle marker on the chart whenever its value changes. The color scheme gives a visual gradient from green (resistance) to red (support).
+[b]Arc Colors[/b]
+[list]
+[*][b]Arc Level 1 Color[/b] (Default: Orange) — Color for the smallest arcs: 1x0, 1.5x0, and 1x1.
+[*][b]Arc Level 2 Color[/b] (Default: Lime) — Color for 2x0 and 2x1 arcs.
+[*][b]Arc Level 3 Color[/b] (Default: Green) — Color for 3x0 and 3x1 arcs.
+[*][b]Arc Level 4 Color[/b] (Default: Teal #40826D) — Color for 4x0 and 4x1 arcs.
+[*][b]Arc Level 5 Color[/b] (Default: Blue) — Color for the largest arcs: 5x0 and 5x1.
+[*][b]Arc Inv 4x0 Color[/b] (Default: Aqua) — Dedicated color for the inverted 4x0 arc, so it can be visually distinguished from the normal (bottom-up) version.
+[/list]
+Each arc level represents a different proportion of the quadrant. Smaller arcs (Level 1) curve tightly near the origin corner, while larger arcs (Level 5) sweep across the full box width. The "x1" variants (1x1, 2x1, etc.) are diagonal-offset versions that sit between the round-number levels.
+[b]━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━[/b]
+[b]HOW TO USE[/b]
+[b]━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━[/b]
+[b]Getting Started (Standard Mode)[/b]
+[list=1]
+[*]Add the indicator to your chart.
+[*]Set [b]Timeframe / Cycle[/b] to match the period you want to analyze. For example, on a 1-hour chart analyzing daily structure, choose "1 Day".
+[*]Leave Scale Mode on [b]Classic Pivots[/b] with Upper = R3, Lower = S1 as a starting point. This gives you a box spanning from the first support to the third resistance.
+[*]Observe how price interacts with the arc curves. The arcs act as curved support/resistance levels — price often reverses or accelerates near these lines.
+[*]Adjust Upper/Lower Pivot to widen (R3/S3) or narrow (R1/S1) the box depending on volatility.
+[/list]
+[b]Using Astrocycles Mode[/b]
+[list=1]
+[*]Set [b]Timeframe / Cycle[/b] to [b]Astrocycles[/b].
+[*]Choose a [b]Planet[/b]. Start with Moon for fast cycles on daily charts, or Jupiter/Saturn for long-term cycles on weekly/monthly charts.
+[*]Choose a [b]Cycle[/b] type. High Latitude is a good general-purpose starting point since it works for all planets.
+[*]Enable [b]Show Info Table[/b] to see the current cycle duration and event dates.
+[*]For scaling, try [b]Prev Cycle Range[/b] — it pairs naturally with Astrocycles because it sizes each new box based on the price action of the previous planetary cycle.
+[/list]
+[b]Choosing a Scale Mode[/b]
+[list]
+[*]Use [b]Classic Pivots[/b] for traditional Gann analysis with well-defined pivot-based boundaries.
+[*]Use [b]Prev Cycle Range[/b] when you want boxes that reflect actual market range — especially good with Astrocycles.
+[*]Use [b]ATR Bands[/b] or [b]StdDev Bands[/b] when you want the box to automatically adapt to changing volatility conditions.
+[*]Use [b]Donchian Channel[/b] for a simple recent-range approach.
+[*]Use [b]Percentile Channel[/b] for a statistical approach that filters out extreme spikes.
+[/list]
+[b]Reading the Arcs[/b]
+[list]
+[*]Bottom-up arcs (normal) rise from the lower-left corner of the box. They represent potential support curves during an uptrend.
+[*]Top-down arcs (inverted) fall from the upper-left corner. They represent potential resistance curves during a downtrend.
+[*]The right-side arcs (mirrored from the right corners) appear in the current box via polyline drawing, creating the full four-corner Gann circle pattern.
+[*]When multiple arcs from different levels converge at the same point, that creates a [b]confluence zone[/b] — a stronger potential reaction area.
+[*]The diagonal cross lines show the direct price-time relationship (1:1 ratio) across the box.
+[/list]
+[b]Tips[/b]
+[list]
+[*]If boxes appear too flat or collapsed, increase [b]Min Height (ATR Mult)[/b] from 0.5 to 1.0 or higher.
+[*]The chart timeframe should be lower than the selected period. For example, use a 1H chart with a 1 Day period, or a Daily chart with a 1 Week period. This ensures enough bars exist within each box for the arcs to render smoothly.
+[*]For Heliocentric Conjunction/Opposition cycles, remember these are only available for planets other than the Moon. These cycles correspond to synodic periods (the time between successive alignments as seen from the Sun).
+[*]High/Low Longitude cycles detect retrograde and direct stations — moments when a planet appears to change direction in the sky. These are astronomically significant turning points often studied in financial astrology.
+[/list]
+
+==================================================
+
+--- s025: Trendline Breakout Indicator [Dots3Red] ---
+[b]Trendline Breakout Indicator[/b] is an upgraded version of the existing "Trendline Breakout with Volume Confirmation [Dots3Red]".
+
+[b]What is this indicator for?[/b]
+The indicator is built to automatically detect and visualize trending price channels, both [i]bullish and bearish[/i][b][/b]. It draws channels (or polygons, optionally) across pivot-based trendlines, tracks them in real time, and signals when price breaks out of them with a certain N% (can be confirmed by volume activity too).
+
+[b]How does it work?[/b]
+The indicator identifies [b]pivot highs and lows[/b] of a configurable length. Consecutive pivots of the same type (lows for bullish, highs for bearish) form a trendline. Each trendline is then extended bar by bar until the price breaks it.
+[b]Channel mode[/b] draws a parallel channel around the trendline, where the channel width is determined by the maximum price deviation from the trendline within the channel's range - not a fixed offset. This means every channel is fitted to actual price behavior.
+[b]Polygon mode[/b] instead fills the area between the trendline and the extreme price reached within it, giving a triangular wedge shape that highlights price compression.
+Channels are color-coded: [i]cyan/teal for bullish, red/pink for bearish[/i].
+
+[b]Breakout Detection[/b]
+A breakout is confirmed when:
+[list]
+[*][b]For bullish channels[/b][i][/i]: price closes below the lower trendline by more than the configured Breakout %
+[*][b]For bearish channels[/b][i][/i]: price closes above the upper trendline by more than the configured Breakout %
+[/list]
+When a breakout occurs, the channel is frozen and drawn at its final shape. [b]A BO▲ / BO▼[/b] label marks the breakout bar.
+Only channels that have persisted for at least the [b]configured minimum length[/b][i][/i] (in bars) are drawn - this filters out insignificant short-lived moves
+
+[b]Volume Confirmation[/b]
+Volume is measured relative to its 20-bar moving average. When volume at the breakout bar exceeds the [i]Volume % Breakout[/i][b][/b] threshold, a bar visualization is drawn at the breakout point.
+
+[b]Key Inputs[/b]
+[list]
+[*]C[b]hannel / Polygon[/b][i][/i] - Switch between channel and polygon visualization mode
+[*][b]Breakout %[/b][i][/i] - How far price must close beyond the trendline to confirm a breakout
+[*][b]Slope Factor[/b][i][/i] - Minimum slope required for a trendline to be considered a valid trend
+[*][b]Pivot Length[/b][i][/i] - Lookback length for pivot high/low detection
+[*][b]Channel Min Length[/b][i][/i] - Minimum bar length a channel must reach before being drawn
+[*][b]Volume % Breakout[/b][i][/i] - Volume spike threshold relative to the 20-bar average (can be toggle on/off)
+[/list]
+The code has been cleaned so as not to contain duplicate execution functions. 
+
+[b]Example[/b]
+[image]https://www.tradingview.com/x/EuVNU9xB/[/image]
+Above is the Trendline analysis of the Nvidia stock behaviour. 
+The following configurable parameters have been chosen:
+[list]
+[*]2.5% for price break out
+[*]1.02 for slope factor
+[*]3 for Pivot length
+[*]20 for min channel's length
+[*]30% for min volume % breakout indicaton
+[/list]
+It is interesting to observe what happens when two opposite channels overlap. From Jan 2025 to mid May 2025, the stock was in a clear bearish channel, yet a bullish channel started to develop since April 2025. The bearish channel got broken on May 13, 2025, at the time when the bullish channel had already been established - a more powerful signal to enter long.
+
+Changing indicator settings might give different visual interpretations, especially the slope factor and the minimum pivot length.
+
+==================================================
+
+--- s026: NQ 8020 Zones [MMT] ---
+The [b]NQ 8020 Zones [MMT][/b] is a precision price-level indicator designed for Nasdaq futures traders. It automatically maps recurring 80/20 reaction zones around key 100-point price intervals, helping traders maintain focus on the most relevant areas of the market without unnecessary chart clutter.
+
+This indicator defines the broader and more actionable zone from 25,020 down to 24,980. This structure reflects the intended 20-to-lower-80 price block and provides a cleaner framework for identifying reaction areas, liquidity interaction, and short-term support or resistance.
+
+The script continuously centers its displayed zones around current market price, ensuring that only the most relevant nearby levels remain visible. For example, when price is trading around 25,000, the indicator will display a user-defined total number of zones surrounding current price, keeping the chart organized and execution-focused.
+
+[b]Core features[/b]
+[list]
+[*]Automatically plots 80/20 zones around active 100-point price levels.
+[*]Allows the user to define the total number of zones displayed on screen.
+[*]Includes customization for zone fill, border color, and border style.
+[*]Displays a warning when applied to symbols outside supported Nasdaq futures markets.
+[*]Supports Nasdaq futures symbols such as NQ1!, MNQ1!, and standard contract symbols such as NQM2026.
+[/list]
+
+[b]Intended use[/b]
+This indicator is built for traders who use price-based frameworks to identify recurring intraday reaction zones in Nasdaq futures. It can be used as a standalone reference tool or as a confluence layer alongside models based on liquidity, displacement, structure, or session execution.
+
+Because the indicator stays centered on current price, it is especially useful for active traders who only need nearby zones visible during live market conditions. The result is a cleaner chart and a more practical view of price levels that matter most in the moment.
+
+[b]Inputs[/b]
+[list]
+[*][b]Total Zones on Screen[/b]: Sets the total number of zones displayed relative to current price.
+[*][b]Zone Background[/b]: Adjusts the fill color of the zone.
+[*][b]Border Color[/b]: Adjusts the outline color.
+[*][b]Border Style[/b]: Selects the border appearance, including solid, dashed, dotted, or hidden.
+[/list]
+
+[b]Notes[/b]
+This indicator is specifically intended for Nasdaq futures and Micro Nasdaq futures. When applied to other symbols, a warning is shown to indicate that the logic is designed for Nasdaq futures price behavior and may not be appropriate for unrelated markets.
+
+==================================================
+
+--- s027: omarnowick ---
+Description:
+
+This indicator combines several price action tools designed to help traders analyze market structure, momentum candles, and trading sessions directly on the chart.
+
+The script highlights structural shifts in price, identifies strong momentum candles, and provides additional tools for session awareness and risk management.
+
+Features:
+
+1) No Wick Momentum Candles
+
+The script detects candles where the open equals the high or low.
+These candles often indicate strong directional pressure because price moves immediately in one direction without initial rejection.
+
+Triangles are plotted on these candles to highlight potential momentum moves.
+
+2) Market Structure (HH / HL / LH / LL)
+
+Swing highs and lows are detected using pivot logic.
+Based on these pivots, the indicator labels the current market structure:
+
+Higher High (HH)
+
+Higher Low (HL)
+
+Lower High (LH)
+
+Lower Low (LL)
+
+This helps traders visually follow trend direction.
+
+3) Break of Structure (BOS) & Change of Character (CHOCH)
+
+When price breaks previously identified structural levels, the script marks the event as either:
+
+Break of Structure (BOS) – continuation of the current trend
+
+Change of Character (CHOCH) – potential early shift in market direction
+
+Lines are drawn to show where the structural break occurred.
+
+4) Trading Sessions
+
+The indicator can highlight major trading sessions:
+
+Asia
+
+London
+
+New York
+
+Session backgrounds help visualize periods of higher market activity.
+
+5) Session Break Zone
+
+A customizable time range can be displayed as a No Trading Zone to highlight periods where a trader may prefer to avoid trading.
+
+The script can also project the next upcoming zone into the future.
+
+6) Risk Dashboard
+
+A built-in risk calculator displays:
+
+Account balance
+
+Risk percentage
+
+Stop loss size
+
+Calculated lot size
+
+This allows traders to quickly estimate position size based on their risk parameters.
+
+7) Manual Backtest Dashboard
+
+A simple dashboard allows traders to manually track wins and losses when reviewing historical trades, automatically calculating total trades and win rate.
+
+Notes:
+
+This indicator is designed as a chart analysis tool and should be used alongside a trader’s own analysis and risk management.
+
+==================================================
+
+--- s028: MovingAverages ---
+Library  [b]"MovingAverages"[/b]
+A collection of O(1) numerically stable moving averages that support anchors and fractional lengths up to 100k bars.
+
+Pine Script has a robust set of moving averages suitable for a majority of cases, making these alternatives useful only if you need anchoring, fractional lengths, or more than 5k bars. Included are the classic [b]SMA[/b], [b]EMA[/b], [b]RMA[/b], [b]WMA[/b], [b]VWMA[/b], [b]VWAP[/b], [b]HMA[/b], [b]SWMA[/b], [b]Linear Regression[/b], and [b]ATR[/b]. The common parameters are:
+[list]
+[*] [b]source (float)[/b]: Series of values to process.
+[*] [b]length (simple float)[/b]: Number of bars. Optional.
+[*] [b]anchor (bool)[/b]: The condition that triggers a calculation reset. Optional.
+[*] [b]parity (simple bool)[/b]: Sets if built-in function should be used. Optional.
+[/list]Other DSP filter adaptations include [b]One Euro[/b], [b]Laguerre[/b], [b]Super Smoother[/b], and [b]Holt[/b], as well as rate limiting functions such as [b]Smooth Damp[/b] and [b]Slew Rate Limiter[/b].
+
+[b]ANCHORING[/b]
+This is the libraries first and primary benefit. Akin to the built-in VWAP, anchoring is managed by passing a series bool into the function. For sessional anchoring, the included [b][i]new_session()[/i][/b] returns [i]true[/i] on the first bar of [i]intraday[/i] sessions, and [b][i]stabilize_anchor()[/i][/b] helps reduce near-anchor volatility. When no length is provided, the series continues indefinitely until a new anchor is set. Values during the warmup period are returned.
+[pine]
+source = close
+length = 9.5
+anchor = ma.new_session() // Assumes library is imported as "ma"
+swma = ma.swma(source, length, anchor).stabilize_anchor(source, length, anchor)
+[/pine]
+[b]STREAMING UPDATES[/b]
+Rather than naively using loops to recalculate the whole series on each bar, linear interpolation (aka. "lerping") is used to incrementally update and translate between values. The canonical formula being: a + (b - a) * t. This formula is effectively an EMA, but it's applicable to nearly all averaging equations. Coupling this technique with a circular buffer captures 3 of the 5 benefits this library offers: O(1) computation, fractional lengths, and 100k bars.
+
+
+[b]NUMERIC STABILITY[/b]
+The last benefit is how the library minimizes floating point errors. When possible, Pine Script functions are used for mathematical parity. Otherwise Kahan summation error compensation is used when calculating an average. Not only does this keep custom implementations stable throughout the series, it also helps keep them within 1.0e-10 of the built-in functions. Automatically defaulting to the built-in functions can be disabled by setting [i]parity[/i] to [i]false[/i].
+
+==================================================
+
+--- s029: EzAlgo ---
+the good indicator made with love and monkey love and cado and momma
+
+==================================================
+
+--- s030: VIX Curve Pro - Real-Time Term Structure with Statistics ---
+This indicator displays the VIX term structure as a spatial curve directly on the chart, allowing you to instantly identify whether the volatility market is in contango or backwardation. 
+It shows the relationship between different VIX maturities (9D, 30D, 3M, 6M, 1Y) as a single curve.
+
+[b]It also shows some statistics and helps with market detection:[/b]
+[list]
+[*]Historical percentile rankings for key VIX ratios
+[*]Real-time min/max/average/median values over lookback period
+[*]Current VIX term values with regime indicators
+[*]Understand where current conditions sit relative to historical context
+[*]Automatic identification of contango vs backwardation states
+[*]Visual indicators showing which part of the curve is inverted
+[*]Optional information guide explaining market states and trading implications
+[/list]
+[b]How to Use:[/b]
+The curve shows the "shape" of volatility expectations across time. An upward-sloping curve (contango) means calm markets where longer-term volatility is priced higher than near-term. A downward-sloping curve (backwardation) shows market stress, where near-term volatility spikes above longer-term expectations.
+
+Use the statistical tables to understand whether current ratios are at historical extremes (high percentile rank) or lows (low percentile rank), helping you gauge whether volatility structures are stretched or compressed.
+
+Perfect for:
+[list]
+[*]Volatility traders and options strategists
+[*]VIX futures and options traders
+[*]Understanding market fear and complacency levels
+[*]Timing volatility trades based on term structure
+[/list]
+[image]https://www.tradingview.com/x/8N36VY0H/[/image]
+In the example above, I've added a chart with [symbol="TVC:VIX"]TVC:VIX[/symbol], [symbol="CBOE:VIX9D"]CBOE:VIX9D[/symbol], [symbol="CBOE:VIX3M"]CBOE:VIX3M[/symbol] and $CBOE:VIX6M. It is possible to see that although they are still in backwardation (short term vix is lower than long term), it might be close to flip. This  kind of situation deserve extra attention. You can set alerts to when it flips.  
+
+This is a simple but useful indicator. Let me know if you have any questions! 
+
+==================================================
+

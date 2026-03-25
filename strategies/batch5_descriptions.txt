@@ -1,0 +1,563 @@
+--- s041: Adaptive Ichimoku Nexus [WillyAlgoTrader] ---
+[b]☁️ Adaptive Ichimoku Nexus[/b] — a modern approach to the legendary all-time indicator Ichimoku Kinko Hyo. This overlay indicator replaces the fixed periods of the classic Ichimoku system with a volatility-adaptive engine that dynamically scales Tenkan-Sen, Kijun-Sen, and Senkou Span B lookback periods based on current market conditions. Every TK cross signal is scored by an 8-factor confluence engine (0–100) that combines all five Ichimoku dimensions with volume, momentum pulse, and momentum acceleration. The indicator also includes a dedicated Kumo breakout engine with retest detection, three Ichimoku-anchored SL modes with R:R-based TP levels, and a multi-timeframe Ichimoku alignment panel — creating a complete trading system built entirely on Ichimoku principles enhanced with adaptive intelligence.
+
+Ichimoku Kinko Hyo was designed in the 1930s with fixed periods (9/26/52) calibrated for the Japanese trading week. These periods remain the default worldwide, but modern markets are faster, more volatile, and trade 24/7. A fixed 26-period Kijun-Sen responds identically whether the market is in a tight range or a momentum breakout — producing late signals in trends and whipsaws in consolidation.
+
+This indicator preserves the complete Ichimoku structure — all five lines, the cloud, and the displacement — while making the periods responsive to current volatility. In high-volatility environments, all three Donchian-based periods shorten → the Tenkan reacts faster, the Kijun adapts sooner, the cloud thins and pivots quicker. In low-volatility consolidation, the periods lengthen → noise is filtered, fewer false TK crosses, thicker cloud provides stronger S/R. The entire Ichimoku system breathes with the market.
+
+
+[b]🧩 WHY THESE COMPONENTS WORK TOGETHER[/b]
+
+Classic Ichimoku already integrates five components into one system: Tenkan-Sen (momentum), Kijun-Sen (trend), Senkou Span A/B (future S/R), and Chikou Span (lagging confirmation). The genius of Ichimoku is that these five dimensions are designed to confirm each other — a "5/5 alignment" is one of the strongest signals in technical analysis.
+
+This indicator enhances the system at three levels:
+
+[b]Level 1 — Adaptive periods:[/b] The volatility engine scales all three Donchian-based components (Tenkan, Kijun, Span B) proportionally, preserving the Ichimoku ratios while adapting the speed. This means the relationship between Tenkan and Kijun (the core signal mechanism) stays consistent — they just both become faster or slower together.
+
+[b]Level 2 — Confluence scoring:[/b] Instead of manually checking "Is Tenkan above Kijun? Is price above cloud? Is Chikou confirming?" — the 8-factor engine quantifies every Ichimoku dimension plus volume and momentum into a single 0–100 score. A score of 85 means virtually every Ichimoku component plus momentum and volume agrees. A score of 35 means the signal is conflicted — skip it.
+
+[b]Level 3 — Structural TP/SL:[/b] The Kumo edge and Kijun-Sen are natural Ichimoku support/resistance levels. Using them as stop-loss anchors (instead of arbitrary ATR multiples) produces structurally meaningful stops that respect the same framework generating the signals.
+
+[b]Level 4 — Momentum Pulse:[/b] Classic Ichimoku has no built-in momentum acceleration measure. The Momentum Pulse engine quantifies how fast the TK spread is changing and which direction the future cloud is rotating — capturing the urgency behind each signal.
+
+Without adaptive periods, the system is rigid. Without scoring, you must manually assess 5+ factors. Without structural SL, your risk management ignores Ichimoku's own S/R levels. Without the Momentum Pulse, you can't distinguish between a strong and a fading TK cross. Each layer adds a dimension that classic Ichimoku lacks.
+
+
+[b]🔍 WHAT MAKES IT ORIGINAL[/b]
+
+1️⃣ [b]Volatility-adaptive Ichimoku periods.[/b]
+When Adaptive mode is on, each Donchian midline (Tenkan, Kijun, Span B) uses a volatility-scaled period:
+
+adaptedPeriod = basePeriod × (1 + strength × (1 − 2 × volRatio))
+
+Where volRatio = (currentATR − lowestATR) / (highestATR − lowestATR) over the volatility lookback (default 50 bars), normalized to 0–1.
+
+When volRatio → 1 (high volatility): adaptedPeriod = basePeriod × (1 − strength) — periods shorten
+When volRatio → 0 (low volatility): adaptedPeriod = basePeriod × (1 + strength) — periods lengthen
+
+The Adapt Strength parameter (default 0.4 = ±40%) controls the range of scaling. With basePeriod=26 and strength=0.4: periods range from 16 (high vol) to 36 (low vol). Each adapted period is clamped to a valid range and fed into the standard Donchian midline formula: (highest(high, period) + lowest(low, period)) / 2.
+
+This means all five Ichimoku lines (Tenkan, Kijun, Senkou A, Senkou B, Chikou) adapt proportionally — the system remains internally consistent. In Classic mode, the standard fixed periods are used unchanged.
+
+2️⃣ [b]8-factor confluence scoring engine (0–100).[/b]
+Every bar computes both a bullish and bearish score from 8 factors:
+
+ — 📐 [b]Price vs Cloud (20 pts)[/b]: above cloud = 20, inside = 8, below = 0 (bull). Symmetric for bear. The cloud is the strongest S/R in Ichimoku.
+ — ⚡ [b]TK alignment (15 pts)[/b]: Tenkan > Kijun = 15 (bull). The core Ichimoku momentum signal.
+ — 👁️ [b]Chikou confirmation (15 pts)[/b]: Chikou Span above price at displaced position = 15 (bull). The lagging confirmation.
+ — ☁️ [b]Cloud direction (10 pts)[/b]: Span A slope > Span B slope = 10 (bull). Future cloud turning bullish indicates trend momentum.
+ — 📏 [b]Kumo thickness (8 pts)[/b]: thick cloud = 8, thin cloud = 2. Thick cloud provides stronger S/R backing.
+ — 📈 [b]Volume (10 pts)[/b]: volume > SMA(20) × 1.2 = 10. Confirms institutional participation.
+ — 💪 [b]Momentum alignment (12 pts)[/b]: Momentum Pulse > 20 = 12, > 0 = 6. Strong momentum behind the signal.
+ — 🚀 [b]Momentum acceleration (10 pts)[/b]: Momentum Pulse rising = 10. Trend is accelerating, not fading.
+
+Max score = 100. Signals require score ≥ Min Confluence Score (default 50). Grades: Strong (≥ 80), Standard (≥ 50), Weak (< 50).
+
+3️⃣ [b]Momentum Pulse engine (−100 to +100).[/b]
+A composite momentum measure built from three Ichimoku-derived components:
+
+ — [b]TK spread normalized by ATR[/b] (weight 40): tkSpreadNorm = (Tenkan − Kijun) / ATR. Measures how far apart the momentum and trend lines are relative to volatility.
+ — [b]TK spread acceleration[/b] (weight 100): tkSpreadNorm − tkSpreadNorm[3]. Measures how fast the spread is changing — captures momentum buildup.
+ — [b]Cloud slope differential[/b] (weight 30): (ΔSpanA − ΔSpanB) / ATR over 5 bars. Measures whether the future cloud is rotating bullish or bearish.
+
+Combined: momentumPulse = tkSpread×40 + tkAcceleration×100 + cloudSlope×30, clamped to [−100, +100], smoothed with EMA(5). States: Accelerating (rising + positive), Bull Fading (falling + positive), Bear Accelerating (falling + negative), Bear Fading (rising + negative).
+
+4️⃣ [b]Three Ichimoku-anchored SL modes.[/b]
+Stop-loss placement uses Ichimoku structure:
+ — [b]Kumo Edge[/b] (default): SL at the nearest cloud boundary (kumoBot for longs, kumoTop for shorts) + ATR buffer. The cloud is Ichimoku's primary S/R — placing the stop here means your stop is at the strongest structural level in the framework.
+ — [b]Kijun[/b]: SL at the Kijun-Sen ± ATR buffer. The Kijun is Ichimoku's equilibrium line — price tends to return to it.
+ — [b]ATR[/b]: SL at entry ± 2× ATR. Pure volatility-based fallback.
+
+TP1/TP2/TP3 are R:R multiples of the risk distance (default 1.5/2.5/4.0). A minimum risk distance of 0.5× ATR is enforced.
+
+5️⃣ [b]Kumo breakout engine with retest detection.[/b]
+Detects when price closes above the cloud (was below or inside on the previous bar) with volume confirmation:
+ — kumoBreakUp: close > kumoTop AND previous close ≤ kumoTop AND volume > SMA(20) × breakoutMultiplier
+ — kumoBreakDown: close < kumoBot AND previous close ≥ kumoBot AND same volume condition
+
+After a breakout, a retest signal fires if within 10 bars, price touches the cloud edge and closes back on the breakout side — confirming the cloud has flipped from resistance to support (or vice versa). Retest signals appear as small circles distinct from the larger diamond breakout markers.
+
+6️⃣ [b]Kijun-Sen S/R zone detection.[/b]
+When the Kijun-Sen has been flat for 4+ consecutive bars and then starts moving, the flat level is marked as a support/resistance zone (shaded box ± 0.15× ATR). Flat Kijun is a well-known Ichimoku S/R concept — price tends to be attracted to flat Kijun levels. The indicator automates this detection and visualization.
+
+7️⃣ [b]Multi-timeframe Ichimoku alignment panel.[/b]
+Three configurable timeframes (default 15M/1H/4H) each compute a full Ichimoku state using the classic periods:
+ — Bull ● : close > cloud AND Tenkan > Kijun
+ — Bear ● : close < cloud AND Tenkan < Kijun
+ — Neutral ○ : anything else
+
+The panel shows per-TF alignment plus a summary: ALL BULL ✓ (all 3 TFs bullish), ALL BEAR ✓ (all 3 bearish), or Mixed. All MTF data uses [1] + lookahead_on for non-repainting.
+
+
+[b]⚙️ HOW IT WORKS — CALCULATION FLOW[/b]
+
+[b]Step 1 — Volatility measurement:[/b] ATR(14) is normalized to 0–1 by its position within the recent high-low range over the volatility lookback.
+
+[b]Step 2 — Period adaptation:[/b] Each base period (9/26/52) is scaled by the adapt strength and vol ratio. High vol → shorter periods, low vol → longer. Classic mode bypasses this.
+
+[b]Step 3 — Ichimoku calculation:[/b] Tenkan = Donchian midline (adapted period). Kijun = Donchian midline (adapted period). Senkou A = avg(Tenkan, Kijun). Senkou B = Donchian midline (adapted period). Chikou = source price. Cloud displaced forward by displacement bars.
+
+[b]Step 4 — Kumo at current bar:[/b] Span A and Span B are read at displacement offset to get the current cloud boundaries. Thickness, price position (above/below/inside), and thin-cloud status are computed.
+
+[b]Step 5 — Momentum Pulse:[/b] TK spread, spread acceleration (vs 3 bars ago), and cloud slope differential — combined and EMA-smoothed.
+
+[b]Step 6 — Confluence scoring:[/b] 8 factors evaluated. Bull and bear scores computed independently.
+
+[b]Step 7 — Signals:[/b] TK cross + score threshold + enabled filters (Kumo thickness, volume, Chikou) → confirmed buy/sell. Kumo breakout: cloud boundary cross + volume surge → breakout signal. Retest: cloud edge touch within 10 bars of breakout.
+
+[b]Step 8 — TP/SL:[/b] SL from Kumo edge / Kijun / ATR mode. TPs as R:R multiples. TP/SL hits tracked per trade.
+
+
+[b]📖 HOW TO USE[/b]
+
+🎯 [b]Quick start:[/b]
+ 1. Add the indicator — the Ichimoku cloud and lines appear (adaptive by default)
+ 2. "Long 78%" / "Short 65%" labels = TK cross signals with confluence score
+ 3. ☁▲ / ☁▼ diamonds = Kumo breakout signals
+ 4. Entry, SL, TP1–TP3 lines appear on each signal
+ 5. Check the MTF panel for multi-timeframe alignment
+
+👁️ [b]Reading the chart:[/b]
+ — 🔵 Blue line = Tenkan-Sen (conversion, fast)
+ — 🔴 Pink line = Kijun-Sen (base, slow)
+ — 🟠 Orange line (displaced back) = Chikou Span
+ — 🟩🟥 Cloud fill = Kumo (green bullish, red bearish)
+ — 🟢 "Long XX%" label = confirmed bullish TK cross with score
+ — 🔴 "Short XX%" label = confirmed bearish TK cross with score
+ — 💎 Cyan diamond = Kumo breakout (☁▲ up / ☁▼ down)
+ — ⚫ Small circle = Kumo edge retest
+ — 🟪 Shaded zone = flat Kijun S/R area
+ — 🔵 Blue line = entry, 🔴 red = SL, 🟢 green = TP1/TP2/TP3
+
+📊 [b]Dashboard fields:[/b]
+ — Mode: Adaptive / Classic
+ — Trend: Bullish / Bearish / Neutral (price vs cloud + TK alignment)
+ — Signal: last signal with bars elapsed
+ — Score: confluence percentage with color grade
+ — Momentum: Pulse state + value (Accelerating / Bull Fading / Bear Accel / etc.)
+ — Cloud: price position (Above / Below / Inside / Thin)
+ — Trade: TP/SL progress (→ TP1, TP1 ✓ → TP2, TP3 ✓ Closed, SL ✗ Closed)
+ — MTF: 3-timeframe Ichimoku alignment + summary (ALL BULL / ALL BEAR / Mixed)
+ — Version
+
+🔧 [b]Tuning guide:[/b]
+ — [b]Too many weak signals:[/b] increase Min Score (60–80), enable all filters
+ — [b]Missing signals:[/b] decrease Min Score (30–40), disable Chikou filter
+ — [b]Adaptive too aggressive:[/b] decrease Adapt Strength (0.2–0.3) or increase Volatility Lookback (100+)
+ — [b]Want classic Ichimoku:[/b] switch to Classic mode — pure 9/26/52 with scoring and TP/SL
+ — [b]Stops too tight:[/b] increase SL ATR Buffer (0.7–1.0) or switch to ATR SL mode
+ — [b]Scalping:[/b] Conversion 5, Base 13, Span B 26, Displacement 13, Min Score 40
+ — [b]Swing:[/b] Conversion 12, Base 34, Span B 68, Displacement 34, Min Score 65
+
+
+[b]⚙️ KEY SETTINGS REFERENCE[/b]
+
+⚙️ [b]Main:[/b]
+ — [b]Calculation Mode[/b] (default Adaptive): Adaptive / Classic
+ — [b]Conversion/Base/Span B/Displacement[/b] (default 9/26/52/26)
+
+🔄 [b]Adaptive Engine:[/b]
+ — [b]Volatility Lookback[/b] (default 50): ATR normalization window
+ — [b]Adapt Strength[/b] (default 0.4): period scaling range (±40%)
+
+🔍 [b]Filters:[/b]
+ — [b]Min Confluence Score[/b] (default 50): 0–100 threshold
+ — [b]Kumo Thickness Filter[/b] (default On): suppress in thin cloud
+ — [b]Volume Filter[/b] (default On): auto-disabled on forex
+ — [b]Chikou Confirmation[/b] (default On): require lagging span alignment
+
+🎯 [b]Smart TP/SL:[/b]
+ — [b]SL Mode[/b] (default Kumo Edge): Kumo Edge / Kijun / ATR
+ — [b]SL ATR Buffer[/b] (default 0.5): padding beyond SL level
+ — [b]TP1/TP2/TP3 R:R[/b] (default 1.5/2.5/4.0)
+
+💥 [b]Kumo Breakout:[/b]
+ — [b]Breakout Vol Mult[/b] (default 1.3): volume surge requirement
+ — [b]Show Retest Signals[/b] (default On): cloud edge retest detection
+
+🔄 [b]Multi-Timeframe:[/b]
+ — [b]TF 1/2/3[/b] (default 15/60/240): configurable timeframes
+
+
+[b]🔔 Alerts[/b]
+
+ — 🟢 BUY / 🔴 SELL — TK cross with score, SL, TP1–TP3
+ — ☁️▲ KUMO BREAK UP / ☁️▼ KUMO BREAK DOWN
+ — 🎯 TP1 HIT / 🛑 SL HIT
+All support plain text and JSON webhook format. Bar-close confirmed.
+
+
+[b]⚠️ IMPORTANT NOTES[/b]
+
+ — 🚫 [b]No repainting.[/b] All TK cross signals and Kumo breakouts require barstate.isconfirmed. MTF data uses [1] + lookahead_on. A warmup period (Span B + displacement, minimum 80 bars) prevents signals during insufficient data.
+ — ☁️ [b]This preserves the complete Ichimoku structure.[/b] All five lines, the cloud, displacement, and Chikou are computed exactly as Ichimoku specifies — the only change is that in Adaptive mode, the three Donchian periods scale with volatility. Switching to Classic mode produces a standard Ichimoku with no modifications.
+ — 📐 The adaptive engine scales all three periods [b]proportionally[/b] using the same vol ratio and strength. The relationship between Tenkan (fast) and Kijun (slow) is preserved — they don't drift independently.
+ — ⚖️ The confluence score is [b]Ichimoku-native[/b]. Six of eight factors (price vs cloud, TK alignment, Chikou, cloud direction, Kumo thickness, momentum) are derived directly from Ichimoku components. Only volume and momentum acceleration are external additions.
+ — 📊 The Momentum Pulse is not a standalone oscillator — it's derived from TK spread dynamics and cloud rotation, both Ichimoku-native measurements. It quantifies what experienced Ichimoku traders assess visually: "Is this TK cross strong and accelerating, or weak and fading?"
+ — 🔄 Kumo breakout retest detection uses a 10-bar window after the initial breakout. Retests beyond 10 bars are not tracked.
+ — 🛠️ This is a [b]signal and analysis tool[/b], not an automated trading bot. It enhances Ichimoku with adaptive periods, scoring, and risk management — trade decisions remain yours.
+ — 🌐 Works on all markets and timeframes. Volume filter auto-disables on instruments without volume data.
+
+==================================================
+
+--- s042: Camarilla Pivot Levels [QuantumFlow] ---
+[b] Overview[/b]
+
+ A clean, open-source implementation of Camarilla Pivot Points with features missing from most existing indicators: RTH/ETH/Custom data modes, user-defined H/L/C values, price labels, configurable session times, and alerts.
+
+  [b]What are Camarilla Pivots?[/b]
+
+  Camarilla Pivot Points were developed by Nick Scott in 1989. They use the previous day's High, Low, and Close to calculate intraday support and resistance levels. The core principle is mean reversion — price tends to revert toward the previous close, and the further it extends, the higher the probability of reversal.
+
+ [b] Key levels:[/b]
+ 
+[list]
+[*]  S3 / R3 — Primary reversal zones (price tends to bounce here)
+[*]  S4 / R4 — Breakout zones (if price breaks through, expect continuation)
+[*]  S6 / R6 — Extreme levels (rare, strong reversal or extension)
+[*]  CP — Central Pivot (previous day's close)
+[/list]
+
+  [b]Formulas[/b]
+
+[pine]  Range = High - Low
+  R3 = Close + Range x 1.1 / 4
+  R4 = Close + Range x 1.1 / 2
+  R6 = Close x High / Low
+  S3 = Close - Range x 1.1 / 4
+  S4 = Close - Range x 1.1 / 2
+  S6 = Close - (R6 - Close)[/pine]
+
+  [b]Features[/b]
+
+  [i]Three data modes:[/i]
+  - RTH — Uses Regular Trading Hours H/L/C only (default: 09:30-16:00 ET). Best for futures traders who want levels
+  based on the most liquid session.
+  - ETH — Uses Extended/Full session H/L/C. Captures overnight moves.
+  - Custom — Enter your own High, Low, Close values manually. Useful for matching specific data feeds or testing.
+
+  [i]Display options:[/i]
+  - Toggle individual level pairs (R3/S3, R4/S4, R6/S6, CP)
+  - Price labels with values on each level
+  - Configurable label offset and line extension
+  - Number of prior days to display
+  - Custom colors for resistance, support, and CP
+
+  [i]Futures support:[/i]
+  - Configurable RTH session times (default 09:30-16:00)
+  - Timezone selection (all major timezones)
+  - Proper session boundary detection
+
+  [i]Alerts:[/i]
+  - R3/S3 cross alerts (reversal zone entries)
+  - R4/S4 breakout/breakdown alerts
+  - R6/S6 extreme alerts
+
+  [b]How to use[/b]
+
+  [i]Mean Reversion (S3/R3):[/i]
+  Price at S3 — look for long setups (reversal up)
+  Price at R3 — look for short setups (reversal down)
+  Best combined with volume profile, order flow, or other confluence.
+
+ [i] Breakout (S4/R4):[/i]
+  Price breaks above R4 — bullish continuation expected
+  Price breaks below S4 — bearish continuation expected
+
+  [i]Extreme (S6/R6):[/i]
+  Rare levels. Price reaching R6/S6 — strong reversal potential.
+
+  [b]Best used with[/b]
+  - Volume Profile (POC, VAH, VAL confluence)
+  - TPO / Market Profile
+  - Order Flow (absorption, delta)
+  - VWAP (sigma bands)
+
+  Camarilla levels alone are reference points. The edge comes from confluence — when a Camarilla level aligns withvolume, order flow, and price action.
+
+  [b]Notes[/b]
+  - Works on all instruments (futures, stocks, forex, crypto)
+  - Designed for intraday timeframes (1m to 1h). Not applicable on Daily/Weekly/Monthly.
+  - Open source — read, learn, modify freely.
+
+  Developed by [b]Quantum Flow Investments[/b]
+  www.quantumflowinvestments.com
+
+==================================================
+
+--- s043: Effort-Anchored VWAP ---
+[b]Overview[/b]
+
+This script automates point-of-origin selection for VWAP based on volume spikes.
+
+By calculating the standard deviation of volume over a lookback period, the script identifies "effort bars". When a volume spike occurs above a threshold, VWAP automatically resets its anchor to that specific bar.
+
+[b]Concepts[/b]
+
+[list]
+[*] Effort-Anchoring: Automatically identifies and resets to high-conviction volume bars.
+[*] SD Bands: Plots statistical variance paths relative to the active effort anchor.
+[*] Visual Feedback: Highlighting on the specific candle that triggered the reset.
+[/list]
+[b]Usage[/b]
+
+Price reaching VWAP bands can be interpreted as a potential buying or selling opportunity, as it suggests the price has pulled back significantly from the VWAP pivot line.
+
+In consolidation phases, can be used to identify range boundaries.
+
+==================================================
+
+--- s044: RTH Time based Gap Fill Statistic ---
+Description
+
+Overview
+The RTH Gap Time based Gap Fill Statistic is a quantitative analysis tool designed for intraday mean-reversion and trend traders. It tracks the behavior of "Gaps" (the price difference between the previous day's 4:00 PM ET close and the 9:30 AM ET RTH open) over a rolling 126-trading-day window (approximately 6 months of data).Instead of just telling you if a gap fills, this indicator tells you when it typically fills, allowing you to align your trades with the highest probability time windows.
+
+Key Features
+Rolling 126-Day Lookback: Maintains a dynamic sample size to capture current market regime shifts.
+
+Granular Time Buckets: Categorizes fills into specific windows
+- Opening Volatility (9:30–9:59)
+- First Hour Windows (10:00–10:15, 10:16–10:30, 10:31–11:00)
+- Late Day Fills (After 11:00)
+
+Gap Up vs. Gap Down Separation: Statistics are split to account for the inherent "long bias" or "short covering" dynamics often found in gap behavior.
+
+Probability Heatmap: The table uses color-coding to highlight high-probability windows (Teal) and low-probability/unfilled risks (Red).
+
+How to Interpret the Data
+The 9:30–9:59 Cluster: Historically, the vast majority of gap fills occur in the first 30 minutes. If the gap is not filled in this window, the probability of a fill occurring in any subsequent 15-minute block drops significantly.
+
+The "Not Filled" Row: This is your risk management metric. If the "Not Filled" percentage is high (e.g., >35%), it indicates a high frequency of "Runaway Gaps" or "Breakaway Gaps," warning you not to "fight the trend" expecting a mean reversion.
+
+Gap Sentiment: Use the n count to see if the market has had a recent bias toward gapping up or gapping down, which can signal broader regime sentiment.
+
+Technical Details
+Time zone: Designed for RTH (Regular Trading Hours) sessions (9:30 AM – 4:00 PM ET).
+
+Precision: Uses a 1-minute calculation base to ensure high-fidelity detection of the exact moment a gap is touched.
+
+Visuals: A clean, bottom-left anchored table that updates in real-time as the session progresses.
+
+DisclaimerThis indicator is for educational and informational purposes only. Historical probabilities do not guarantee future results. Always use proper risk management and stop-losses when trading gap fades.
+
+==================================================
+
+--- s045: IB Front Run Dashboard ---
+This indicator analyzes the first 45 minutes of the New York RTH session (9:30–10:15) to identify high-probability directional setups at the 10:15 close.
+How it works:
+At 10:15, the indicator checks the last completed bar's close against 3 key levels:
+
+IB45 mid — midpoint of the 9:30–10:15 Initial Balance
+OR mid — midpoint of the 10:00–10:03 Opening Range
+10:00 open — the first print of the 10am candle
+
+If price is below all 3 or above all 3, a directional bias is confirmed. The indicator then tracks whether that bias held — defined as the close at 10:30 and 11:00 remaining outside the OR range on the same side.
+For mixed days (conditions disagree), the indicator waits until 10:30 when the full IB60 (9:30–10:30) is complete, then uses the 10:30 close relative to IB60 mid as the direction reference, tracking whether the 11:00 close held that side.
+Stats shown:
+
+Rolling 20-day hit rate for below-all-3 and above-all-3 days
+Separate 20-day pool for mixed days using IB60 mid
+Two windows: 10:15–10:30 and 10:15–11:00 (or 10:30–11:00 for mixed)
+IB high/low formation time for fib reference
+
+Timeframe independent — works on 1m, 3m, 5m and higher. Uses the last completed bar before each key time rather than relying on exact bar boundaries.
+Best used on: ES1!, NQ1!, or any liquid futures market during NY RTH hours.
+
+==================================================
+
+--- s046: TTrades Currency Strength & Pair Ranker ---
+Dear TTtrades Community & Fellow Traders:
+
+I made this indicator inspired by TTrades Youtube Video on how to Find the best currency to trade in the moment. I designed this so I can be on top of the moves during market open without needing to shift from chart to chart.
+
+Thank you TTrades for all that you share, here’s my way of contributing to the community and for all the free stuff you give out.
+
+
+Here’s the Description of the Video:
+
+In this advanced forex training, you will learn how to pair currencies using futures and the US Dollar Index DXY to identify high probability expansion moves in the market. We break down the fraction concept behind pairs like EUR/USD, USD/JPY, and EUR/CAD, explain relative strength and weakness, and show how to trade strongest versus weakest currencies for cleaner trends. If you trade forex or currency futures and want a structured framework for better pair selection, this video walks you through the exact logic step by step.
+
+[url=https://m.youtube.com/watch?v=HrjYoxAUb3s&t=4s&pp=ygUPdHRyYWRlcyBmdXR1cmVz]Youtube Link: https://m.youtube.com/watch?v=HrjYoxAUb3s&t=4s&pp=ygUPdHRyYWRlcyBmdXR1cmVz[/url]
+
+Happy Trading!
+Paymun Ghaemi
+
+==================================================
+
+--- s047: Instructions for changing the font in Pine Editor ---
+Instructions for changing the font in Pine Editor
+
+THIS IS NOT AN INDICATOR!
+
+-------------------------
+
+Currently there is no direct way to change the font in TradingView Desktop for Pine Editor. However I came up with a workaround for Windows. It should also work on Unix systems. It has side effects described later.
+
+Short version: find files of an OpenType monospace font you like, change font name strings inside those files to Menlo, install the files, restart TradingView.
+
+Why bother? On Windows Pine Editor uses Consolas font. Its Bold weight is too thin. I didn't even know until recently that Pine Editor uses Bold for types. Also its "1" and "l" glyphs are not distinct enough for my taste.
+It's not a bad font, but I was changing ALL the software I'm using for coding, log viewing, etc to use the same monospace font, so I needed to change the font in Pine Editor as well.
+
+Detailed instructions:
+[list=1]
+[*]Find files of an OpenType monospace font you like.
+You'll definitely need a Regular weight font. Bold weight would also be useful and will lower side effects. Italic and Bold Italic weights may lower side effects but are not used in TradingView right now.
+If the font is installed on your PC the font files are likely to be found in "c:\Windows\Fonts" or in "%LOCALAPPDATA%\Microsoft\Windows\Fonts". Better copy them somewhere.
+If the font files were downloaded from the internet better unblock them before using (right mouse button click - Properties - Unblock).
+[*]Install python >= 3.6, install opentype-feature-freezer using pip (which comes with python).
+I'm using python 3.14 and ran this command from command line to install: "python -m pip install opentype-feature-freezer"
+The library is [url=https://github.com/twardoch/fonttools-opentype-feature-freezer]open source[/url] . I'm not related to its author.
+The command installs the tool to "%LOCALAPPDATA%\Python\pythoncore-3.14-64\Scripts\pyftfeatfreeze.exe"
+[*]Now suppose you selected some font, say, "Source Code Pro" (free OTF font from Adobe). It comes in several files named like SourceCodePro-<Weight>.otf. Run the following commands from command line (replace paths to yours or otherwise ensure files are found correctly):
+
+path/to/pyftfeatfreeze.exe -R 'Source Code Pro/Menlo' path/to/SourceCodePro-Regular.otf
+path/to/pyftfeatfreeze.exe -R 'Source Code Pro/Menlo' path/to/SourceCodePro-Bold.otf
+path/to/pyftfeatfreeze.exe -R 'Source Code Pro/Menlo' path/to/SourceCodePro-It.otf
+path/to/pyftfeatfreeze.exe -R 'Source Code Pro/Menlo' path/to/SourceCodePro-BoldIt.otf
+
+These commands will change substrings "Source Code Pro" and "SourceCodePro" to "Menlo" in relevant font name strings so that any software would see these files as being files with a font named "Menlo".
+These commands don't change input files (at least when using current version of the tool), they produce other files with the names like SourceCodePro-<Weight>.otf.featfreeze.otf. Save them somewhere.
+[*]Select all those produced files, right mouse button click - Install for all users.
+[*]Restart TradingView
+[/list]
+You should see the new font in Pine Editor.
+
+Side effects:
+[list]
+[*]You should see the new font also in Pine Logs and code segments in all the docs in TradingView Desktop, also on TradingView site too.
+[*]Lots of sites which use similar CSS fontstacks will also pick Menlo instead of whatever they picked previously. For example, Github.
+I suppose that may be Ok because you were probably replacing the font to a font you really like :)
+[*]If you don't install Bold, Italic or Bold Italic, but the site/app picking "Menlo" font would need this weight, it will "generate" it itself. It may be a problem because it may generate it with incorrect width: generated font will still be monospace, but of different width than the Regular weight. In case of text containing several font weights letters which should have been vertically aligned won't be. But Pine Editor doesn't suffer from such an issue.
+[/list]
+
+Other points of interest:
+[list]
+[*]You can pick different fonts for Regular weight and for Bold weight. That might work for Pine Editor, and even Github, but dunno about other sites.
+[*]You can use Black weight instead of Bold weight and Pine Editor will choose it as long as you don't install "Menlo" Bold.
+[/list]
+
+
+
+==================================================
+
+--- s048: Breakout Volume Delta | Flux Charts ---
+[b]GENERAL OVERVIEW:[/b]
+Breakout Volume Delta is an indicator that measures breakout strength using lower-timeframe volume delta. It estimates buyer vs. seller participation within the breakout candle by summing bullish and bearish sub-candle volumes, then visualizes that dominance by splitting the candle body into bullish and bearish segments.
+https://www.tradingview.com/x/AQGBkiiG/ 
+https://www.tradingview.com/x/li1Zdtsv/ 
+https://www.tradingview.com/x/dYHoYL2m/ 
+​​https://www.tradingview.com/x/UuFy5eif/ 
+
+[b]What is the theory behind the indicator?:[/b]
+Breakouts often look strong on price alone, but their quality depends on participation. A breakout candle that is driven by dominant buying or selling pressure is generally more meaningful than a breakout candle that forms with mixed or weak participation.
+
+This indicator gauges participation using lower timeframe volume delta. It breaks the current candle into lower timeframe sub-candles, sums volume on bullish sub-candles as bullish volume, and sums volume on bearish sub-candles as bearish volume. Those totals are converted into dominance percentages.
+
+The breakout candle is then visualized using a split-body overlay: the portion sized by the dominant side is shown in the breakout color, and the remaining portion is shown as the opposite side. This makes it easy to judge whether the breakout candle was supported by real directional participation or if the opposite side was active inside the same candle.
+
+Bullish dominant breakout candle:
+https://www.tradingview.com/x/gpuDpRdj/
+
+Bearish dominant breakout candle:
+https://www.tradingview.com/x/NelkuwXa/ 
+
+[b]FEATURES:[/b]
+🔹Swing Left and Right
+Controls how many swing-timeframe candles are required on the left and right side to confirm a swing point before a level is drawn. Higher values reduce noise by requiring stronger confirmation. Higher values increase confirmation delay because more candles are needed to validate the pivot.
+https://www.tradingview.com/x/hkeM1bgV/ 
+
+🔹Swing Timeframe
+Selects the timeframe used to detect swing levels. Default setting uses the chart timeframe. Creates each swing timeframe candle by combining the smaller candles inside it, then tracks the highest high and lowest low made during that period. Saves the exact time when those highs and lows happened so levels can be placed accurately on lower timeframes.
+
+Swing levels detected on a higher timeframe and shown on a lower timeframe chart:
+https://www.tradingview.com/x/0fxICYHq/ 
+
+🔹Volume Delta LTF
+Selects the lower timeframe used to estimate buy vs sell participation inside each breakout candle.
+[list]
+[*]Bull volume sums volume from sub-candles where close is above open.
+[*]Bear volume sums volume from sub-candles where close is below open.
+[/list]
+Converts those totals into bullish and bearish dominance percentages.
+
+Volume delta label showing bullish and bearish dominance:
+https://www.tradingview.com/x/nQYyjyKw/ 
+
+🔹Breakout by
+Controls how a swing level is considered broken.
+[list]
+[*]Wick mode confirms a break when the wick crosses the level.
+[*]Close mode confirms a break only when the candle closes beyond the level.
+[/list]
+
+Close breakout:
+https://www.tradingview.com/x/vL3xsoqT/
+
+Wick breakout:
+https://www.tradingview.com/x/7iLaNIU3/ 
+
+🔹Show Nearest
+Limits how many of the most recent swing levels remain visible on the chart. Deletes older levels once the stored level count exceeds the chosen number.
+
+Only the most recent swing levels shown on the chart:
+https://www.tradingview.com/x/LQeLQX5Q/ 
+
+🔹Breakout Volume Filter
+Optional filter that only validates a breakout if the breakout candle shows enough dominance from the breakout side.
+[list]
+[*]Bullish breakouts require bullish dominance to exceed the threshold.
+[*]Bearish breakouts require bearish dominance to exceed the threshold.
+[/list]
+If the filter fails, the affected level is removed instead of being marked as broken.
+
+Bullish breakout with Breakout Volume Filter activated:
+https://www.tradingview.com/x/7QbE4Ei7/
+
+Bearish breakout with Breakout Volume Filter activated:
+https://www.tradingview.com/x/kXJnIACl/ 
+
+🔹Unmitigated Levels
+Controls how live (unmitigated) swing levels are drawn. Users can customize the Line style, thickness, and colors for live levels.
+
+Live levels shown with unmitigated styling:
+https://www.tradingview.com/x/ke0U1A4n/ 
+
+🔹Broken Levels
+Controls how a level looks after it breaks and locks it to the breakout bar. Switches the level to broken style, width, and color, and stops extending and ends at the breakout candle time.
+
+https://www.tradingview.com/x/cU6m0jmr/ 
+
+🔹Volume Delta
+Controls the colors used for bullish and bearish dominance on the split-body overlay.
+https://www.tradingview.com/x/u2A2DF5f/ 
+
+🔹Extend Levels
+Controls how far levels extend forward when Extend Right is disabled.
+https://www.tradingview.com/x/ZAsfsfZd/ 
+
+🔹Extend Right
+When enabled, levels extend all the way to the right instead of stopping at a fixed future point.
+https://www.tradingview.com/x/DQydWtLU/ 
+
+🔹Volume Delta Labels
+Optional volume delta labels that print bullish and bearish volume with dominance percentages on breakout bars.
+[list]
+[*]Shows bull and bear volumes plus percentages.
+[*]Places label above bullish breakouts and below bearish breakouts.
+[/list]
+https://www.tradingview.com/x/8gD0iJri/ 
+
+[b]UNIQUENESS:[/b]
+Breakout Volume Delta is unique because it visualizes breakout strength directly on the breakout candle using lower timeframe buy vs sell dominance, instead of relying on price action alone.
+
+[list]
+[*]Breakout strength is shown inside the breakout candle by splitting the body into bullish and bearish participation segments.
+[*]Lower timeframe activity is mapped onto the higher timeframe candle so dominance is visible exactly where the breakout happened.
+[*]Swing levels provide breakout context, while the split-body overlay explains how much real participation supported the move.
+[*]Chart-clean design keeps the display readable by limiting how many levels remain on screen.
+[/list]
+https://www.tradingview.com/x/rb86GZnm/ 
+
+==================================================
+

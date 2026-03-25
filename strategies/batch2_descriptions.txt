@@ -1,0 +1,906 @@
+--- s011: Market Structure Volume Profiles [Kioseff Trading] ---
+Hello traders and friends!
+
+Introducing: "Market Structure Volume Profiles".
+
+This script combines market structure with volume profiling and CVD to show how volume develops inside each structural changes of the market.
+
+Instead of building one continuous profile across a session, this script creates a new volume profile for each completed BoS or CHoCH, allowing you to study the internal auction of each behavioral regime independently.
+
+[b]🔹Features[/b]
+[list]
+[*]Detects and displays BoS and CHoCH
+[*]Builds a dedicated volume profile for each new structure
+[*]Displays profiles in Stacked or Split mode
+[*]Optional Mini Profile mode for a compact structure profile view
+[*]Shows buy-side and sell-side volume distribution
+[*]Displays POC for each profile
+[*]Optional extended POC and naked POC tracking
+[*]Displays Value Area (VA) for each completed structure
+[*]Tracks and plots CVD by structural leg
+[*]Optional market structure candle coloring
+[*]Optional structure statistics label
+[*]Uses lower timeframe data to build more detailed internal volume distribution
+[/list]
+[b]🔹How it works[/b]
+
+This script tracks market structure and recalculates volume profiles for each structural change.
+
+Whenever price confirms a Break of Structure (BoS) or Change of Character (CHoCH), the volume accumulated during that completed leg is organized into a profile. This allows you to examine how volume was distributed throughout the move, where the heaviest participation occurred, and whether buying or selling dominated the leg.
+
+Rather than asking only where price moved, this script helps answer:
+[list]
+[*]where volume concentrated during the move
+[*]whether the move was supported by participation
+[*]where value developed inside the structural range
+[*]how buy and sell volume were distributed across price
+[/list]
+Each profile is built from lower timeframe data so that the structural leg can be broken into price levels and analyzed internally.
+
+[b]🔹What it shows[/b]
+
+[b]🔸Market Structure[/b]
+
+The script identifies major structural events and labels them as:
+[list]
+[*]BoS
+[*]CHoCH
+[/list]
+Profiles to be tied directly to meaningful structural transitions.
+
+[b]🔸Volume Profile by Structure[/b]
+
+Each completed structural leg gets its own profile, showing:
+[list]
+[*]buy volume at each level
+[*]sell volume at each level
+[*]total participation across the leg
+[*]the internal shape of the auction
+[/list]
+This makes it easier to compare continuation legs against reversal legs.
+
+[image]https://www.tradingview.com/x/EMSfO66a/[/image]
+
+[image]https://www.tradingview.com/x/qJBhHmx2/[/image]
+
+You can color BoS and CHoCH generated profiles distinctly. Making it easier to trach where each profile sits inside broader market action.
+
+[b]🔸Point of Control (POC)[/b]
+
+The script can display the POC of each structural profile, showing the price level with the highest traded volume during that leg.
+
+[image]https://www.tradingview.com/x/GhWcl6HK/[/image]
+
+The script can also display the Value Area for each profile, helping identify where the majority of volume was concentrated during the structural move.
+
+[image]https://www.tradingview.com/x/Haz6fhip/[/image]
+
+[b]🔸CVD[/b]
+
+The script tracks Cumulative Volume Delta throughout the current structure and plots it in the pane.
+
+CVD can be reset by:
+
+[list]
+[*]CHoCH
+[*]BoS + CHoCH
+[*]Day
+[*]Week
+[/list]
+
+This makes it possible to study delta behavior in a structural context rather than only in a session-based one.
+
+[image]https://www.tradingview.com/x/MSG9auoP/[/image]
+
+[b]🔸Structure Stats[/b]
+
+Optional structure statistics can be displayed, including:
+[list]
+[*]Range
+[*]High
+[*]Low
+[*]Buy volume
+[*]Sell volume
+[*]Delta
+[*]Return
+[/list]
+This gives a summary of the completed structural move.
+
+[b]🔸Why use it[/b]
+
+This script is designed for traders who want to combine:
+[list]
+[*]market structure
+[*]volume profiling
+[*]delta/CVD
+[*]auction logic
+[/list]
+Because profiles are anchored to structure instead of session time, they can help reveal differences between:
+[list]
+[*]strong continuation legs
+[*]weak continuation legs
+[*]reversal legs
+[*]imbalanced breakouts
+[*]balanced rotations
+[/list]
+[b]🔸Mini Profiles[/b]
+
+[image]https://www.tradingview.com/x/LIjs3g13/[/image]
+
+The indicator has two separate drawing methods for each VP.
+
+The detailed profile is used when the structural move has enough bar data to create a detailed profile.
+
+When not enough data exists, a mini profile is used. You can select only to use mini profiles if you prefer the style. 
+
+The internal logic to calculate each volume profile is similar. However, the detailed profile "scrunches" when not enough bar data exists to calculate it on - that's when mini profile takes over.
+
+[b]🔸Split Profile[/b]
+
+[image]https://www.tradingview.com/x/W2avKP0C/[/image]
+
+You can also choose to show split volume profiles.
+
+This is more similar to how a delta profile is shown. This is a styling preference only.
+
+[b]Rows Limit[/b]
+
+[image]https://www.tradingview.com/x/CmX515Mi/[/image]
+
+Detailed profiles can use up to 500 rows.
+
+Higher values were giving a "response too large" error, so I restricted the max to 500. 
+
+[b]🔹Summary[/b]
+
+That’s about it!
+
+The goal of this script is simply to combine market structure with volume profiles and CVD so you can see how volume develops inside each structural move instead of across arbitrary time windows.
+
+By anchoring profiles to BoS and CHoCH, you can study how participation builds during continuations, reversals, and rotations - and get a better feel for how each move was actually formed internally.
+
+Hope you find it useful (:
+
+Thank you guys and thank you TradingView!
+
+==================================================
+
+--- s012: Peak Trading Activity Graphs [LuxAlgo] ---
+The [b]Peak Trading Activity Graphs[/b] displays four graphs that allow traders to see at a glance the times of the highest and lowest volume and volatility for any month, day of the month, day of the week, or hour of the day. By default, it plots the median values of the selected data for each period. Traders can enable the Median Delta feature to further highlight differences in the data. The graphs are customizable in width and height and feature gradient colors by default.
+
+🔶 [b]USAGE[/b]
+[image]https://www.tradingview.com/x/rSk48QiN/[/image]
+The tool is simple yet powerful. Using the three main parameters on the settings panel, traders can display up to four different graphs and up to 16 different configurations.
+
+There are two main types of data: volume and volatility. There are also four different time periods: months, days of the month, days of the week, and hours of the day. There is also the possibility of displaying the raw medians or the delta between them.
+
+Understanding which time periods have the most and least volume and volatility is essential for any trader. From avoiding trading during periods of low volume to properly sizing positions during periods of high volatility, there are multiple use cases directly related to improving execution and risk management.
+
+🔹 [b]Months[/b]
+[image]https://www.tradingview.com/x/lKzG26EW/[/image]
+This chart shows the monthly volume and volatility of NQ as medians at the top and as the delta of medians at the bottom.
+
+As we can see on the left-hand chart, the volume is fairly consistent throughout the year. January, March, and October have the highest volume, and December has the lowest volume for obvious reasons. Note the bottom chart with the delta feature enabled, which clearly shows the top and bottom periods.
+
+On the right, we have volatility, which is also evenly distributed throughout most months. October is the most volatile month, and March is the least volatile month. The differences are also very clear on the bottom chart with delta enabled.
+
+Traders may want to compare median volatility and volume by month to size positions and favor exposure during historically high-activity months.
+
+🔹 [b]Days of Month[/b]
+[image]https://www.tradingview.com/x/HInS1JAq/[/image]
+The same NQ charts are shown, but in this case, the Days of Month period has been selected. As you can see, this displays a calendar-like graph. The volume is on the left, the volatility is on the right, and the delta feature is enabled on the bottom charts. This feature allows for stronger differences in gradient.
+
+The top charts show that the raw medians of both volume and volatility are evenly distributed. We need to enable the delta feature on the bottom charts to see where the most and least volume and volatility are.
+
+Traders can use median activity by calendar day to anticipate liquidity expansions or contractions and adjust trade frequency.
+
+🔹 [b]Days of Week[/b]
+[image]https://www.tradingview.com/x/qnUpkV3Q/[/image]
+In this case, we have BTC charts with the same layout as before. Notably, the difference in volume on weekends is not as pronounced from a volatility perspective on those same days.
+
+A practical use case can be differentiate high-risk, high-participation weekdays from low-activity sessions to select trend or range-based strategies.
+
+🔹 [b]Hours of Day[/b]
+[image]https://www.tradingview.com/x/s0Y2jkn7/[/image]
+This shows the volume and volatility of each hour of the day for gold futures. As we can see, the most volume and volatility occur during the three hours around the RTH open at 8:00, 9:00, and 10:00 a.m.
+
+Traders may want to isolate hours with the highest median volatility and volume to concentrate execution and avoid low-liquidity periods.
+
+🔹 [b]Assets Comparison[/b]
+[image]https://www.tradingview.com/x/hmXDqAqN/[/image]
+This tool allows us to compare different assets over the same period. In this case, we are comparing the hours of the day for 10-year notes, the S&P 500, silver, and the yen. Each asset has a different volatility profile throughout the day.
+[image]https://www.tradingview.com/x/r1RmozlI/[/image]
+With the Delta feature enabled, we can clearly see the differences. The 10Y Notes move from 7:00 to 9:00 and from 2:00 to 9:00. The Yen moves from 7:00 to 9:00 and from 2:00 to 9:00. Silver moves from 8:00 to 10:00. The S&P 500 moves from 8:00 to 9:00 and from 14:00 to 15:00. All times are in exchange time.
+
+🔹 [b]Sizing & Coloring Graphs[/b]
+[image]https://www.tradingview.com/x/wg1eZHjo/[/image]
+Traders can adjust the width and height of the graphs, as well as the text size, at will.
+[image]https://www.tradingview.com/x/sy0yXnV9/[/image]
+Traders can choose from four different color configurations in the settings panel.
+
+🔶 SETTINGS
+[list]
+[*]Data: Select the type of data to display: Volume or Volatility.
+[*]Period: Select the time period to display: Month, Day of Month, Day of Week, or Hours.
+[*]Display delta between medians. Display the difference between the medians as a percentage. The smaller median is 0 and the larger median is 100. Enabling this feature highlights the differences between values.
+[/list]
+🔹 [b]Graph[/b]
+[list]
+[*]Graph: Select the graph location.
+[*]Size: Select the graph size.
+[*]Width: Select the graph width.
+[*]Height: Select the height of the graph.
+[/list]
+🔹 [b]Style[/b]
+[list]
+[*] Colors: Select a color map: Viridis, Plasma, Magma, or Custom.
+[*]Custom Cold: Select a custom color for cold (low values).
+[*] Custom Lukewarm: Select a custom color for lukewarm (medium values).
+[*] Custom Hot: Select a custom color for hot (high values).
+[/list]
+
+==================================================
+
+--- s013: Fair Value Gap Profile + Rolling POC [BigBeluga] ---
+[b]🔵 OVERVIEW[/b]  
+[b]FVG Profile [BigBeluga][/b] builds a price-level profile based on detected Fair Value Gaps (FVGs) over a fixed lookback period.  
+Instead of measuring traded volume alone, this tool aggregates bullish and bearish FVG occurrences into horizontal bins, allowing traders to see where price inefficiencies are most concentrated.
+
+Each profile level represents how many bullish and bearish FVGs formed near that price zone, along with their relative strength, imbalance, and delta volume.
+
+[b]🔵 CONCEPTS[/b]
+[list]
+[*][b]FVG Detection[/b] —  
+  • Bullish FVG: when the high two bars back is below the current low.  
+  • Bearish FVG: when the low two bars back is above the current high.
+[image]https://www.tradingview.com/x/YzE7a8nj/[/image]
+[*][b]Price Binning[/b] — The full price range of the lookback period is divided into fixed bins.
+[*][b]FVG Aggregation[/b] — Each detected FVG is mapped to its nearest price bin and counted.
+[*][b]Directional Separation[/b] — Bullish and bearish FVGs are stored separately inside each bin.
+[/list]
+
+[b]🔵 FEATURES[/b]
+[list]
+[*][b]Bull / Bear FVG Profile[/b] —  
+  • Green segments represent bullish FVG counts.  
+[image]https://www.tradingview.com/x/efYXcgsQ/[/image]
+  • Orange segments represent bearish FVG counts.  
+[image]https://www.tradingview.com/x/kSOGMYXz/[/image]
+  • Each bin visually shows how many FVGs occurred at that level.
+[image]https://www.tradingview.com/x/72FuLCtm/[/image]
+[*][b]Strength Percentage[/b] —  
+  • Each bin displays a % value based on total FVG count.  
+  • The strongest bin is normalized to 100%.
+[image]https://www.tradingview.com/x/NpNd1W9c/[/image]
+[*][b]Delta Volume[/b] —  
+  • Calculates the difference between bullish and bearish FVG volume per bin.  
+  • Positive delta = bullish dominance.  
+  • Negative delta = bearish dominance.
+[image]https://www.tradingview.com/x/yDGlCdYG/[/image]
+[*][b]Heatmap Mode[/b] —  
+  • Colors profile levels by relative strength.  
+  • Color direction is driven by delta volume (bullish vs bearish).
+[image]https://www.tradingview.com/x/X30l6wVS/[/image]
+[*][b]Live FVG Visualization[/b] — Optionally plots individual bullish and bearish FVG boxes on the chart.
+[image]https://www.tradingview.com/x/Q1aLLQeN/[/image]
+[*][b]Profile Background[/b] — A background frame highlights the full analyzed price range.
+[image]https://www.tradingview.com/x/niWiR7hw/[/image]
+[/list]
+
+[b]🔵 Rolling POC Logic[/b]  
+[list]
+[*] Unlike a static profile, the Rolling POC moves with price.
+[*] It continuously calculates the "peak imbalance level" for the last X bars, providing a moving average of where the market's most significant gaps are forming.
+[image]https://www.tradingview.com/x/H1wK7dFB/[/image]
+[/list]
+
+[b]🔵 Moving Average Integration[/b]  
+[list]
+[*] The indicator features a customizable Moving Average (SMA, EMA, WMA, VWMA, etc.).
+[*] This MA helps identify if the price is currently trending toward or away from high-density FVG zones.
+[*] An "Auto" length feature is included that scales the MA based on the selected lookback period for optimal smoothing.
+[image]https://www.tradingview.com/x/IqTuXShE/[/image]
+[/list]
+
+[b]🔵 HOW TO USE[/b]
+[list]
+[*][b]Identify FVG Clusters[/b] — Strong profile levels highlight prices where inefficiencies repeatedly formed.
+[*][b]Directional Bias[/b] — Compare bullish vs bearish segments to determine dominance at each level.
+[*][b]Delta Confirmation[/b] — Use delta volume to confirm whether bullish or bearish FVGs control the zone.
+[*][b]Reaction Zones[/b] — High-strength bins often act as areas of interest for price reactions.
+[image]https://www.tradingview.com/x/j3O6sql8/[/image]
+[*][b]Heatmap Context[/b] — Enable heatmap to quickly spot dominant imbalance zones across the range.
+[/list]
+
+[b]🔵 CONCLUSION[/b]  
+[b]FVG Profile [BigBeluga][/b] transforms Fair Value Gaps into a structured price-level profile, revealing where inefficiencies cluster and which side dominates those zones.  
+By combining FVG count, directional balance, delta volume, and strength normalization, it provides a powerful way to analyze imbalance behavior beyond traditional volume profiles.
+
+==================================================
+
+--- s014: Machine Learning Pivot Points (KNN) [SS] ---
+Hey everyone,
+
+Been working on this one for a very long time. 
+
+[b]1. What It Is: [i]The Geometric DNA of a Pivot[/i][/b]
+
+Machine Learning Pivot Points (KNN) is a predictive structural tool that moves away from traditional lag based oscillators. Instead of waiting for a moving average crossover, this system treats price action as a Geometric Slope. By utilizing a K-Nearest Neighbors (KNN) algorithm combined with regression, the script captures the mathematical "DNA" of the price leading into a pivot and compares it against a live updating database of previous market turns.
+
+[b]2. The Science: Linear Regression as a Signature[/b]
+If you know me well, you know I am into regression. ChatGPT even called me the "Regression Whisperer" in 2025 (not sure if that is a good thing). The core of this indicator is the Historical Slope Function, which provides data for KNN to actually make its prediction). 
+
+[i]The Training:[/i] Unlike static models, this script "trains" itself in real-time on your specific chart. Every time a 10-bar pivot (High or Low) is confirmed, the script extracts the Linear Regression Slope of the 20 bars leading into that point.
+
+[i]The Library:[/i] These slopes are stored in dynamic arrays. This creates a localized "memory" of what a reversal looks like for the specific asset you are trading, and hence how the indicator "learns".
+
+[i]The Classification: [/i]As the current price moves, its Rolling Slope is constantly calculated. The KNN algorithm then measures the "distance" (similarity) between the current slope and the stored signatures. If the current price "curves" in a way that matches past tops, the indicator flags an Approaching Pivot High.
+
+[b]3. Decoding the Tables[/b]
+The indicator features a dual-table Cockpit designed for high-speed decision-making.
+
+[i]A. The Directional Helper (Top Right): Live KNN Bias[/i]
+This is your real-time classification engine.
+
+[i]The Neon Logic:  Neon Red ▼[/i]: The current price slope has a high mathematical similarity to historical Pivot Highs.
+
+[i]Neon Lime ▲:[/i] The current price slope matches the signature of historical Pivot Lows.
+
+[i]Confidence Metric:[/i] This represents the [i]Cluster Similarity[/i]. If the current slope is significantly closer to one group than the other, confidence spikes. A confidence level of 90%+ suggests the current price movement is almost identical to the most powerful reversals in the recent lookback.
+
+[b]B. The Backtest Table (Bottom Right)[/b]
+This table provides a live-calculating Proof of Concept for the current ticker.
+
+[i]Success Rate:[/i] Measures how often the KNN's Approaching signal successfully resulted in an actual price reversal before the opposite signal appeared.
+
+[i]Avg Low Move ($): [/i] The average dollar/point drop achieved after a "Pivot High" was predicted.
+
+[i]Avg High Move (%): [/i]  The average percentage ROI gained after a "Pivot Low" was predicted.
+
+[b]4. Visual Cues[/b]
+To differentiate from standard labels, this script uses v6 Polyline Geometry to create glowing pivots. I think we can all agree we are bored of those little basic triangles. However, because Pinescript limits at 100 polylines, the script will revert to those boring triangles over a designated history so that you can still see performance in the past with clear markers. 
+
+[b]5. Mastering the Logic: Parameters for the Pro[/b]
+[i]KNN Clusters (K):[/i] Set to 2 by default. This tells the script to average the distance to the 2 most similar past events. Increasing this makes the model "stricter" but less frequent.
+
+[i]Pivot Window: [/i]This controls the "length" of the signature. A 20-bar window captures the broader curve of the trend, while a shorter window focuses on micro-reversals.
+
+[i]Bars Left/Right:[/i] This defines the pivots themselves. It tells the script what counts as a confirmed pivot to be added to the memory bank.
+
+[b]6. Concluding Remarks[/b]
+This indicator represents a bridge between Statistical Geometry and Machine Learning. By focusing on the[i] Slope Signature[/i] rather than simple price levels, it allows you to see the market's intention before the pivot is fully formed. Whether you are scalping the 1-minute or swing trading the Daily, the KNN logic adapts to the volatility and DNA of the chart in front of you.
+
+I hope this provides a new edge to your trading workflow. Safe trades!
+
+==================================================
+
+--- s015: Inversion Fair Value Gaps (IFVG) [ChartPrime] ---
+[b]🔶 OVERVIEW[/b]  
+[b]Inversion Fair Value Gaps (IFVG) [ChartPrime][/b] is a high-performance SMC (Smart Money Concepts) indicator that tracks the evolution of institutional liquidity gaps. This tool identifies Fair Value Gaps (FVG) created by institutional displacement and monitors their "Inversion"—a powerful structural shift where failed supply becomes demand (or vice versa).
+
+Featuring a precision-focused invalidation engine, this indicator removes "Zombie Zones" by detecting re-breaches, ensuring your chart only displays the most relevant institutional levels.
+
+• Advanced Inversion FVG (IFVG) Tracking  
+• Percentage-Based Displacement Filtering  
+• ICT-Style Structural Invalidation Logic  
+• Precision Retest Diamond Signals  
+• Historical Archive Longevity Markers  
+
+[image]https://www.tradingview.com/x/BbnEj0VF/[/image]
+
+[b]🔶 CORE CONCEPT — THE INVERSION (IFVG)[/b]
+An Inversion Fair Value Gap occurs when price completely breaches an existing FVG. In institutional trading, these breached levels often flip their bias:
+[list]
+[*] [b]Bullish Inversion:[/b] A Bearish FVG that is broken to the upside becomes a Support zone.
+[image]https://www.tradingview.com/x/u2jd90ln/[/image]
+[*] [b]Bearish Inversion:[/b] A Bullish FVG that is broken to the downside becomes a Resistance zone.
+[image]https://www.tradingview.com/x/EqySVZHD/[/image]
+[*] These zones are marked with a [b]Yellow Dotted Border[/b] to signal a potential structural flip.
+[/list]
+
+
+[b]🔶 SMART INVALIDATION LOGIC[/b]
+To provide the cleanest possible analysis, the indicator follows strict ICT re-breach rules:
+[list]
+[*] [b]Resistance IFVG Invalidation:[/b] If price closes back above the top of a bearish inversion zone, the level is considered failed and is removed.
+[*] [b]Support IFVG Invalidation:[/b] If price closes back below the bottom of a bullish inversion zone, the level is removed.
+[*] [b]Longevity Retirement:[/b] Active zones that reach the user-defined bar limit (default 200) shrink into 5-bar historical markers.
+[/list]
+
+
+[b]🔶 HOW TO USE[/b]
+[list]
+[*] [b]High-Probability Retests:[/b] Monitor the [b]Triangle Signals[/b]. These appear when price retests a confirmed inversion zone, identifying prime entry locations for SMC traders.
+[*] [b]Bias Confirmation:[/b] Use the [b]Display Mode[/b] filter to focus only on Bullish or Bearish setups based on your higher-timeframe narrative.
+[*] [b]Displacement Validation:[/b] Gauge the strength of a gap using the [b]Institutional Volume[/b] text displayed inside each box.
+[/list]
+
+
+[b]🔶 CONCLUSION[/b]
+[b]Inversion Fair Value Gaps (IFVG) [ChartPrime][/b] transforms raw liquidity data into an actionable structural map. By automating the lifecycle of FVGs—from creation to inversion and eventual invalidation—it provides traders with an institutional-grade roadmap of supply and demand.
+
+==================================================
+
+--- s016: HTF Floating Candles w/ Volume Footprint [theUltimator5] ---
+This indicator is designed to pull higher-timeframe candles outside of the chart, and add the footprint volume data to give a complete snapshot of the Higher Timeframe (HTF) trading range and volume data without cluttering your view.
+
+[b]IMPORTANT![/b]
+This uses the new request.footprint() call, which may make this indicator only available to premium TradingView users.
+The request.footprint() doesn't assume all buy volume or all sell volume based on the direction of a candle, but instead uses actual footprint information to construct the volume footprints.
+
+Instead of forcing you to mentally reconstruct the most recent daily (or weekly/monthly) candle(s) while watching lower-timeframe price action, this script draws floating HTF candles to the right side of the chart and updates it live as the higher-timeframe bar develops.  The default number of HTF candles is 1, but you can add up to 10 HTF candles.
+
+It also builds a row-by-row volume distribution across the active HTF candle price range and separates it into buy-side vs sell-side volume, displayed on opposite sides of the candle. This gives you a quick visual read on where volume has been concentrated inside the higher-timeframe structure — not just where price traveled.
+
+If you don't like seeing buy and sell volume on separate sides of the candles, you can stack them all on the left side like traditional volume footprint indicators.
+[image]https://www.tradingview.com/x/au7wuMrg/[/image]
+
+You can also plot the horizontal lines backwards on the chart to show where the high and low points for the candle occurred.
+[image]https://www.tradingview.com/x/40EnE5Pz/[/image]
+
+If you want more than 1 HTF candle, you can plot multiple.  The volume footprint shows the volume profile of the entire plotted HTF candle range.
+[image]https://www.tradingview.com/x/T4T6YKIm/[/image]
+
+You can configure the following display options:
+[list]
+[*]Position and size of HTF candles
+[*]Number of HTF candles
+[*]HTF timeframe
+[*]Volume profile layout style
+[*]Number of volume profile bars
+[*]Width of volume profile bars
+[*]Colors & transparency
+[*]Horizontal high/low toggle
+[/list]
+
+This indicator isn't a standalone trading indicator, but it is a visualization enhancement tool to give you a clean picture of the higher timeframe's price and volume data without the clutter.
+
+==================================================
+
+--- s017: Hyperfork Matrix ---
+🔱  Hyperfork Matrix 🔱  A manual Andrews Pitchfork tool with action/reaction propagation lines and lattice matrix functionality. This indicator extends Dr. Alan Andrews' and Patrick Mikula's median line methodology by automating the projection of reaction and action lines at equidistant intervals, creating a time-price grid that highlights where pivot levels intersect the matrix.
+
+Three pitchfork variants are supported: Original, Schiff, and Modified Schiff. Each variant adjusts the anchor point position to accommodate different trend angles.
+
+
+[image]https://www.tradingview.com/x/ySigUhJQ/[/image]
+
+
+═══════════════════════════════════════════════════════════════
+
+
+█ [b]THE METHOD[/b]
+
+[b]Andrews Pitchfork[/b]
+Dr. Alan Andrews developed the pitchfork as a trend channel tool. The core principle: price tends to return to the median line roughly 80% of the time. When it fails to reach the median, a reversal may be developing.
+
+A pitchfork requires three pivot points:
+• [b]Point A[/b] — The anchor (starting pivot)
+• [b]Point B[/b] — First swing in the opposite direction
+• [b]Point C[/b] — Second swing, same direction as A
+
+The median line runs from Point A through the midpoint of B-C. Parallel lines through B and C form the channel boundaries.
+
+[b]Action/Reaction Principle[/b]
+Based on Newton's third law ("action and reaction are equal and opposite"), this principle suggests that price movements elicit proportional reactions in the future. By projecting lines at equal intervals along the pitchfork's slope, we anticipate where these reactions may occur.
+
+[b]Lattice Matrix[/b]
+The lattice squares pivot price levels to the matrix structure. A horizontal from your selected pivot intersects the pitchfork and propagation lines, with verticals drawn at each intersection. These verticals mark time points where price-time geometry converges—potential areas to watch for trend changes.
+
+[image]https://www.tradingview.com/x/FYWKp8t1/[/image]
+
+
+═══════════════════════════════════════════════════════════════
+
+
+█ [b]HOW THE INDICATOR WORKS[/b]
+
+This section explains the calculation flow from your inputs to the final drawing.
+
+[b]Step 1 — Pivot Selection[/b]
+You click on the chart to select three timestamps. The indicator retrieves the high or low price at each timestamp based on your starting pivot type selection:
+• Starting with "Low" creates a Low-High-Low pattern
+• Starting with "High" creates a High-Low-High pattern
+
+[b]Step 2 — Anchor Calculation[/b]
+The anchor position depends on your pitchfork variant:
+• [b]Original[/b] — Anchor stays at Point A
+• [b]Schiff[/b] — Anchor shifts 50% toward B in price (Y-axis only)
+• [b]Modified Schiff[/b] — Anchor shifts 50% toward B in both time and price
+
+[b]Step 3 — Median Line[/b]
+A line is drawn from the anchor through the midpoint of the B-C segment. This median line defines the channel's slope and center.
+
+[b]Step 4 — Parallel Tines[/b]
+Parallel lines are drawn through Points B and C, maintaining the median line's slope. These form the upper and lower channel boundaries.
+
+[b]Step 5 — Extra Parallels[/b]
+If configured, additional parallel lines are drawn at equal spacing beyond B and C. The spacing equals the distance from the median to each tine.
+
+[b]Step 6 — Handle Length[/b]
+The "handle" is the segment from the anchor to the B-C midpoint. This length becomes the unit of measurement for propagation.
+
+[b]Step 7 — Propagation Points[/b]
+Points are placed along the median line at handle-length intervals:
+• Forward points extend into the future
+• Backward points extend into the past
+
+[b]Step 8 — Reaction Lines[/b]
+Through each propagation point, a line is drawn parallel to B-C (the transversal slope). These reaction lines mark time-price zones based on the original swing rhythm, where trend changes may occur.
+
+[b]Step 9 — Action Lines[/b]
+Through each propagation point, a line is drawn parallel to A-B (the initial move slope). These action lines project the original momentum into future price zones.
+
+[b]Step 10 — Lattice Grid[/b]
+If enabled, a horizontal line is drawn at the price level of your selected pivot. Vertical lines are then drawn at every intersection between this horizontal and the selected line type (pitchfork, reaction, or action lines).
+
+[b]Step 11 — Alert Monitoring[/b]
+On each bar, the indicator checks if the price has crossed any of the drawn lines. Crossings trigger alerts based on your configuration.
+
+
+═══════════════════════════════════════════════════════════════
+
+
+█ [b]PITCHFORK VARIANTS[/b]
+
+[b]Original (Andrews)[/b]
+The classic pitchfork. The anchor remains at Point A. Best suited for strong trending markets where price respects steep channels.
+
+[b]Schiff[/b]
+Named after Jerome Schiff, a student of Andrews. The anchor shifts halfway toward Point B in price only—same time position as A, but price is the midpoint of A and B.
+
+This produces a less steep channel, better suited for:
+• Shallow trends
+• Corrective phases
+• Markets where the original pitchfork angle is too aggressive
+
+[b]Modified Schiff[/b]
+The anchor shifts halfway toward Point B in both time and price—positioned at the midpoint of the A-B segment.
+
+This creates an even gentler slope than the standard Schiff variant. Use when:
+• Trends are weak or ranging
+• Price doesn't respect steeper channel angles
+• You need a middle ground between Original and Schiff
+
+[image]https://www.tradingview.com/x/BRqWPEm6/[/image]
+
+
+═══════════════════════════════════════════════════════════════
+
+
+█ [b]ACTION & REACTION LINES[/b]
+
+[b]Reaction Lines[/b]
+These run parallel to the B-C segment (the "transversal"). They represent the market's response rhythm—the swing from B to C sets a pattern that may repeat at predictable intervals.
+
+[b]Action Lines[/b]
+These run parallel to the A-B segment (the initial impulse). They project the original momentum forward, suggesting where similar price movements may begin or end.
+
+[b]Forward vs Backward[/b]
+• [b]Forward Lines[/b] — Project into the future beyond the B-C midpoint
+• [b]Backward Lines[/b] — Project into the past before Point A
+
+Most analysis focuses on forward lines, but backward lines can reveal historical confluence with past pivots.
+
+[b]Propagation Spacing[/b]
+Lines are spaced at equal intervals defined by the handle length (anchor to B-C midpoint). This creates a rhythmic structure where each segment equals the original pitchfork's core measurement.
+
+[b]Action Lines[/b]
+[image]https://www.tradingview.com/x/1Lutx06R/[/image]
+
+[b]Reaction Lines[/b]
+[image]https://www.tradingview.com/x/MyuXf24A/[/image]
+
+[b]Extra Parallels with/ both Action & Reactions Line extended within the grid[/b]
+
+[image]https://www.tradingview.com/x/23AHtviP/[/image]
+
+═══════════════════════════════════════════════════════════════
+
+
+█ [b]LATTICE MATRIX[/b]
+
+The lattice creates a grid overlay within the pitchfork structure.
+
+[b]Horizontal Line[/b]
+A horizontal line is drawn at the price level of your selected pivot (A, B, or C). This squares the pivot's price level to find where it aligns with the matrix structure. These confluences may represent higher-probability reaction points in time.
+
+[b]Vertical Lines[/b]
+Vertical lines are drawn at every point where the horizontal intersects your selected line source. These verticals mark time points—potential areas to watch for trend changes.
+• [b]Pitchfork & Parallels[/b] — Intersections with median and all parallel tines
+• [b]Action Lines[/b] — Intersections with action transversals
+• [b]Reaction Lines[/b] — Intersections with reaction transversals
+• [b]Action & Reaction[/b] — Both types combined
+
+
+[b]Envelope Clamping[/b]
+Lattice lines are automatically clamped to stay within the pitchfork's channel envelope (bounded by the outermost parallels). This keeps the grid visually clean and focused on relevant areas.
+
+
+[image]https://www.tradingview.com/x/tZURHuEf/[/image]
+
+═══════════════════════════════════════════════════════════════
+
+
+█ [b]ALERTS[/b]
+
+The indicator monitors price crossings and triggers alerts when the price moves through any drawn line type.
+
+[b]Available Alert Types[/b]
+• [b]Pitchfork Lines[/b] — Crossing the median or any parallel
+• [b]Action Lines[/b] — Crossing any action transversal (when action lines are drawn)
+• [b]Reaction Lines[/b] — Crossing any reaction transversal (when reaction lines are drawn)
+• [b]Lattice Horizontal[/b] — Crossing the horizontal price level (when lattice is enabled)
+• [b]Any Line Crossing[/b] — Combined alert for all of the above
+
+[b]Setting Up Alerts[/b]
+1. Right-click on the indicator or use the alert menu
+2. Select "Create Alert."
+3. Choose the desired condition from the dropdown
+4. Configure notification preferences (pop-up, email, webhook, etc.)
+
+[b]Alert Timing[/b]
+Alerts trigger once per bar close when a crossing is detected between the previous and current bar's close prices.
+
+
+═══════════════════════════════════════════════════════════════
+
+
+█ [b]HOW TO USE[/b]
+
+[b]Basic Setup[/b]
+1. Add the indicator to your chart
+2. When prompted, click on three pivot points in sequence: A, B, C
+3. Choose starting pivot type: Auto (detects pattern), Low (LHL), or High (HLH)
+4. The pitchfork draws automatically
+
+[b]Adjusting the Pitchfork[/b]
+• Change the variant (Original/Schiff/Modified Schiff) if the angle doesn't suit your trend
+• Add extra parallel levels to see where price might react beyond the main channel
+• Disable or Adjust price range min/max to hide parallels outside your focus area
+
+[b]Adding Propagation Lines[/b]
+• Adjust forward offset to add/remove lines beyond auto-extend (0 = to current bar)
+• Choose which line types to display: Reaction Only, Action Only, or Both
+• Customize colors to distinguish line types visually
+
+[b]Using the Lattice[/b]
+• Enable "Draw Lattice" in the Lattice settings group
+• Select which pivot's price level to use for the horizontal
+• Choose the intersection source that matches your analysis style
+• Look for time zones where verticals cluster—these may be significant dates
+
+[b]Log Scale Charts[/b]
+If your chart uses logarithmic scale, enable "Logarithmic Scale" in Pitchfork Settings. This ensures all calculations transform correctly for log price axes.
+
+
+═══════════════════════════════════════════════════════════════
+
+
+█ [b]SETTINGS REFERENCE[/b]
+
+[b]1. Pivot Points[/b]
+• Starting Pivot Type — Auto (detect pattern), Low (force LHL), or High (force HLH)
+• Pivot A/B/C Time — Timestamps for your three pivots (click to select)
+• Show Pivot Labels — Display A, B, C labels at pivot locations
+• Pivot Colors — Customize high/low label colors
+• Label Size — Tiny, Small, Normal, or Large
+
+[b]2. Pitchfork Settings[/b]
+• Logarithmic Scale — Enable for log charts
+• Pitchfork Type — Original, Schiff, or Modified Schiff
+• Extra Parallel Levels — Additional parallels beyond B and C
+• Line styling (color, width, style)
+• Extend Direction — Right only or Both directions
+• Enable Price Range Filter — Toggle filtering of extra parallels
+• Price Range Min/Max — Hide extra parallels outside this range
+
+[b]3. Action / Reaction Lines[/b]
+• Draw Type — None, Reaction Only, Action Only, or Both
+• Forward Lines Offset — Adjust from auto-extend (0 = to current bar, positive adds more)
+• Backward Lines Count — Number of lines projected before Point A
+• Separate styling for reaction and action lines
+
+[b]4. Lattice[/b]
+• Draw Lattice — Master toggle
+• Select Pivot for Horizontal — A, B, or C price level
+• Intersection Source — Which lines to use for vertical placement
+• Lattice styling
+
+
+[image]https://www.tradingview.com/x/EMTkLErd/[/image]
+
+═══════════════════════════════════════════════════════════════
+
+
+█ [b]LIMITATIONS[/b]
+
+• [b]Maximum 500 lines[/b] — TradingView limits line objects; complex setups with many parallels and propagation lines may approach this limit
+• [b]Manual pivot selection[/b] — Pivots must be selected manually via timestamp inputs; no auto-detection
+• [b]Log scale requires toggle[/b] — You must enable "Logarithmic Scale" manually if your chart uses log axes
+• [b]Minor visual drift[/b] — Action/Reaction lines may shift slightly when toggling between odd and even extra parallel counts (cosmetic only)
+• [b]Backward lines visibility[/b] — When adding backward propagation lines, you may need to scroll the chart left for them to render
+
+
+═══════════════════════════════════════════════════════════════
+
+
+█ [b]FURTHER READING[/b]
+
+For deeper study of pitchfork analysis and action/reaction methodology:
+• Patrick Mikula's "The Best Trendline Methods of Alan Andrews and Five New Trendline Techniques"
+
+[i]No affiliation implied. Referenced for educational context only.[/i]
+
+
+═══════════════════════════════════════════════════════════════
+
+
+█ [b]RELATED[/b]
+
+For a video walkthrough of the Super Pitchfork methodology that inspired this indicator:
+[url=https://www.tradingview.com/chart/BTCUSD/tMl0xjtC-How-to-Build-a-Super-Pitchfork-with-Reaction-Trigger-Lines/]How to Build a Super Pitchfork with Reaction & Trigger Lines[/url]
+
+This tutorial covers manual pitchfork construction, reaction line projection, and timing techniques.
+
+
+
+==================================================
+
+--- s018: Central Bank Liquidity Gap Indicator ---
+This indicator measures the [b]gap between global liquidity growth and stock market growth[/b] to identify potential buying opportunities.
+
+Liquidity drives markets. When central banks print money, that liquidity eventually flows into stocks and other assets. If we spot when liquidity growth is outpacing market growth, we can spot moments when the market is "due" to catch up.
+
+I like this quote:
+[i]Earnings don't move the overall market; it's the Federal Reserve Board... focus on the central banks and focus on the movement of liquidity."
+- Stanley Druckenmiller[/i]
+
+[b]How Central Bank Liquidity Gap Indicator Works[/b]
+The indicator calculates a simple divergence:
+
+Divergence = Liquidity Growth % − S&P 500 Growth %
+[list]
+[*]Green bars = Liquidity is growing faster than the market (bullish)
+[*]Red bars = Market is growing faster than liquidity (less bullish)
+[/list]
+[b]Multi-Country M2 Money Supply[/b]
+Unlike basic M2 indicators, this one lets you combine money supply data from multiple economies, including US, UK, Canada, China, Eurozone, Switzerland and Japan. 
+
+Each country's M2 is automatically weighted by its actual size (converted to USD). Larger economies have more influence on the global liquidity picture.
+I've added a discount for China. China's M2 weight is reduced by 50% to account for capital controls that limit how much Chinese liquidity flows into global markets and into the US market. 
+
+[b]Fed Net Liquidity [/b]
+You can also blend in Fed Net Liquidity for a more precise US liquidity measure:
+
+Net Liquidity = Fed Balance Sheet − Treasury General Account − Reverse Repo
+This captures the actual liquidity the Fed has injected into financial markets, not just the broad money supply.
+
+[b]How To Read It[/b]
+The Buy Zone (5%+ Divergence)
+When the divergence exceeds +5%, the indicator enters the "Buy Zone" (highlighted with green background). This means liquidity is significantly outpacing market growth — historically a good buy signal.
+
+[b]The Support Table[/b]
+[list]
+[*]The info table shows:
+[*]Component weights: How much each country's M2 contributes
+[*]Corr w/ SPX: Current correlation between liquidity and SPX (are they moving together?)
+[*]Leads SPX by X: Does past liquidity predict future SPX moves? (higher = more predictive)
+[*]Divergence %: Current divergence value
+[*]Signal
+[/list]
+[b]Correlation Stats [/b]
+[list]
+[*]Corr w/ SPX: Measures if liquidity and SPX are moving in sync right now
+[*]Leads SPX: Measures if liquidity changes predict future SPX moves. A positive value here suggests liquidity is a leading indicator.
+[/list]
+[b]Potential Use Cases[/b]
+[list]
+[*]Long-term investing: Wait for 5%+ divergence (buy zone) to accumulate index funds, ETFs, or stocks
+[*]Leveraged ETFs: Use buy zone signals to time entries into UPRO, TQQQ, SSO (higher risk, higher reward)
+[*]Crypto: Bitcoin and crypto markets also correlate with global liquidity — use this for BTC accumulation timing
+[*]Risk management: Avoid adding positions when divergence is deeply negative
+[/list]
+[b]Important Notes[/b]
+This is a long-term indicator and not for daytrading. It works best used on Daily/Weekly timeframes
+It identifies accumulation zones and not precise bottoms
+
+Truly yours, Henrique Centieiro
+
+Inspired by the relationship between M2 money supply and market performance, enhanced with multi-country liquidity tracking and Fed balance sheet analysis.
+
+Let me know if you have questions/suggestions.
+
+
+==================================================
+
+--- s019: RSI BUY/SELL Pro - KN ---
+RSI based indicator that prints BUY and SELL labels when RSI hits the configured threshold.
+Default values:
+BUY - RSI Crosses 30
+SELL - RSI Crosses 70
+
+==================================================
+
+--- s020: Earnings Snapshot [Trendoscope] ---
+[b]🎲 Overview[/b]
+
+The [b]Earnings Snapshot [Trendoscope®] [/b]is a custom indicator designed to provide traders and investors with a quick, visual overview of a stock's earnings performance and its impact on price action. This tool automates the analysis of earnings reports by fetching historical and future earnings data, calculating growth metrics for both earnings and price changes, and presenting the information in an intuitive table format on the chart. It also adds interactive labels at key earnings dates for detailed breakdowns.
+
+During the earning season, I was trying to understand the earnings and revenue growth of microsoft in comparison with thier price growth. This involved tidious process of taking scereenshot of multiple earning reports and then drawing correlations between them.
+
+https://www.tradingview.com/x/25W6kUwX/
+
+This script eliminates the tedium of manual data gathering and visualization. It focuses on key metrics like actual vs. estimated earnings, year-over-year (Y2Y) comparisons, and future estimates, while highlighting how these events correlate with price movements. Currently, the script handles earnings per share (EPS) data effectively, but revenue details are not included due to ongoing technical challenges with the available data interfaces in Pine Script. Future updates may incorporate revenue analysis once we find an effective way to present this data.
+
+This indicator is ideal for fundamental analysis, earnings season preparation, or post-earnings reviews, helping users spot patterns such as earnings surprises, growth trends, or price reactions.
+
+[b]🎲 Key Features[/b]
+[list]
+[*][b]Earnings Data[/b]: Retrieves actual, estimated, and standardized EPS from TradingView's built-in request.earnings function.
+[*][b]Growth Calculations[/b]: Computes percentage changes in earnings and price compared to the previous quarter (Last), year-over-year (Y2Y, based on 4 quarters back), and future estimates.
+[*][b]Visual Table Display[/b]: A customizable table in the top-right corner showing dates, growth percentages, and color-coded indicators (lime for positive growth, orange for negative).
+[*][b]On-Chart Infomration[/b]: Based on the settings, users can enable presentation of earnings, price and the growth data on chart. 
+[*][b]Historical Depth[/b]: Configurable history lookback (up to 24 quarters) to analyze past earnings.
+[*]Tooltip Mode: For a cleaner chart, labels show a score summary with full details available on hover.
+[*]Future Earnings Integration: Includes upcoming EPS estimates and their projected growth from the last actual earnings.
+[/list]
+[b]🎲 Display Modes[/b]
+
+[b]🎯Tooltip Mode[/b]
+If we select tooltip mode, it is better to chose the label size as either large or huge for better visibility. In tooltip mode, the data is not directly presented on the screen. Instead, we display the calculated score on the earnings release bar. The earnings and price growth info will show up upon hovering on the printed score value.
+
+https://www.tradingview.com/x/xPfuGYAO/
+
+[b]🎯Text Mode[/b]
+In case of text mode, all the calculated earnings and price growth data is printed directly on the chart. This will provide easier access to the data. However, it fills the chart. It is usefull for people who do not use additional indicators on the same chart or someone who trades mainly based on the earnings reports.
+
+https://www.tradingview.com/x/kgtC0hVb/
+
+[b]🎯Tabular Data[/b]
+Tabular data presents the growth of Earnings and Price based on last quarter as well as Y2Y along with growth of estimated earnings. The table can be hidden through input settings.
+
+https://www.tradingview.com/x/VEere9sB/
+
+[b]🎲 Diving Deep[/b]
+
+[b]🎯Information Gathered and Presented[/b]
+At present, we have tried collating and presenting following information for every earnings.
+[list]
+[*] Q2Q Earnings Growth
+[*] Q2Q Price Growth
+[*] Y2Y Earnings Growth
+[*] Y2Y Price Growth
+[*] Q2Q Future Estimated Earning Growth
+[/list]
+[b]🎯 Calculation of Score and Color coding[/b]
+When in text mode, the information of earnings and price growth are printed on the chart completely. These displays are color coded based on a calculated score. You can also see the score directly on the chart when the display mode is tooltip mode. Let us try to understand how this score is calculated.
+
+Score is nothing but combination of different factors of price and earnings growth. Following conditions are considered for the calculation.
+
+[list]
+[*] If Earnings growth is positive, add 1 else reduce the score by 1
+[*] If price growth is positive, add 1 else reduce the score by 1
+[*] If Earnings growth percent is higher than price growth percent, then add 1, else reduce the score by 1
+[/list]
+Similar calculations are repeated for Y2Y earning and price growth. Finanlly the score also looks at if the future estimated earning is expected to increase from current actual earnings or is it expected to reduce.
+
+Since there are 7 factors, the score can vary from -7 to +7. Higher the score, the greener the text background will be and lesser the score, the text background will turn more towards red.
+
+[b]🎯 Limitations[/b]
+[list]
+[*] Assumes quarterly earnings; irregular reporting schedules may affect Y2Y accuracy.
+[*] Historical depth is limited to 24 quarters to avoid performance issues, but can be adjusted.
+[*] Works best on daily/weekly timeframes where earnings bars are visible.
+[*] No alerts or backtesting integration; this is purely a visualization tool.
+[/list]
+[b]🎯  Example of Interpretations [/b]
+[list]
+[*]A green label with positive growth in both earnings and price suggests a strong beat with bullish reaction.
+[*]Orange cells in Y2Y might indicate slowing growth despite a recent beat.
+[*]Negative future estimates could signal caution for upcoming reports.
+[/list]
+If you encounter issues or have suggestions, feel free to provide feedback. This script aims to streamline your manual analysis—happy trading!
+
+==================================================
+

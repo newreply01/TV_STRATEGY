@@ -4,34 +4,35 @@ generator client {
 
 datasource db {
   provider  = "postgresql"
-  url       = env("POSTGRES_PRISMA_URL")
+  url       = env("DATABASE_URL")
   directUrl = env("POSTGRES_URL_NON_POOLING")
 }
 
 model TradingviewScript {
-  id              Int      @id @default(autoincrement())
-  title           String
-  author          String
-  url             String
-  slug            String   @unique
-  imageUrl        String?  @map("image_url")
-  descriptionEn   String?  @map("description_en")
-  descriptionZh   String?  @map("description_zh")
-  sourceType      String?  @map("source_type")
-  descriptionFull String?  @map("description_full")
-  pineScript      String?  @map("pine_script")
-  localImages     String[] @map("local_images")
-  likesCount      Int      @default(0) @map("boosts_count")
-  commentsCount   Int      @default(0) @map("comments_count")
-  createdAt       DateTime @default(now()) @map("created_at")
-  updatedAt       DateTime @updatedAt @map("updated_at")
-  lastSyncedAt    DateTime @default(now()) @map("last_synced_at")
-  isImplemented   Boolean  @default(false) @map("is_implemented")
-  isWebDone       Boolean  @default(false) @map("is_web_done")
-  isScriptDone    Boolean  @default(false) @map("is_script_done")
-  serialId        String?  @map("serial_id")
-  publishedAt     DateTime? @map("published_at")
-  category        String?
+  id                Int       @id @default(autoincrement())
+  title             String
+  author            String
+  url               String
+  slug              String    @unique
+  imageUrl          String?   @map("image_url")
+  descriptionEn     String?   @map("description_en")
+  descriptionZh     String?   @map("description_zh")
+  sourceType        String?   @map("source_type")
+  descriptionFull   String?   @map("description_full")
+  descriptionFullZh String?   @map("description_full_zh")
+  pineScript        String?   @map("pine_script")
+  localImages       String[]  @map("local_images")
+  likesCount        Int       @default(0) @map("boosts_count")
+  commentsCount     Int       @default(0) @map("comments_count")
+  createdAt         DateTime  @default(now()) @map("created_at")
+  updatedAt         DateTime  @updatedAt @map("updated_at")
+  lastSyncedAt      DateTime  @default(now()) @map("last_synced_at")
+  isImplemented     Boolean   @default(false) @map("is_implemented")
+  isWebDone         Boolean   @default(false) @map("is_web_done")
+  isScriptDone      Boolean   @default(false) @map("is_script_done")
+  serialId          String?   @map("serial_id")
+  publishedAt       DateTime? @map("published_at")
+  category          String?
 
   @@map("tradingview_scripts")
 }
@@ -47,11 +48,9 @@ model SystemLog {
 }
 
 model SyncProgress {
-  id             Int      @id @default(autoincrement())
-  dataset        String   @unique
-  lastSyncDate   DateTime @map("last_sync_date")
-  
+  id           Int      @id @default(autoincrement())
+  dataset      String   @unique
+  lastSyncDate DateTime @map("last_sync_date")
+
   @@map("fm_sync_progress")
 }
-
-
