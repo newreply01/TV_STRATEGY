@@ -94,6 +94,17 @@ export default function ScriptDetailClient({ script }: { script: any }) {
                <div className="flex items-center gap-1.5"><MessageSquare className="w-4 h-4 text-blue-500" /> <span className="text-xs font-bold">{script.comments_count || 0}</span></div>
             </div>
           </div>
+
+          {/* Thumbnail Image */}
+          {script.image_url && (
+            <div className="mt-8 rounded-[2rem] overflow-hidden border border-white/10 shadow-2xl max-w-4xl">
+              <img 
+                src={script.image_url} 
+                alt={script.title} 
+                className="w-full h-auto object-cover"
+              />
+            </div>
+          )}
         </div>
 
         {/* 1. Dynamic Chart Section (Fixed at top of document flow) */}

@@ -21,16 +21,22 @@ export default function ScriptsListClient({ initialScripts }: { initialScripts: 
   const [mounted, setMounted] = React.useState(false);
 
   // Helper to extract TradingView snapshot URL from slug
-  const getTradingViewSnapshot = (slug: string, imageUrl: string) => {
-    if (!imageUrl) return "";
+  // Helper to extract TradingView snapshot URL or use database image_url
+  const getTradingViewSnapshot = (slug: string, originalUrl: string) => {
+    // If originalUrl exists and starts with http, use it
+    if (originalUrl && (originalUrl.startsWith('http') || originalUrl.startsWith('/'))) {
+      return originalUrl;
+    }
+
+    let id = slug;
+    if (slug.includes('-')) {
+      id = slug.split('-')[0];
+    }
     
-    if (imageUrl.startsWith('http') || imageUrl.startsWith('/')) return imageUrl;
+    if (!id || id.length < 5) return originalUrl;
     
-    const id = imageUrl.length >= 5 ? imageUrl : slug.split('-')[0];
-    const firstLetter = id.charAt(0).toLowerCase();
-    
-    // Verified 200 OK: s3.tradingview.com/{first_char}/{id}.png
-    return `https://s3.tradingview.com/${firstLetter}/${id}.png`;
+    // Fallback
+    return `https://s3.tradingview.com/c/${id}_mid.png`;
   };
 
   React.useEffect(() => {
@@ -40,7 +46,8 @@ export default function ScriptsListClient({ initialScripts }: { initialScripts: 
   const filteredScripts = initialScripts.filter(s => {
     const matchesCategory = filter === 'All' || s.category === filter;
     const matchesSearch = s.title.toLowerCase().includes(search.toLowerCase()) || 
-                          (s.description_zh && s.description_zh.toLowerCase().includes(search.toLowerCase()));
+                          (s.descriptionFullZh && s.descriptionFullZh.toLowerCase().includes(search.toLowerCase())) ||
+                          (s.descriptionZh && s.descriptionZh.toLowerCase().includes(search.toLowerCase()));
     
     return matchesCategory && matchesSearch;
   });
@@ -140,17 +147,17 @@ export default function ScriptsListClient({ initialScripts }: { initialScripts: 
                 
                 {/* Overlay Tags */}
                 <div className="absolute top-6 right-6 flex flex-col items-end gap-2">
-                  {script.serial_id && (
+                  {script.serialId && (
                     <span className="px-3 py-1 rounded-full text-[10px] font-black bg-white/90 text-black border border-white shadow-xl">
-                      #{script.serial_id}
+                      #{script.serialId}
                     </span>
                   )}
                   <span className={`px-3 py-1 rounded-full text-[10px] font-black backdrop-blur-md uppercase tracking-wider ${
-                    script.source_type === 'editors_picks' 
+                    script.sourceType === 'editors_picks' 
                       ? 'bg-amber-500 text-white' 
                       : 'bg-blue-500 text-white'
                   }`}>
-                    {script.source_type === 'editors_picks' ? '編輯精選' : '熱門'}
+                    {script.sourceType === 'editors_picks' ? '編輯精選' : '熱門'}
                   </span>
                 </div>
 
@@ -168,12 +175,12 @@ export default function ScriptsListClient({ initialScripts }: { initialScripts: 
                     <h2 className="text-xl font-bold line-clamp-1 group-hover:text-brand-primary transition-colors">
                       {script.title}
                     </h2>
-                    {script.is_implemented && (
+                    {script.isImplemented && (
                       <span className="px-2 py-0.5 rounded-full bg-emerald-500 text-white text-[9px] font-black uppercase tracking-widest shadow-lg shadow-emerald-500/20">
                         已實作
                       </span>
                     )}
-                    {script.is_web_done && (
+                    {script.isWebDone && (
                       <span className="px-2 py-0.5 rounded-full bg-blue-500 text-white text-[9px] font-black uppercase tracking-widest shadow-lg shadow-blue-500/20">
                         已完成
                       </span>
@@ -188,7 +195,7 @@ export default function ScriptsListClient({ initialScripts }: { initialScripts: 
                 </div>
 
                 <p className="text-sm text-zinc-500 dark:text-zinc-500 line-clamp-3 leading-relaxed font-medium">
-                  {script.descriptionZh || script.descriptionEn || '尚未提供描述'}
+                  {script.descriptionFullZh || script.descriptionZh || script.descriptionEn || '尚未提供描述'}
                 </p>
 
                 {/* Datasets Info */}

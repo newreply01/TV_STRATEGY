@@ -21,20 +21,22 @@ export default function DevListClient({ initialScripts }: { initialScripts: any[
   const [mounted, setMounted] = React.useState(false);
 
   // Helper to extract TradingView snapshot URL from slug
+  // Helper to extract TradingView snapshot URL or use database image_url
   const getTradingViewSnapshot = (slug: string, originalUrl: string) => {
-    // If slug is not provided, try to extract from originalUrl
+    // If originalUrl exists and starts with http, use it as it's likely the correct S3/Official link
+    if (originalUrl && originalUrl.startsWith('http')) {
+      return originalUrl;
+    }
+
     let id = slug;
-    
-    // TradingView script IDs are usually the first 8 characters before the first hyphen
     if (slug.includes('-')) {
       id = slug.split('-')[0];
     }
     
-    // If id is empty or invalid, fallback to original
     if (!id || id.length < 5) return originalUrl;
     
-    // Return the standard TradingView chart snapshot URL (light version)
-    return `https://s3.tradingview.com/l/${id}_light.png`;
+    // Fallback to light version if no originalUrl
+    return `https://s3.tradingview.com/c/${id}_mid.png`;
   };
 
   React.useEffect(() => {
@@ -44,7 +46,8 @@ export default function DevListClient({ initialScripts }: { initialScripts: any[
   const filteredScripts = initialScripts.filter(s => {
     const matchesCategory = filter === 'All' || s.category === filter;
     const matchesSearch = s.title.toLowerCase().includes(search.toLowerCase()) || 
-                          (s.description_zh && s.description_zh.toLowerCase().includes(search.toLowerCase()));
+                          (s.descriptionFullZh && s.descriptionFullZh.toLowerCase().includes(search.toLowerCase())) ||
+                          (s.descriptionZh && s.descriptionZh.toLowerCase().includes(search.toLowerCase()));
     
     return matchesCategory && matchesSearch;
   });
@@ -132,9 +135,9 @@ export default function DevListClient({ initialScripts }: { initialScripts: any[
               className="group block rounded-[2.5rem] border border-gray-200 dark:border-white/5 bg-white dark:bg-zinc-900/40 overflow-hidden hover:border-brand-primary transition-all duration-500 hover:shadow-[0_20px_50px_-15px_rgba(255,59,48,0.15)]"
             >
               <div className="aspect-[16/10] bg-gray-100 dark:bg-zinc-900 overflow-hidden relative">
-                {script.image_url ? (
+                {script.imageUrl ? (
                   <img 
-                    src={getTradingViewSnapshot(script.slug, script.image_url)} 
+                    src={getTradingViewSnapshot(script.slug, script.imageUrl)} 
                     alt={script.title}
                     className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700"
                   />
@@ -144,17 +147,17 @@ export default function DevListClient({ initialScripts }: { initialScripts: any[
                 
                 {/* Overlay Tags */}
                 <div className="absolute top-6 right-6 flex flex-col items-end gap-2">
-                  {script.serial_id && (
+                  {script.serialId && (
                     <span className="px-3 py-1 rounded-full text-[10px] font-black bg-white/90 text-black border border-white shadow-xl">
-                      #{script.serial_id}
+                      #{script.serialId}
                     </span>
                   )}
                   <span className={`px-3 py-1 rounded-full text-[10px] font-black backdrop-blur-md uppercase tracking-wider ${
-                    script.source_type === 'editors_picks' 
+                    script.sourceType === 'editors_picks' 
                       ? 'bg-amber-500 text-white' 
                       : 'bg-blue-500 text-white'
                   }`}>
-                    {script.source_type === 'editors_picks' ? '編輯精選' : '熱門'}
+                    {script.sourceType === 'editors_picks' ? '編輯精選' : '熱門'}
                   </span>
                 </div>
 
@@ -172,7 +175,7 @@ export default function DevListClient({ initialScripts }: { initialScripts: any[
                     <h2 className="text-xl font-bold line-clamp-1 group-hover:text-brand-primary transition-colors">
                       {script.title}
                     </h2>
-                    {script.is_implemented ? (
+                    {script.isImplemented ? (
                       <span className="px-2 py-0.5 rounded-full bg-emerald-500 text-white text-[9px] font-black uppercase tracking-widest shadow-lg shadow-emerald-500/20">
                         已實作
                       </span>
@@ -191,7 +194,7 @@ export default function DevListClient({ initialScripts }: { initialScripts: any[
                 </div>
 
                 <p className="text-sm text-zinc-500 dark:text-zinc-500 line-clamp-3 leading-relaxed font-medium">
-                  {script.description_zh || script.description_en || '尚未提供描述'}
+                  {script.descriptionFullZh || script.descriptionZh || script.descriptionEn || '尚未提供描述'}
                 </p>
 
                 {/* Datasets Info */}
@@ -204,7 +207,7 @@ export default function DevListClient({ initialScripts }: { initialScripts: any[
 
                 <div className="flex items-center justify-between pt-6 border-t border-gray-100 dark:border-white/5">
                   <span className="text-[10px] text-zinc-400 font-black uppercase tracking-widest">
-                    {new Date(script.updated_at).toLocaleDateString('zh-TW')}
+                    {new Date(script.updatedAt).toLocaleDateString('zh-TW')}
                   </span>
                   <span className="text-brand-primary text-xs font-black uppercase tracking-widest opacity-0 group-hover:opacity-100 transition-all translate-x-4 group-hover:translate-x-0">
                     開發細節 →
