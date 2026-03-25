@@ -193,9 +193,10 @@ def main(symbol="2330"):
     if ohlc:
         last_t = ohlc[-1]['time']
         for i in range(1, 145):
-            ohlc.append({"time": last_t + (i * 900)})
-            # Also add to profile or other items if they define the timeframe
-            # But usually Candlestick + TimeScale is enough
+            future_t = last_t + (i * 900)
+            ohlc.append({"time": future_t})
+            # Add to profile as placeholder if needed
+            profile.append({"time": future_t, "price": None, "volume": None, "color": "transparent"})
             
     return {
         "ohlc": ohlc,

@@ -24,16 +24,12 @@ export default function ScriptsListClient({ initialScripts }: { initialScripts: 
   const getTradingViewSnapshot = (slug: string, imageUrl: string) => {
     if (!imageUrl) return "";
     
-    // If imageUrl is a full URL or internal path
-    if (imageUrl.startsWith('http') || imageUrl.startsWith('/')) {
-      return imageUrl;
-    }
+    if (imageUrl.startsWith('http') || imageUrl.startsWith('/')) return imageUrl;
     
     const id = imageUrl.length >= 5 ? imageUrl : slug.split('-')[0];
-    const firstLetter = id.charAt(0).toLowerCase();
     
-    // Official TradingView snapshot path
-    return `https://s3.tradingview.com/snapshots/${firstLetter}/${id}.png`;
+    // According to verify: /l/{id}.png is highly reliable for link-based IDs
+    return `https://s3.tradingview.com/l/${id}.png`;
   };
 
   React.useEffect(() => {
