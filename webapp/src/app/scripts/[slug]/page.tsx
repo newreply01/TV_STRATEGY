@@ -17,6 +17,7 @@ async function getScript(slug: string) {
     description_zh: script.descriptionZh,
     source_type: script.sourceType,
     description_full: script.descriptionFull,
+    description_full_zh: script.descriptionFullZh,
     pine_script: script.pineScript,
     local_images: script.localImages,
     boosts_count: script.likesCount, // 注意：Prisma 模型中是 likesCount 映射到 boosts_count
