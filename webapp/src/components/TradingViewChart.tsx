@@ -200,22 +200,18 @@ export default function TradingViewChart({ slug, symbol = 'AAPL' }: { slug: stri
             // 由於加入了未來時間節點，過濾出有實體資料的部分來精算起點
             const actualData = chartData.ohlc.filter((d: any) => d.close !== undefined);
             const actualLength = actualData.length;
-            // 恢復至正常的可視範圍，主要依靠 rightOffset 撐開未來空間
+            // 配合後端注入點，強制延伸視野以顯示日期標籤
             const firstTime = chartData.ohlc[0].time as any;
-            const lastDataTime = actualData[actualLength - 1].time as any;
+            const lastFutureTime = chartData.ohlc[dataLength - 1].time as any;
             
             requestAnimationFrame(() => {
               if (chartRef.current) {
                 chartRef.current.timeScale().setVisibleRange({ 
                   from: firstTime, 
-                  to: lastDataTime 
+                  to: lastFutureTime 
                 });
-                
-                // 設定右側偏移量以顯示未來時間標籤 (S001: 50根 ~ 0.5天, S002: 150根 ~ 1.5天)
-                const offset = isS001 ? 50 : (isS002 ? 150 : 30);
-                chartRef.current.timeScale().applyOptions({ 
-                  rightOffset: offset,
-                });
+                // 設為極小邊距，主要靠數據撐開
+                chartRef.current.timeScale().applyOptions({ rightOffset: 5 });
               }
             });
           } else {

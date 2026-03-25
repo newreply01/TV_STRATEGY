@@ -195,7 +195,7 @@ def main(symbol="2330"):
         for i in range(1, 145):
             future_t = last_t + (i * 900)
             ohlc.append({"time": future_t})
-            # Add to profile as placeholder if needed
+            # Also add to profile as placeholder if needed
             profile.append({"time": future_t, "price": None, "volume": None, "color": "transparent"})
             
     return {
