@@ -189,10 +189,10 @@ def main(symbol="2330"):
             "close": float(row['close'])
         })
     
-    # Inject Future Empty Bars (1 Day = 96 bars at 15m)
+    # Inject Future Empty Bars (1.5 Days = 144 bars at 15m)
     if ohlc:
         last_t = ohlc[-1]['time']
-        for i in range(1, 97):
+        for i in range(1, 145):
             ohlc.append({"time": last_t + (i * 900)})
             # Also add to profile or other items if they define the timeframe
             # But usually Candlestick + TimeScale is enough

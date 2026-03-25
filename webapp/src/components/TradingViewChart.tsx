@@ -201,11 +201,7 @@ export default function TradingViewChart({ slug, symbol = 'AAPL' }: { slug: stri
             const actualData = chartData.ohlc.filter((d: any) => d.close !== undefined);
             const actualLength = actualData.length;
             const lastTime = chartData.ohlc[dataLength - 1].time as any;
-            const isS001 = slug.includes('Omni-Flow');
-            const isS002 = slug.includes('Volume-Profile');
-            const extraSpace = isS002 ? 86400 : (isS001 ? 43200 : 0);
-            
-            // 一次顯示所有數據範圍 (從第一根到最後一根注入的虛擬節點)
+            // 依靠後端注入的未來虛擬節點來延伸時間軸
             const firstTime = chartData.ohlc[0].time as any;
             const lastFutureTime = chartData.ohlc[dataLength - 1].time as any;
             
@@ -221,8 +217,8 @@ export default function TradingViewChart({ slug, symbol = 'AAPL' }: { slug: stri
             chartRef.current.timeScale().fitContent();
           }
           
-          // 保留些微右側邊距 (避免最後一個虛擬點貼邊)
-          chartRef.current.timeScale().applyOptions({ rightOffset: 10 });
+          // 保留 20 根的右側微邊距，增加呼吸感
+          chartRef.current.timeScale().applyOptions({ rightOffset: 20 });
         }
         setLoading(false);
 
