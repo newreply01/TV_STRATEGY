@@ -144,8 +144,7 @@ export default function TradingViewChart({ slug, symbol = 'AAPL' }: { slug: stri
                   color: p === 0 ? 'rgba(255, 255, 255, 0.4)' : (Math.abs(p) === 90 ? 'rgba(255, 255, 255, 0.2)' : 'rgba(255, 255, 255, 0.1)'),
                   lineWidth: 1,
                   lineStyle: p === 0 ? 0 : 2, // 0: Solid, 2: Dashed
-                  axisLabelVisible: true,
-                  title: p === 0 ? 'ZERO' : `${p > 0 ? '+' : ''}${p}`,
+                  axisLabelVisible: false, // 隱藏右側標籤框
                 });
               });
 
