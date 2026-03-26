@@ -136,6 +136,19 @@ export default function TradingViewChart({ slug, symbol = 'AAPL' }: { slug: stri
               }, 1);
               flowSeries.setData(chartData.indicator.filter((d:any) => typeof d.value === 'number'));
               flowSeries.priceScale().applyOptions({ scaleMargins: { bottom: 0.2, top: 0.1 } });
+
+              // Add reference levels for Omni-Flow (90, 70, 0, -70, -90)
+              [90, 70, 0, -70, -90].forEach(p => {
+                flowSeries.createPriceLine({
+                  price: p,
+                  color: p === 0 ? 'rgba(255, 255, 255, 0.4)' : (Math.abs(p) === 90 ? 'rgba(255, 255, 255, 0.2)' : 'rgba(255, 255, 255, 0.1)'),
+                  lineWidth: 1,
+                  lineStyle: p === 0 ? 0 : 2, // 0: Solid, 2: Dashed
+                  axisLabelVisible: true,
+                  title: p === 0 ? 'ZERO' : `${p > 0 ? '+' : ''}${p}`,
+                });
+              });
+
               dynamicSeriesRef.current.push(flowSeries);
 
               if (chartData.signal) {
