@@ -118,8 +118,14 @@ def health_check():
 def get_chart_data(slug):
     symbol = request.args.get('symbol', 'AAPL')
     # Determine default period based on exchange (Taiwan vs others)
+    # Determine default period based on exchange (Taiwan vs others)
     is_tw = ".TW" in symbol.upper() or symbol.isdigit()
-    default_period = '7d' if is_tw else '5d'
+    
+    # S001 (Omni-Flow) requires more history for consensus calculation. Default to 30d.
+    if slug == SLUG_S001:
+        default_period = '30d'
+    else:
+        default_period = '7d' if is_tw else '5d'
 
     interval = request.args.get('interval', '5m')
     period = request.args.get('period', default_period)

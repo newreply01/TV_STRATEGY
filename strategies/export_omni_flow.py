@@ -222,7 +222,7 @@ def generate_html(symbol, data):
 
 def main():
     symbol = sys.argv[1] if len(sys.argv) > 1 else "2330.TW"
-    period = "60d"
+    period = "30d"
     interval = "15m"
     
     print(f"Exporting {symbol} (Period: {period}, Interval: {interval})...")

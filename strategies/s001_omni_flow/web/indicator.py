@@ -114,8 +114,8 @@ def get_omni_flow_data(df, interval="15m"):
     bull_confirm_series = []
     bear_confirm_series = []
     
-    # 1.5 month display filter (approx 45 days)
-    cutoff_time = df_calc.index.max() - pd.Timedelta(days=45)
+    # 1.0 month display filter (30 days)
+    cutoff_time = df_calc.index.max() - pd.Timedelta(days=30)
     for idx, row in df_calc.iterrows():
         t = int(idx.timestamp())
         flow_v = float(row['flow_main'])
