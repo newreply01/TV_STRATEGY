@@ -86,7 +86,12 @@ export default function ScriptDetailClient({ script }: { script: any }) {
             </div>
             <div className="flex items-center gap-2 text-zinc-500">
               <Calendar className="w-4 h-4" />
-              {new Date(script.last_synced_at).toLocaleDateString('zh-TW')}
+              {/* Force client-only rendering for the date string to solve persistent hydration mismatch */}
+              {mounted ? (
+                <span className="font-medium animate-in fade-in duration-500">{script.last_synced_at}</span>
+              ) : (
+                <div className="h-4 w-24 bg-zinc-800 animate-pulse rounded" />
+              )}
             </div>
             <div className="flex items-center gap-4 px-4 py-1.5 bg-zinc-900/50 rounded-full border border-white/5">
                <div className="flex items-center gap-1.5"><Heart className="w-4 h-4 text-red-500" /> <span className="text-xs font-bold">{script.boosts_count || 0}</span></div>
@@ -94,54 +99,45 @@ export default function ScriptDetailClient({ script }: { script: any }) {
                <div className="flex items-center gap-1.5"><MessageSquare className="w-4 h-4 text-blue-500" /> <span className="text-xs font-bold">{script.comments_count || 0}</span></div>
             </div>
           </div>
-
-          {/* Thumbnail Image */}
-          {script.image_url && (
-            <div className="mt-8 rounded-[2rem] overflow-hidden border border-white/10 shadow-2xl max-w-4xl">
-              <img 
-                src={script.image_url} 
-                alt={script.title} 
-                className="w-full h-auto object-cover"
-              />
-            </div>
-          )}
         </div>
 
-        {/* 1. Dynamic Chart Section (Fixed at top of document flow) */}
+        {/* 1. Dynamic Chart Section */}
         <section className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-700 pt-8 border-t border-white/5">
-          <div className="flex items-center justify-between">
+          <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
             <h2 className="text-2xl font-black flex items-center gap-3">
               <LineChart className="w-6 h-6 text-brand-primary" />
               動態分析圖表
             </h2>
-            {/* Symbol Switcher */}
-            <div className="hidden lg:flex flex-wrap items-center gap-2 p-1 bg-white/5 rounded-xl border border-white/5 backdrop-blur-md">
-              <span className="px-3 text-xs font-black text-zinc-600 uppercase tracking-widest">快速切換:</span>
-              {popularSymbols.map((s) => (
-                <button
-                  key={s.value}
-                  onClick={() => {
-                    setSymbol(s.value);
-                    setCustomSymbol(''); // Reset custom input when clicking presets
-                  }}
-                  className={cn(
-                    "px-4 py-1.5 rounded-lg text-sm font-black tracking-widest uppercase transition-all",
-                    symbol === s.value 
-                      ? "bg-white text-black shadow-lg" 
-                      : "text-zinc-500 hover:text-white"
-                  )}
-                >
-                  {s.label}
-                </button>
-              ))}
+            
+            {/* Symbol Switcher (Outside Top Right) */}
+            <div className="flex flex-wrap items-center gap-2 p-1 bg-white/5 rounded-2xl border border-white/5 backdrop-blur-md">
+              <div className="flex items-center gap-1">
+                {popularSymbols.map((s) => (
+                  <button
+                    key={s.value}
+                    onClick={() => {
+                      setSymbol(s.value);
+                      setCustomSymbol(''); 
+                    }}
+                    className={cn(
+                      "px-3 py-1.5 rounded-xl text-[10px] font-black tracking-widest uppercase transition-all whitespace-nowrap",
+                      symbol === s.value 
+                        ? "bg-white text-black shadow-lg" 
+                        : "text-zinc-500 hover:text-white hover:bg-white/10"
+                    )}
+                  >
+                    {s.label}
+                  </button>
+                ))}
+              </div>
               
-              <div className="w-px h-4 bg-zinc-800 mx-2" />
+              <div className="w-px h-4 bg-zinc-800 mx-1" />
               
               {/* Custom Symbol Input */}
-              <div className="flex items-center gap-2 px-2 py-0.5 bg-black/40 rounded-lg border border-white/5 group focus-within:border-brand-primary/50 transition-all">
+              <div className="flex items-center gap-2 px-3 py-1 bg-black/40 rounded-xl border border-white/5 focus-within:border-brand-primary/50 transition-all">
                 <input
                   type="text"
-                  placeholder="輸入代號 (e.g. BTCUSDT)"
+                  placeholder="SEARCH..."
                   value={customSymbol}
                   onChange={(e) => setCustomSymbol(e.target.value.toUpperCase())}
                   onKeyDown={(e) => {
@@ -149,11 +145,11 @@ export default function ScriptDetailClient({ script }: { script: any }) {
                       setSymbol(customSymbol);
                     }
                   }}
-                  className="bg-transparent border-none outline-none text-xs font-black w-32 placeholder:text-zinc-700 text-white p-1"
+                  className="bg-transparent border-none outline-none text-[10px] font-black w-24 placeholder:text-zinc-700 text-white"
                 />
                 <button 
                   onClick={() => customSymbol && setSymbol(customSymbol)}
-                  className="p-1 hover:text-brand-primary text-zinc-500 transition-colors"
+                  className="hover:text-brand-primary text-zinc-500 transition-colors"
                 >
                   <Activity className="w-3.5 h-3.5" />
                 </button>
@@ -161,7 +157,7 @@ export default function ScriptDetailClient({ script }: { script: any }) {
             </div>
           </div>
 
-          <div className="rounded-[2.5rem] bg-zinc-900/40 border border-white/10 p-2 backdrop-blur-3xl overflow-hidden shadow-3xl">
+          <div className="relative rounded-[2.5rem] bg-zinc-900/40 border border-white/10 p-2 backdrop-blur-3xl overflow-hidden shadow-3xl">
             {mounted ? (
               <TradingViewChart slug={script.slug} symbol={symbol} />
             ) : (
@@ -177,15 +173,14 @@ export default function ScriptDetailClient({ script }: { script: any }) {
               <p className="text-zinc-400 leading-relaxed text-sm">
                本動態圖表目前切換至 <b>{symbol}</b> 進行設計基準校驗。數據採用 15 分鐘級別 K 線。
                圖表中的買賣信號是透過 Python 精準還原 <b>{script.title}</b> 的核心演算法運算而成。
-             </p>
+              </p>
           </div>
         </section>
 
-        {/* 2. Unified Information & Article Section (Single Row Header) */}
+        {/* 2. Unified Information & Article Section */}
         <section className="space-y-6 pt-12 border-t border-white/5">
           {/* Controls Row */}
           <div className="flex flex-col lg:flex-row items-stretch lg:items-center gap-4">
-            {/* Header & Lang Switcher */}
             <div className="flex-1 flex items-center justify-between bg-zinc-900/50 p-4 rounded-2xl border border-white/5 backdrop-blur-md">
               <div className="flex items-center gap-3">
                 <Globe className="w-5 h-5 text-brand-primary" />
@@ -214,34 +209,73 @@ export default function ScriptDetailClient({ script }: { script: any }) {
               </div>
             </div>
 
-            {/* TV Button */}
             <a href={script.url} target="_blank" className="flex items-center gap-3 px-6 py-4 bg-brand-primary rounded-2xl font-bold text-white hover:bg-red-600 transition-colors text-xs shadow-xl">
               去 TradingView 查看
               <ExternalLink className="w-4 h-4" />
             </a>
 
-            {/* Accuracy Status */}
             <div className="flex items-center gap-4 px-6 py-4 bg-zinc-900/50 rounded-2xl border border-white/5 backdrop-blur-md">
                <span className="text-xs text-zinc-500 font-bold uppercase tracking-widest font-mono">Accuracy</span>
                <span className="text-sm text-white font-black">99.8%</span>
             </div>
           </div>
           
-          {/* Main Content Area */}
           <div className="rounded-[2.5rem] bg-zinc-900/40 border border-white/5 p-8 md:p-12 backdrop-blur-3xl relative overflow-hidden text-base leading-relaxed">
             <div className="relative">
               <div className="text-zinc-200 font-medium whitespace-pre-wrap max-w-5xl">
-                {lang === 'zh' 
-                  ? (script.description_full_zh || script.description_zh || '尚未提供描述') 
-                  : (script.description_full || script.description_en || 'No description available')
-                }
+                {(() => {
+                  const rawContent = lang === 'zh' 
+                    ? (script.description_full_zh || script.description_zh || '尚未提供描述') 
+                    : (script.description_full || script.description_en || 'No description available');
+                  
+                  const content = String(rawContent).replace(/\r\n/g, '\n');
+
+                  if (!mounted) {
+                    return <div className="whitespace-pre-wrap">{content}</div>;
+                  }
+
+                  let imageIndex = 0;
+                  let processed = content
+                    .replace(/\[list\]/gi, '\n')
+                    .replace(/\[\/list\]/gi, '\n')
+                    .replace(/\[\*\]/gi, '• ');
+
+                  const regex = /(\[b\].*?\[\/b\]|\[image\].*?\[\/image\]|\[image\])/gi;
+                  const rawParts = processed.split(regex);
+
+                  return (
+                    <div>
+                      {rawParts.map((part: string, index: number) => {
+                        if (!part) return null;
+                        
+                        if (part.startsWith('[b]') && part.endsWith('[/b]')) {
+                          return <strong key={index} className="text-white font-black">{part.slice(3, -4)}</strong>;
+                        } 
+                        
+                        if (part.toLowerCase().startsWith('[image]')) {
+                          const imgPath = script.local_images && script.local_images[imageIndex];
+                          imageIndex++;
+                          if (imgPath) {
+                            return (
+                              <div key={index} className="my-8 rounded-2xl overflow-hidden border border-white/10 shadow-2xl bg-black/20">
+                                <img src={imgPath} alt="Strategy Detail" className="w-full h-auto object-cover" />
+                              </div>
+                            );
+                          }
+                          return null;
+                        }
+                        
+                        return <span key={index}>{part}</span>;
+                      })}
+                    </div>
+                  );
+                })()}
               </div>
             </div>
           </div>
         </section>
       </div>
 
-      {/* Floating Back to Top Button */}
       {showScrollTop && (
         <button
           onClick={scrollToTop}

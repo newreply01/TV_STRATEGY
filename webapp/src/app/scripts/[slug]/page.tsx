@@ -11,9 +11,13 @@ async function getScript(slug: string) {
   
   if (!script) return null;
 
-  // 手動映射回蛇形命名 (snake_case)，因為 ScriptDetailClient 預期的是原始 DB 欄位名稱
-  return {
-    ...script,
+  const cleanScript = {
+    id: script.id,
+    slug: script.slug,
+    title: script.title,
+    author: script.author,
+    url: script.url,
+    category: script.category,
     image_url: script.imageUrl,
     description_en: script.descriptionEn,
     description_zh: script.descriptionZh,
@@ -22,17 +26,19 @@ async function getScript(slug: string) {
     description_full_zh: script.descriptionFullZh,
     pine_script: script.pineScript,
     local_images: script.localImages,
-    boosts_count: script.likesCount, // 注意：Prisma 模型中是 likesCount 映射到 boosts_count
+    boosts_count: script.likesCount,
     comments_count: script.commentsCount,
-    created_at: script.createdAt,
-    updated_at: script.updatedAt,
-    last_synced_at: script.lastSyncedAt,
+    created_at: script.createdAt ? new Date(script.createdAt).toISOString() : null,
+    updated_at: script.updatedAt ? new Date(script.updatedAt).toISOString() : null,
+    last_synced_at: script.lastSyncedAt ? new Date(script.lastSyncedAt).toLocaleDateString('zh-TW') : '---',
     is_implemented: script.isImplemented,
     is_web_done: script.isWebDone,
     is_script_done: script.isScriptDone,
     serial_id: script.serialId,
-    published_at: script.publishedAt,
+    published_at: script.publishedAt ? new Date(script.publishedAt).toLocaleDateString('zh-TW') : '---',
   };
+
+  return JSON.parse(JSON.stringify(cleanScript));
 }
 
 export default async function ScriptDetailPage({ params }: { params: { slug: string } }) {

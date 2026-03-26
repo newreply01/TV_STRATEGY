@@ -23,8 +23,8 @@ export default function DevListClient({ initialScripts }: { initialScripts: any[
   // Helper to extract TradingView snapshot URL from slug
   // Helper to extract TradingView snapshot URL or use database image_url
   const getTradingViewSnapshot = (slug: string, originalUrl: string) => {
-    // If originalUrl exists and starts with http, use it as it's likely the correct S3/Official link
-    if (originalUrl && originalUrl.startsWith('http')) {
+    // If originalUrl exists and starts with http or /, use it
+    if (originalUrl && (originalUrl.startsWith('http') || originalUrl.startsWith('/'))) {
       return originalUrl;
     }
 

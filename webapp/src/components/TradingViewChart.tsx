@@ -27,24 +27,24 @@ export default function TradingViewChart({ slug, symbol = 'AAPL' }: { slug: stri
   const [data, setData] = useState<ChartData | null>(null);
 
   const candlestickSeriesRef = useRef<any>(null);
-  const timescaleSeriesRef = useRef<any>(null); // For axis stretch
-  const flowSeriesRef = useRef<any>(null);
-  const signalSeriesRef = useRef<any>(null);
+  const timescaleSeriesRef = useRef<any>(null);
+  const dynamicSeriesRef = useRef<any[]>([]); // To track dynamically added series for cleanup
 
   const [isFocused, setIsFocused] = useState(false);
   const [hoverData, setHoverData] = useState<any>(null);
+  const [indicatorValues, setIndicatorValues] = useState<any[]>([]);
 
   useEffect(() => {
     if (!chartContainerRef.current) return;
 
     const chart = createChart(chartContainerRef.current, {
       layout: { background: { type: ColorType.Solid, color: '#000000' }, textColor: '#d1d4dc' },
-      grid: { vertLines: { color: 'rgba(42, 46, 57, 0.05)' }, horzLines: { color: 'rgba(42, 46, 57, 0.05)' } },
+      grid: { vertLines: { color: 'rgba(42, 46, 57, 0.02)' }, horzLines: { color: 'rgba(42, 46, 57, 0.02)' } },
       width: chartContainerRef.current.clientWidth,
       height: 600,
       handleScroll: { mouseWheel: false, pressedMouseMove: true, horzTouchDrag: true, vertTouchDrag: true },
       handleScale: { mouseWheel: false, pinch: true, axisPressedMouseMove: true },
-      timeScale: { timeVisible: true, rightOffset: 0 },
+      timeScale: { timeVisible: true, rightOffset: 5 },
       localization: {
         locale: 'zh-TW',
         dateFormat: 'MM/dd',
@@ -57,45 +57,18 @@ export default function TradingViewChart({ slug, symbol = 'AAPL' }: { slug: stri
 
     chartRef.current = chart;
 
-    const isS001 = slug.includes('Omni-Flow');
-    const indicatorPane = isS001 ? chart.addPane() : null;
-    if (indicatorPane) indicatorPane.setHeight(240);
-
-    // 1. Candlestick
+    // 1. Candlestick (Main Series)
     candlestickSeriesRef.current = chart.addSeries(CandlestickSeries, {
       upColor: '#00ffcc', downColor: '#ff2e2e', borderVisible: false,
       wickUpColor: '#00ffcc', wickDownColor: '#ff2e2e',
       priceLineVisible: false, lastValueVisible: false
     }, 0);
 
-    // 2. Hidden Timescale Support (Extends Axis)
+    // 2. Hidden Timescale Support
     timescaleSeriesRef.current = chart.addSeries(LineSeries, {
       color: 'transparent', priceLineVisible: false, lastValueVisible: false,
       crosshairMarkerVisible: false, priceFormat: { type: 'custom', formatter: () => '' }
     });
-
-    // 3. S001 Indicator
-    if (isS001) {
-      flowSeriesRef.current = chart.addSeries(BaselineSeries, {
-        baseValue: { type: 'price', price: 0 },
-        topFillColor1: 'rgba(0, 255, 255, 0.4)', topFillColor2: 'rgba(0, 255, 255, 0.05)', topLineColor: '#00ffff',
-        bottomFillColor1: 'rgba(255, 46, 46, 0.05)', bottomFillColor2: 'rgba(255, 46, 46, 0.4)', bottomLineColor: '#ff2e2e',
-        lineWidth: 3, lastValueVisible: false, priceLineVisible: false,
-      }, 1);
-      flowSeriesRef.current.priceScale().applyOptions({ scaleMargins: { bottom: 0.2, top: 0.1 } });
-
-      signalSeriesRef.current = chart.addSeries(LineSeries, {
-        color: 'rgba(200, 200, 200, 0.3)', lineWidth: 1, lastValueVisible: false, priceLineVisible: false,
-      }, 1);
-
-      [90, 70, 0, -70, -90].forEach(p => {
-        flowSeriesRef.current.createPriceLine({
-          price: p, color: p === 0 ? 'rgba(255, 255, 255, 0.4)' : (Math.abs(p) === 90 ? 'rgba(255, 255, 255, 0.2)' : 'rgba(255, 255, 255, 0.1)'),
-          lineWidth: 1, lineStyle: p === 0 ? 0 : 1, axisLabelVisible: true,
-          title: p === 0 ? 'ZERO' : `${p > 0 ? '+' : ''}${p}`,
-        });
-      });
-    }
 
     const handleResize = () => {
       if (chartRef.current && chartContainerRef.current) {
@@ -117,18 +90,29 @@ export default function TradingViewChart({ slug, symbol = 'AAPL' }: { slug: stri
     let active = true;
     const isS001 = slug.includes('Omni-Flow');
     const isS002 = slug.includes('Volume-Profile');
+    
+    // Interval defaults
     const interval = isS002 ? '5m' : '15m';
     const period = isS002 ? '7d' : '60d';
     const apiBase = process.env.NEXT_PUBLIC_API_URL || '/api/py';
     const url = `${apiBase}/charts/${slug}?symbol=${symbol}&interval=${interval}&period=${period}`;
 
     setLoading(true);
-    fetch(url).then(res => res.json()).then((chartData: ChartData) => {
+    fetch(url).then(res => res.json()).then((chartData: any) => {
       if (!active || !chartRef.current) return;
 
       try {
         if (chartData.error) throw new Error(chartData.error);
         setData(chartData);
+
+        // CRITICAL: Clear any residue markers and series before rendering new data
+        if (candlestickSeriesRef.current) {
+          createSeriesMarkers(candlestickSeriesRef.current, []);
+        }
+        
+        // Cleanup old dynamic series (indicators)
+        dynamicSeriesRef.current.forEach(s => chartRef.current?.removeSeries(s));
+        dynamicSeriesRef.current = [];
 
         const actualOHLC = (chartData.ohlc || []).filter((d: any) => d.close !== undefined);
         if (candlestickSeriesRef.current) candlestickSeriesRef.current.setData(actualOHLC);
@@ -139,18 +123,60 @@ export default function TradingViewChart({ slug, symbol = 'AAPL' }: { slug: stri
           timescaleSeriesRef.current.setData(dummyData);
         }
 
-        if (isS001 && chartData.indicator && flowSeriesRef.current) {
-          const validInd = chartData.indicator.filter(d => typeof d.value === 'number');
-          flowSeriesRef.current.setData(validInd);
+        // --- DYNAMIC INDICATORS RENDERING ---
+        // S001 Legacy Pane Support
+        if (isS001) {
+           if (chartData.indicator) {
+              const flowSeries = chartRef.current.addSeries(BaselineSeries, {
+                baseValue: { type: 'price', price: 0 },
+                topFillColor1: 'rgba(0, 255, 255, 0.4)', topFillColor2: 'rgba(0, 255, 255, 0.05)', topLineColor: '#00ffff',
+                bottomFillColor1: 'rgba(255, 46, 46, 0.05)', bottomFillColor2: 'rgba(255, 46, 46, 0.4)', bottomLineColor: '#ff2e2e',
+                lineWidth: 3, lastValueVisible: false, priceLineVisible: false,
+                title: 'FLOW'
+              }, 1);
+              flowSeries.setData(chartData.indicator.filter((d:any) => typeof d.value === 'number'));
+              flowSeries.priceScale().applyOptions({ scaleMargins: { bottom: 0.2, top: 0.1 } });
+              dynamicSeriesRef.current.push(flowSeries);
+
+              if (chartData.signal) {
+                const signalSeries = chartRef.current.addSeries(LineSeries, {
+                    color: 'rgba(200, 200, 200, 0.3)', lineWidth: 1, lastValueVisible: false, priceLineVisible: false,
+                    title: 'SIGNAL'
+                }, 1);
+                signalSeries.setData(chartData.signal.filter((d:any) => typeof d.value === 'number'));
+                dynamicSeriesRef.current.push(signalSeries);
+              }
+
+              if (chartData.markers) {
+                 const finalMarkers = chartData.markers.map((m: any) => ({ ...m, shape: m.shape || 'circle', size: 1 }));
+                 finalMarkers.sort((a:any, b:any) => a.time - b.time);
+                 createSeriesMarkers(flowSeries, finalMarkers);
+              }
+           }
         }
-        if (isS001 && chartData.signal && signalSeriesRef.current) {
-          const validSig = chartData.signal.filter(d => typeof d.value === 'number');
-          signalSeriesRef.current.setData(validSig);
+
+        // S008 / Generic Indicators (Plural)
+        if (chartData.indicators && Array.isArray(chartData.indicators)) {
+           chartData.indicators.forEach((ind: any) => {
+              const series = chartRef.current?.addSeries(LineSeries, {
+                 color: ind.color || '#ffffff',
+                 lineWidth: ind.lineWidth || 1,
+                 lastValueVisible: false,
+                 priceLineVisible: false,
+                 title: ind.name
+              }, ind.pane || 0);
+              if (series && ind.data) {
+                 series.setData(ind.data);
+                 dynamicSeriesRef.current.push(series);
+              }
+           });
         }
-        if (isS001 && chartData.markers && flowSeriesRef.current) {
-          const finalMarkers = chartData.markers.map((m: any) => ({ ...m, shape: m.shape || 'circle', size: 1 }));
-          finalMarkers.sort((a, b) => a.time - b.time);
-          createSeriesMarkers(flowSeriesRef.current, finalMarkers);
+
+        // Generic Markers on Main Series
+        if (chartData.markers && !isS001 && candlestickSeriesRef.current) {
+            const finalMarkers = chartData.markers.map((m: any) => ({ ...m, size: 1 }));
+            finalMarkers.sort((a:any, b:any) => a.time - b.time);
+            createSeriesMarkers(candlestickSeriesRef.current, finalMarkers);
         }
 
         if (chartData.ohlc && chartData.ohlc.length > 0) {
@@ -159,7 +185,7 @@ export default function TradingViewChart({ slug, symbol = 'AAPL' }: { slug: stri
           requestAnimationFrame(() => {
             if (chartRef.current) {
               chartRef.current.timeScale().setVisibleRange({ from: start, to: end });
-              chartRef.current.timeScale().applyOptions({ rightOffset: 0 });
+              chartRef.current.timeScale().applyOptions({ rightOffset: 5 });
             }
           });
         }
@@ -168,11 +194,22 @@ export default function TradingViewChart({ slug, symbol = 'AAPL' }: { slug: stri
         chartRef.current.subscribeCrosshairMove((param) => {
           if (param.time && param.seriesData.size > 0) {
             const ohlc = param.seriesData.get(candlestickSeriesRef.current);
-            const flow = flowSeriesRef.current ? param.seriesData.get(flowSeriesRef.current) : null;
-            const sig = signalSeriesRef.current ? param.seriesData.get(signalSeriesRef.current) : null;
-            setHoverData({ time: param.time, ohlc, flow, sig });
+            const dynamicVals: any[] = [];
+            dynamicSeriesRef.current.forEach(s => {
+                const val = param.seriesData.get(s);
+                if (val) {
+                    dynamicVals.push({ 
+                        title: s.options().title, 
+                        value: (val as any).value || (val as any).close,
+                        color: s.options().color || s.options().topLineColor 
+                    });
+                }
+            });
+            setHoverData({ time: param.time, ohlc });
+            setIndicatorValues(dynamicVals);
           } else {
             setHoverData(null);
+            setIndicatorValues([]);
           }
         });
       } catch (e: any) {
@@ -212,14 +249,26 @@ export default function TradingViewChart({ slug, symbol = 'AAPL' }: { slug: stri
           </span>
           <span className="text-[10px] font-black px-1.5 py-0.5 rounded bg-brand-primary/10 text-brand-primary border border-brand-primary/20">LIVE</span>
         </div>
-        <div className="flex items-center gap-4 text-[11px] font-bold">
+        <div className="flex flex-wrap items-center gap-3 text-[11px] font-bold">
           {hoverData ? (
-            <div className="flex items-center gap-1.5 bg-black/40 px-2 py-0.5 rounded-full border border-white/5 backdrop-blur-sm">
-              <span className="text-zinc-500 uppercase">O</span><span className={hoverData.ohlc?.close > hoverData.ohlc?.open ? "text-cyan-400" : "text-rose-500"}>{hoverData.ohlc?.open?.toFixed(2)}</span>
-              <span className="text-zinc-500 uppercase">H</span><span className={hoverData.ohlc?.close > hoverData.ohlc?.open ? "text-cyan-400" : "text-rose-500"}>{hoverData.ohlc?.high?.toFixed(2)}</span>
-              <span className="text-zinc-500 uppercase">L</span><span className={hoverData.ohlc?.close > hoverData.ohlc?.open ? "text-cyan-400" : "text-rose-500"}>{hoverData.ohlc?.low?.toFixed(2)}</span>
-              <span className="text-zinc-500 uppercase">C</span><span className={hoverData.ohlc?.close > hoverData.ohlc?.open ? "text-cyan-400" : "text-rose-500"}>{hoverData.ohlc?.close?.toFixed(2)}</span>
-            </div>
+            <>
+              <div className="flex items-center gap-1.5 bg-black/40 px-2 py-0.5 rounded-full border border-white/5 backdrop-blur-sm">
+                <span className="text-zinc-500 uppercase">O</span><span className={hoverData.ohlc?.close > hoverData.ohlc?.open ? "text-cyan-400" : "text-rose-500"}>{hoverData.ohlc?.open?.toFixed(2)}</span>
+                <span className="text-zinc-500 uppercase">H</span><span className={hoverData.ohlc?.close > hoverData.ohlc?.open ? "text-cyan-400" : "text-rose-500"}>{hoverData.ohlc?.high?.toFixed(2)}</span>
+                <span className="text-zinc-500 uppercase">L</span><span className={hoverData.ohlc?.close > hoverData.ohlc?.open ? "text-cyan-400" : "text-rose-500"}>{hoverData.ohlc?.low?.toFixed(2)}</span>
+                <span className="text-zinc-500 uppercase">C</span><span className={hoverData.ohlc?.close > hoverData.ohlc?.open ? "text-cyan-400" : "text-rose-500"}>{hoverData.ohlc?.close?.toFixed(2)}</span>
+              </div>
+              
+              {/* Dynamic Indicator Values */}
+              <div className="flex items-center gap-2">
+                {indicatorValues.map((iv, idx) => (
+                  <div key={idx} className="flex items-center gap-1.5 bg-black/40 px-2 py-0.5 rounded-full border border-white/5 backdrop-blur-sm">
+                    <span className="text-zinc-500 uppercase text-[9px]">{iv.title}</span>
+                    <span style={{ color: iv.color }}>{iv.value?.toFixed(2)}</span>
+                  </div>
+                ))}
+              </div>
+            </>
           ) : (
             <span className="text-zinc-600 animate-pulse uppercase tracking-widest text-[9px]">Awaiting Market Data Stream...</span>
           )}

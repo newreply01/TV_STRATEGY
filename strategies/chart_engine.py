@@ -13,6 +13,7 @@ import logging
 from s001_omni_flow.web.indicator import get_omni_flow_data
 from s002_clusters_volume_profile.web.indicator import calculate_clusters_volume_profile
 from strategy_003 import process_strategy_003
+from strategy_008 import process_strategy_008
 
 # Configure logging to write to a file explicitly
 logging.basicConfig(
@@ -32,6 +33,7 @@ CORS(app, resources={r"/api/*": {"origins": "*"}})
 SLUG_S001 = "3ONFG3bJ-Omni-Flow-Consensus-LuxAlgo"
 SLUG_S002 = "lpnsjMbH-Clusters-Volume-Profile-LuxAlgo"
 SLUG_S003 = "vXui7vrm-Market-Structure-Dashboard-Flux-Charts"
+SLUG_S008 = "a8pEQinU-Smart-NR2-NR20-and-Inside-Bar-Zeiierman"
 
 def fetch_yfinance_data(symbol="2330.TW", period="1mo", interval="15m"):
     try:
@@ -139,7 +141,9 @@ def get_chart_data(slug):
         source = "yfinance"
 
     if df is not None and not df.empty:
-        print(f"Engine: Using {source} for {symbol} ({interval}/{period}), Count: {len(df)}")
+        # Deduplicate data by index (timestamp) to prevent vertical signal stacking
+        df = df[~df.index.duplicated(keep='first')]
+        print(f"Engine: Using {source} for {symbol} ({interval}/{period}), Unique Count: {len(df)}")
         
         # Branching logic based on slug
         if slug == SLUG_S002:
@@ -196,6 +200,9 @@ def get_chart_data(slug):
             # S003: Market Structure Dashboard
             # Set a default 1h interval if not specified for S003
             data = process_strategy_003(df)
+        elif slug == SLUG_S008:
+            # S008: Smart NR2-NR20 and Inside Bar
+            data = process_strategy_008(df, interval=interval)
         else:
             # Default to S001: Omni-Flow
             print(f"[Engine] Calling S001 for {symbol} (interval={interval})")

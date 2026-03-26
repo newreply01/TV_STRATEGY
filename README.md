@@ -6,7 +6,6 @@
 > 「我們正在進行 TradeView Strategy 專案。目前已完成『管理中心 (Management Center)』的重新命名與佈局優化。請讀取 `/webapp/src/app/monitor/MonitorPageClient.tsx` 與 `/webapp/src/app/api/monitor/route.ts` 以了解最新的數據分流邏輯（開發進度 vs 系統監控）。
 
 ## 🛠️ 目前專案狀態
-- **管理中心**: 已區分為「開發進度」與「系統管理」兩大區塊。
 - **數據分類**: 
   - `TradingView_Scripts`: 屬於系統基礎數據，已移至系統監控分頁。
   - `Strategy_001` ~ `Strategy_004`: 屬於具體開發進度。
@@ -32,12 +31,14 @@
    - 當您親自確認該策略的功能、畫面與數據皆符合預期，可正式對外發布時，**請在管理中心的狀態欄直接點擊下方藍色的「未確認 / 已完成」開關**。
    - 點擊後將會同步將資料表中的 `is_web_done` 屬性標記為 `true`，代表該策略的所有開發生命週期已透過人工驗收真正結束。
 ### 3. 內容與縮圖優化 (Mandatory Optimization)
-每從來源網站復刻一篇文章，**必須** 執行此步驟以確保網頁內容完整（包含完整描述與高品質轉譯）：
+每從來源網站復刻一篇文章，**必須** 執行此步驟以確保網頁內容完整且專業：
 - **執行指令**：`python strategies/update_strategy_metadata.py --serial Sxxx`
 - **邏輯說明**：
-  - 自動抓取 TradingView 完整 `description_full`。
-  - **轉譯政策**：若 `.env` 中未提供 `GOOGLE_API_KEY`，應由開發者/AI 助手依據原文進行手動高品質轉譯並更新至 `description_full_zh`，以維持全域頁面的一致性與專業度。
-  - **縮圖同步**：自動同步官方 `image_url` 至資料庫。
+  - **內容清理 (Pure Text)**：自動移除了 `description_full` 與 `description_full_zh` 中的所有 TradingView 內置圖片。詳情頁面採純文字專業設計，首屏優先展示動態圖表。
+  - **縮圖本地化 (Localization)**：自動將官方 `image_url` 下載至 `webapp/public/thumbnails/`，並將資料庫路徑更新為本地 `/thumbnails/{serial_id}.png`。這消除了對外部圖片伺服器的依賴，並提升了載入速度。
+  - **列表展示專用**：縮圖僅會顯示在「策略中心」與「開發中心」的列表視圖中，不會顯示在文章詳情頁內部。
+  - > [!IMPORTANT]
+  - > **狀態鎖定**：此腳本 **絕對不會** 變更 `is_web_done` 狀態。該狀態僅能透過管理中心 UI 由人工手動開啟。
 
 ## 🏗️ 架構說明：`strategies/` vs `webapp/api/py/`
 
@@ -96,4 +97,64 @@ pm2 logs tradeview-chart-engine
 > 為了避免版本衝突，各專案皆配有 `./dev.sh` 啟動腳本，會自動切換至正確的 Node 版本並套用隔離環境。
 
 ---
-*最後更新時間: 2026-03-25 (新增策略目錄架構說明與 X 軸緩衝優化)*
+*最後更新時間: 2026-03-26 (新增 Vercel 環境變數防護章節)*
+
+---
+
+## 🚨 Vercel 正式站環境變數設定（禁止遺漏）
+
+> [!CAUTION]
+> **每次以下情況發生後，必須重新至 Vercel Dashboard 確認環境變數是否存在：**
+> - 重新連結 GitHub Repository
+> - 建立新的 Vercel Project
+> - 重新連結 Supabase Integration
+> - 任何 `vercel --prod` 手動部署
+
+### 必填環境變數清單
+
+請前往 **Vercel Dashboard → Project → Settings → Environment Variables** 確認以下變數已設定：
+
+| 變數名稱 | 說明 | 來源 |
+|---|---|---|
+| `DATABASE_URL` | Supabase 連線字串（**Transaction Pooler**，Port 6543） | Supabase Dashboard → Connect → Transaction Pooler |
+| `POSTGRES_URL_NON_POOLING` | Supabase 直連字串（**Session Mode**，Port 5432） | Supabase Dashboard → Connect → Direct Connection |
+
+### 正確的 Vercel 環境變數格式
+
+> [!NOTE]
+> Project Ref: `cktbfzaudujxgjmmwfcl` ｜ Region: `ap-northeast-2`（首爾）
+
+```
+# DATABASE_URL (Transaction Pooler，Port 6543，用於日常資料庫讀寫)
+postgresql://postgres.cktbfzaudujxgjmmwfcl:[PASSWORD]@aws-1-ap-northeast-2.pooler.supabase.com:6543/postgres?pgbouncer=true&sslmode=require
+
+# POSTGRES_URL_NON_POOLING (Session Mode，Port 5432，用於 Prisma Migration)
+postgresql://postgres.cktbfzaudujxgjmmwfcl:[PASSWORD]@aws-1-ap-northeast-2.pooler.supabase.com:5432/postgres?sslmode=require
+```
+
+> [!WARNING]
+> **本地 `.env` 的 `DATABASE_URL` 指向 `localhost:5533`，這是完全不同的本地資料庫，不能複製到 Vercel 使用！**
+> 
+> **密碼請至 Supabase Dashboard → Project Settings → Database → Database password 複製。**
+
+### 事故排查流程（正式站出現 `DATABASE_URL not found`）
+
+1. 開啟 [Vercel Dashboard](https://vercel.com)
+2. 進入本專案 → **Settings** → **Environment Variables**
+3. 確認 `DATABASE_URL` 與 `POSTGRES_URL_NON_POOLING` 是否存在
+4. 如不存在，前往 [Supabase Dashboard](https://supabase.com/dashboard) → 本專案 → **Connect**
+5. 複製 **Transaction Pooler** 連線字串，貼入 `DATABASE_URL`
+6. 複製 **Session Mode (Direct)** 連線字串，貼入 `POSTGRES_URL_NON_POOLING`
+7. 記得將 `[YOUR-PASSWORD]` 替換為實際密碼
+8. **觸發重新部署**：Vercel Dashboard → Deployments → 最新記錄 → **Redeploy**
+
+### AI 助理鐵則
+
+> [!IMPORTANT]
+> **在任何對話中，AI 助理（Antigravity）不得修改以下檔案，除非使用者明確要求處理 Vercel/Supabase 部署問題：**
+> - `webapp/prisma/schema.prisma`（特別是 `url` 與 `directUrl` 設定）
+> - `webapp/src/lib/prisma.ts`
+> - `webapp/.env` / `webapp/.env.local`
+>
+> 修改上述檔案有可能影響正式站的資料庫連線，造成服務中斷。
+
